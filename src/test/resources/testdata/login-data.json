@@ -1,0 +1,32 @@
+{
+  "validLogins": [
+    {
+      "username": "standard_user",
+      "password": "secret_sauce"
+    }
+  ],
+  "invalidLogins": [
+    {
+      "username": "invalid_user",
+      "password": "wrong_password",
+      "expectedErrorMessage": "Invalid"
+    }
+  ],
+  "emptyCredentials": [
+    {
+      "username": "",
+      "password": "",
+      "expectedErrorMessage": "required"
+    },
+    {
+      "username": "standard_user",
+      "password": "",
+      "expectedErrorMessage": "password"
+    },
+    {
+      "username": "",
+      "password": "secret_sauce",
+      "expectedErrorMessage": "username"
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<suite name="Selenium Automation Suite" parallel="methods" thread-count="2" verbose="1">
+    <listeners>
+        <listener class-name="com.automation.listeners.TestListener"/>
+    </listeners>
+
+    <test name="UI Regression Tests">
+        <classes>
+            <class name="com.automation.tests.LoginTest"/>
+            <class name="com.automation.tests.DashboardTest"/>
+        </classes>
+    </test>
+</suite>
