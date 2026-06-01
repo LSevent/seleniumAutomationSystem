@@ -1,6 +1,7 @@
 package com.automation.tests;
 
 import com.automation.excel.ExcelReader;
+import com.automation.excel.ExcelTemplateFormatter;
 import com.automation.excel.ScenarioReader;
 import com.automation.models.Scenario;
 import org.apache.poi.ss.usermodel.Row;
@@ -12,6 +13,7 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -21,6 +23,8 @@ public class ScenarioReaderTest {
 
     private static final Path TEMPLATE_FILE = Path.of("src", "test", "resources", "testdata", "Template Testing.xlsx");
     private static final Path TEMP_DIR = Path.of("target", "scenario-reader-test");
+    private static final int MIN_TEMPLATE_COLUMN_WIDTH = 10 * 256;
+    private static final int MAX_TEMPLATE_COLUMN_WIDTH = 45 * 256;
     private static final String[] SCENARIO_SHEET_HEADERS = {
             "Testcase", "Run", "Function", "Object", "Value", "Application", "Description"
     };
@@ -80,6 +84,26 @@ public class ScenarioReaderTest {
         try (ExcelReader excelReader = new ExcelReader(TEMPLATE_FILE.toString())) {
             assertScenarioSheetHeaders(excelReader, "Create New Booking");
             assertScenarioSheetHeaders(excelReader, "Cancel Booking");
+        }
+    }
+
+    @Test
+    public void templateWorkbookShouldFreezeHeadersAndFitUsedColumns() throws IOException {
+        try (InputStream inputStream = Files.newInputStream(TEMPLATE_FILE);
+             Workbook workbook = new XSSFWorkbook(inputStream)) {
+            for (Sheet sheet : workbook) {
+                Assert.assertNotNull(sheet.getPaneInformation(), sheet.getSheetName() + " should freeze the header row.");
+                Assert.assertTrue(sheet.getPaneInformation().isFreezePane(), sheet.getSheetName() + " should use a frozen pane.");
+                Assert.assertEquals(sheet.getPaneInformation().getHorizontalSplitPosition(), 1, sheet.getSheetName() + " should freeze row 1.");
+
+                Row headerRow = sheet.getRow(0);
+                Assert.assertNotNull(headerRow, sheet.getSheetName() + " should have a header row.");
+                for (int columnIndex = 0; columnIndex < headerRow.getLastCellNum(); columnIndex++) {
+                    int columnWidth = sheet.getColumnWidth(columnIndex);
+                    Assert.assertTrue(columnWidth >= MIN_TEMPLATE_COLUMN_WIDTH, sheet.getSheetName() + " column " + columnIndex + " should meet the minimum width.");
+                    Assert.assertTrue(columnWidth <= MAX_TEMPLATE_COLUMN_WIDTH, sheet.getSheetName() + " column " + columnIndex + " should stay within the maximum width.");
+                }
+            }
         }
     }
 
@@ -213,6 +237,7 @@ public class ScenarioReaderTest {
                 writeRow(scenarioSheet.createRow(0), SCENARIO_SHEET_HEADERS);
             }
 
+            ExcelTemplateFormatter.applyReadableLayout(workbook);
             workbook.write(outputStream);
         }
         return workbookPath;

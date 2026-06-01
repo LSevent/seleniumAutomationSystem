@@ -1,6 +1,7 @@
 package com.automation.tests;
 
 import com.automation.excel.ExcelReader;
+import com.automation.excel.ExcelTemplateFormatter;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
@@ -46,6 +47,7 @@ public class ExcelReaderTest {
             secondDataRow.createCell(2).setCellValue("Cancel Booking");
             secondDataRow.createCell(3).setCellValue("Cancel booking");
 
+            ExcelTemplateFormatter.applyReadableLayout(workbook);
             workbook.write(outputStream);
         }
     }
