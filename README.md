@@ -266,6 +266,8 @@ The framework can read the `SCENARIOS` sheet from an Excel workbook. Only rows w
 
 `ACTION` must match an existing sheet name.
 
+Scenario sheets use the headers `Testcase`, `Run`, `Function`, `Object`, `Value`, `Application`, and `Description`.
+
 Scenario sheet execution and step parsing are not implemented yet.
 
 ## Future Improvements

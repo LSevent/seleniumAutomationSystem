@@ -21,6 +21,9 @@ public class ScenarioReaderTest {
 
     private static final Path TEMPLATE_FILE = Path.of("src", "test", "resources", "testdata", "Template Testing.xlsx");
     private static final Path TEMP_DIR = Path.of("target", "scenario-reader-test");
+    private static final String[] SCENARIO_SHEET_HEADERS = {
+            "Testcase", "Run", "Function", "Object", "Value", "Application", "Description"
+    };
 
     @BeforeClass
     public void createTempDirectory() throws IOException {
@@ -69,6 +72,14 @@ public class ScenarioReaderTest {
             Assert.assertTrue(excelReader.isSheetExists("Create New Booking"));
             Assert.assertTrue(excelReader.isSheetExists("Cancel Booking"));
             scenarioReader.validateScenarios();
+        }
+    }
+
+    @Test
+    public void scenarioSheetsShouldUseAgreedTemplateHeaders() {
+        try (ExcelReader excelReader = new ExcelReader(TEMPLATE_FILE.toString())) {
+            assertScenarioSheetHeaders(excelReader, "Create New Booking");
+            assertScenarioSheetHeaders(excelReader, "Cancel Booking");
         }
     }
 
@@ -199,12 +210,19 @@ public class ScenarioReaderTest {
 
             for (String scenarioSheetName : scenarioSheetNames) {
                 Sheet scenarioSheet = workbook.createSheet(scenarioSheetName);
-                writeRow(scenarioSheet.createRow(0), new String[]{"STEP_NO", "KEYWORD", "OBJECT", "VALUE", "DESCRIPTION"});
+                writeRow(scenarioSheet.createRow(0), SCENARIO_SHEET_HEADERS);
             }
 
             workbook.write(outputStream);
         }
         return workbookPath;
+    }
+
+    private void assertScenarioSheetHeaders(ExcelReader excelReader, String sheetName) {
+        Assert.assertEquals(excelReader.getColumnCount(sheetName, 0), SCENARIO_SHEET_HEADERS.length);
+        for (int columnIndex = 0; columnIndex < SCENARIO_SHEET_HEADERS.length; columnIndex++) {
+            Assert.assertEquals(excelReader.getCellValue(sheetName, 0, columnIndex), SCENARIO_SHEET_HEADERS[columnIndex]);
+        }
     }
 
     private void writeRow(Row row, Object[] values) {
