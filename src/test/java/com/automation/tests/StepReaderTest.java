@@ -1,7 +1,6 @@
 package com.automation.tests;
 
 import com.automation.excel.ExcelReader;
-import com.automation.excel.ExcelTemplateFormatter;
 import com.automation.excel.StepReader;
 import com.automation.models.Scenario;
 import com.automation.models.TestCaseBlock;
@@ -337,7 +336,6 @@ public class StepReaderTest {
             for (int rowIndex = 0; rowIndex < rows.length; rowIndex++) {
                 writeRow(sheet.createRow(rowIndex + 1), rows[rowIndex]);
             }
-            ExcelTemplateFormatter.applyReadableLayout(workbook);
             workbook.write(outputStream);
         }
         return workbookPath;
