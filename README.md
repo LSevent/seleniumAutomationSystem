@@ -250,6 +250,14 @@ src/test/resources/testdata/login-data.json
 - `invalidLoginData`
 - `emptyCredentialsData`
 
+## Excel Reader Foundation
+
+Apache POI is used to read `.xlsx` files through `ExcelReader`.
+
+`ExcelReader` can read workbook data by sheet name, row index, column index, and header name. Header row is row `0`, and header matching is case-insensitive with surrounding spaces ignored. Cell values are returned as `String`.
+
+This is only the foundation for future Excel-driven execution. Scenario execution from Excel is not implemented yet.
+
 ## Future Improvements
 
 - Add environment-specific config files for QA, staging, and production.

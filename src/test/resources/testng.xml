@@ -8,6 +8,7 @@
         <classes>
             <class name="com.automation.tests.LoginTest"/>
             <class name="com.automation.tests.DashboardTest"/>
+            <class name="com.automation.tests.ExcelReaderTest"/>
         </classes>
     </test>
 </suite>
