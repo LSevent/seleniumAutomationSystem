@@ -2,7 +2,7 @@
 
 A clean Selenium UI automation framework built with Java 17, Maven, TestNG, Page Object Model, WebDriverManager, ExtentReports, Log4j2, and JSON test data.
 
-This project is intentionally beginner-friendly while keeping production-minded patterns: reusable base classes, explicit waits, ThreadLocal WebDriver management for parallel tests, external configuration, external test data, reporting, screenshots, and logging.
+This project is intentionally beginner-friendly while keeping production-minded patterns: reusable base classes, explicit waits, ThreadLocal WebDriver management for parallel tests, external configuration, external test data, reporting, screenshots, logging, and Excel-driven test design foundations.
 
 ## Tech Stack
 
@@ -276,7 +276,28 @@ The framework can now parse scenario sheets referenced by `SCENARIOS.ACTION`. Sc
 
 Execution order follows Excel row order. `Application` is required on active testcase rows; step rows inherit the parent `Application` unless they provide an override. `Description` is optional.
 
-The framework does not execute Selenium steps from Excel yet. Data references such as `LOGIN_DATA[USERNAME]` and object repository resolution are not implemented yet.
+The framework does not execute Selenium steps from Excel yet.
+
+## Data Reference Resolver
+
+The framework can resolve data references in scenario sheet `Value` cells using dot notation:
+
+```text
+SHEET_NAME.COLUMN_NAME
+```
+
+Examples:
+
+- `LOGIN_DATA.USERNAME`
+- `LOGIN_DATA.PASSWORD`
+- `BOOKING_DATA.ROOM_NAME`
+- `BOOKING_DATA.EXPECTED_MESSAGE`
+
+`SCENARIOS.NO` is used as the data key. Every data sheet must include a `NO` column, and the matching row is selected by the active scenario number.
+
+If a `Value` cell is not a data reference, it is treated as literal text. Bracket notation is not supported.
+
+Object repository lookup, XPath resolution, and Excel-driven Selenium step execution are not implemented yet.
 
 ## Future Improvements
 

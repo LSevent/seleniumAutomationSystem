@@ -11,6 +11,7 @@
             <class name="com.automation.tests.ExcelReaderTest"/>
             <class name="com.automation.tests.ScenarioReaderTest"/>
             <class name="com.automation.tests.StepReaderTest"/>
+            <class name="com.automation.tests.DataReaderTest"/>
         </classes>
     </test>
 </suite>

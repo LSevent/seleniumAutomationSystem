@@ -80,7 +80,7 @@ public class StepReaderTest {
                 REQUIRED_HEADERS,
                 new Object[][]{
                         {"Login BRS", "Yes", "", "", "", "BRS", "Login to BRS"},
-                        {"", "", "input", "txtUsername", "LOGIN_DATA[USERNAME]", "", "Input username"},
+                        {"", "", "input", "txtUsername", "LOGIN_DATA.USERNAME", "", "Input username"},
                         {"Optional Setup", "No", "", "", "", "", "Inactive setup"},
                         {"", "", "click", "btnOptional", "", "", "Optional click"},
                         {"Create Booking", "True", "", "", "", "BRS", "Create booking"},
@@ -132,7 +132,7 @@ public class StepReaderTest {
                 REQUIRED_HEADERS,
                 new Object[][]{
                         {"Login BRS", "Yes", "", "", "", "BRS", "Login to BRS"},
-                        {"", "", "input", "txtUsername", "LOGIN_DATA[USERNAME]", "HRIS", "Input username"}
+                        {"", "", "input", "txtUsername", "LOGIN_DATA.USERNAME", "HRIS", "Input username"}
                 }
         );
 
@@ -169,7 +169,7 @@ public class StepReaderTest {
                 CREATE_BOOKING_SHEET,
                 REQUIRED_HEADERS,
                 new Object[][]{
-                        {"", "", "input", "txtUsername", "LOGIN_DATA[USERNAME]", "", "Input username"}
+                        {"", "", "input", "txtUsername", "LOGIN_DATA.USERNAME", "", "Input username"}
                 }
         );
 
@@ -314,16 +314,16 @@ public class StepReaderTest {
                 REQUIRED_HEADERS,
                 new Object[][]{
                         {"Login BRS", "Yes", "", "", "", "BRS", "Login to BRS"},
-                        {"", "", "input", "txtUsername", "LOGIN_DATA[USERNAME]", "", "Input username"},
-                        {"", "", "input", "txtPassword", "LOGIN_DATA[PASSWORD]", "", "Input password"},
+                        {"", "", "input", "txtUsername", "LOGIN_DATA.USERNAME", "", "Input username"},
+                        {"", "", "input", "txtPassword", "LOGIN_DATA.PASSWORD", "", "Input password"},
                         {"", "", "click", "btnLogin", "", "", "Click login"},
                         {"", "", "verifyDisplayed", "lblDashboard", "", "", "Verify dashboard"},
                         {"Create Booking", "Yes", "", "", "", "BRS", "Create booking"},
                         {"", "", "click", "menuBooking", "", "", "Open booking menu"},
-                        {"", "", "input", "txtBookingTitle", "BOOKING_DATA[BOOKING_TITLE]", "", "Input title"},
-                        {"", "", "click", "btnRoomByName", "BOOKING_DATA[ROOM_NAME]", "", "Select room"},
+                        {"", "", "input", "txtBookingTitle", "BOOKING_DATA.BOOKING_TITLE", "", "Input title"},
+                        {"", "", "click", "btnRoomByName", "BOOKING_DATA.ROOM_NAME", "", "Select room"},
                         {"", "", "click", "btnSubmitBooking", "", "", "Submit"},
-                        {"", "", "verifyText", "lblSuccessMessage", "BOOKING_DATA[EXPECTED_MESSAGE]", "", "Verify success"}
+                        {"", "", "verifyText", "lblSuccessMessage", "BOOKING_DATA.EXPECTED_MESSAGE", "", "Verify success"}
                 }
         );
     }
