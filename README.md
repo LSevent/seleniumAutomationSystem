@@ -258,6 +258,14 @@ Apache POI is used to read `.xlsx` files through `ExcelReader`.
 
 This is only the foundation for future Excel-driven execution. Scenario execution from Excel is not implemented yet.
 
+## SCENARIOS Reader
+
+The framework can read the `SCENARIOS` sheet from an Excel workbook. Only rows with `RUN` values of `Y`, `YES`, or `TRUE` are selected as active scenarios.
+
+`ACTION` must match an existing sheet name, and `DATA_ROW` is required for active scenarios. `DATA_ROW` will be used by future data readers.
+
+Scenario sheet execution and step parsing are not implemented yet.
+
 ## Future Improvements
 
 - Add environment-specific config files for QA, staging, and production.

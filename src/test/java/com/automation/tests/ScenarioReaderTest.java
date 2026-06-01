@@ -1,0 +1,178 @@
+package com.automation.tests;
+
+import com.automation.excel.ExcelReader;
+import com.automation.excel.ScenarioReader;
+import com.automation.models.Scenario;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.testng.Assert;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
+
+import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
+
+public class ScenarioReaderTest {
+
+    private static final Path TEMPLATE_FILE = Path.of("src", "test", "resources", "testdata", "Template Testing.xlsx");
+    private static final Path TEMP_DIR = Path.of("target", "scenario-reader-test");
+
+    @BeforeClass
+    public void createTempDirectory() throws IOException {
+        Files.createDirectories(TEMP_DIR);
+    }
+
+    @Test
+    public void shouldReadAllScenarios() {
+        try (ExcelReader excelReader = new ExcelReader(TEMPLATE_FILE.toString())) {
+            ScenarioReader scenarioReader = new ScenarioReader(excelReader);
+
+            List<Scenario> scenarios = scenarioReader.getAllScenarios();
+
+            Assert.assertEquals(scenarios.size(), 3);
+        }
+    }
+
+    @Test
+    public void shouldReadActiveScenariosOnly() {
+        try (ExcelReader excelReader = new ExcelReader(TEMPLATE_FILE.toString())) {
+            ScenarioReader scenarioReader = new ScenarioReader(excelReader);
+
+            List<Scenario> activeScenarios = scenarioReader.getActiveScenarios();
+
+            Assert.assertEquals(activeScenarios.size(), 2);
+            Assert.assertTrue(activeScenarios.stream().allMatch(scenario -> "Create New Booking".equals(scenario.getAction())));
+        }
+    }
+
+    @Test
+    public void runNScenarioShouldBeIgnoredByActiveScenarios() {
+        try (ExcelReader excelReader = new ExcelReader(TEMPLATE_FILE.toString())) {
+            ScenarioReader scenarioReader = new ScenarioReader(excelReader);
+
+            List<Scenario> activeScenarios = scenarioReader.getActiveScenarios();
+
+            Assert.assertTrue(activeScenarios.stream().noneMatch(scenario -> "Cancel Booking".equals(scenario.getAction())));
+        }
+    }
+
+    @Test
+    public void actionSheetValidationShouldPassForTemplateWorkbook() {
+        try (ExcelReader excelReader = new ExcelReader(TEMPLATE_FILE.toString())) {
+            ScenarioReader scenarioReader = new ScenarioReader(excelReader);
+
+            Assert.assertTrue(excelReader.isSheetExists("Create New Booking"));
+            Assert.assertTrue(excelReader.isSheetExists("Cancel Booking"));
+            scenarioReader.validateScenarios();
+        }
+    }
+
+    @Test
+    public void shouldReadDataRowForActiveScenarios() {
+        try (ExcelReader excelReader = new ExcelReader(TEMPLATE_FILE.toString())) {
+            ScenarioReader scenarioReader = new ScenarioReader(excelReader);
+
+            List<Scenario> activeScenarios = scenarioReader.getActiveScenarios();
+
+            Assert.assertEquals(activeScenarios.get(0).getDataRow(), "1");
+            Assert.assertEquals(activeScenarios.get(1).getDataRow(), "2");
+        }
+    }
+
+    @Test
+    public void invalidRunValueShouldThrowClearError() throws IOException {
+        Path workbookPath = createWorkbook(
+                "invalid-run.xlsx",
+                new String[]{"NO", "RUN", "ACTION", "SCENARIOS", "DATA_ROW"},
+                new Object[][]{
+                        {1, "MAYBE", "Create New Booking", "Create booking room A", 1}
+                },
+                "Create New Booking"
+        );
+
+        IllegalArgumentException exception = Assert.expectThrows(IllegalArgumentException.class, () -> {
+            try (ExcelReader excelReader = new ExcelReader(workbookPath.toString())) {
+                new ScenarioReader(excelReader).getActiveScenarios();
+            }
+        });
+
+        Assert.assertTrue(exception.getMessage().contains("Invalid RUN value 'MAYBE' in SCENARIOS row 2."));
+    }
+
+    @Test
+    public void missingActionSheetShouldThrowClearError() throws IOException {
+        Path workbookPath = createWorkbook(
+                "missing-action-sheet.xlsx",
+                new String[]{"NO", "RUN", "ACTION", "SCENARIOS", "DATA_ROW"},
+                new Object[][]{
+                        {1, "Y", "Create New Booking", "Create booking room A", 1}
+                }
+        );
+
+        IllegalArgumentException exception = Assert.expectThrows(IllegalArgumentException.class, () -> {
+            try (ExcelReader excelReader = new ExcelReader(workbookPath.toString())) {
+                new ScenarioReader(excelReader).getActiveScenarios();
+            }
+        });
+
+        Assert.assertTrue(exception.getMessage().contains("Scenario sheet not found: Create New Booking. Referenced by SCENARIOS row 2."));
+    }
+
+    @Test
+    public void missingRequiredHeaderShouldThrowClearError() throws IOException {
+        Path workbookPath = createWorkbook(
+                "missing-action-header.xlsx",
+                new String[]{"NO", "RUN", "SCENARIOS", "DATA_ROW"},
+                new Object[][]{
+                        {1, "Y", "Create booking room A", 1}
+                },
+                "Create New Booking"
+        );
+
+        IllegalArgumentException exception = Assert.expectThrows(IllegalArgumentException.class, () -> {
+            try (ExcelReader excelReader = new ExcelReader(workbookPath.toString())) {
+                new ScenarioReader(excelReader).getAllScenarios();
+            }
+        });
+
+        Assert.assertTrue(exception.getMessage().contains("Header not found: ACTION in sheet SCENARIOS"));
+    }
+
+    private Path createWorkbook(String fileName, String[] headers, Object[][] scenarioRows, String... scenarioSheetNames) throws IOException {
+        Path workbookPath = TEMP_DIR.resolve(fileName);
+        try (Workbook workbook = new XSSFWorkbook(); OutputStream outputStream = Files.newOutputStream(workbookPath)) {
+            Sheet scenariosSheet = workbook.createSheet("SCENARIOS");
+            writeRow(scenariosSheet.createRow(0), headers);
+
+            for (int rowIndex = 0; rowIndex < scenarioRows.length; rowIndex++) {
+                writeRow(scenariosSheet.createRow(rowIndex + 1), scenarioRows[rowIndex]);
+            }
+
+            for (String scenarioSheetName : scenarioSheetNames) {
+                Sheet scenarioSheet = workbook.createSheet(scenarioSheetName);
+                writeRow(scenarioSheet.createRow(0), new String[]{"STEP_NO", "KEYWORD", "OBJECT", "VALUE", "DESCRIPTION"});
+            }
+
+            workbook.write(outputStream);
+        }
+        return workbookPath;
+    }
+
+    private void writeRow(Row row, Object[] values) {
+        for (int columnIndex = 0; columnIndex < values.length; columnIndex++) {
+            Object value = values[columnIndex];
+            if (value instanceof Number number) {
+                row.createCell(columnIndex).setCellValue(number.doubleValue());
+            } else if (value instanceof Boolean bool) {
+                row.createCell(columnIndex).setCellValue(bool);
+            } else if (value != null) {
+                row.createCell(columnIndex).setCellValue(value.toString());
+            }
+        }
+    }
+}
