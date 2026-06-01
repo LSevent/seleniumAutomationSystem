@@ -268,7 +268,15 @@ The framework can read the `SCENARIOS` sheet from an Excel workbook. Only rows w
 
 Scenario sheets use the headers `Testcase`, `Run`, `Function`, `Object`, `Value`, `Application`, and `Description`.
 
-Scenario sheet execution and step parsing are not implemented yet.
+Scenario sheet execution is not implemented yet.
+
+## Scenario Sheet Parser
+
+The framework can now parse scenario sheets referenced by `SCENARIOS.ACTION`. Scenario sheets use a parent-child testcase format: a `Testcase` row starts a testcase block, and rows under it with `Function` are parsed as ordered step rows.
+
+Execution order follows Excel row order. `Application` is required on active testcase rows; step rows inherit the parent `Application` unless they provide an override. `Description` is optional.
+
+The framework does not execute Selenium steps from Excel yet. Data references such as `LOGIN_DATA[USERNAME]` and object repository resolution are not implemented yet.
 
 ## Future Improvements
 

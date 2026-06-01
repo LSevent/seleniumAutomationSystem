@@ -10,6 +10,7 @@
             <class name="com.automation.tests.DashboardTest"/>
             <class name="com.automation.tests.ExcelReaderTest"/>
             <class name="com.automation.tests.ScenarioReaderTest"/>
+            <class name="com.automation.tests.StepReaderTest"/>
         </classes>
     </test>
 </suite>
