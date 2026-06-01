@@ -297,7 +297,21 @@ Examples:
 
 If a `Value` cell is not a data reference, it is treated as literal text. Bracket notation is not supported.
 
-Object repository lookup, XPath resolution, and Excel-driven Selenium step execution are not implemented yet.
+## Object Repository Resolver
+
+The framework can read the `OBJECT_REPOSITORY` sheet and resolve scenario step `Object` names into XPath values.
+
+Object lookup uses `Application + Object`, so the same object name can exist in different applications. For example, `BRS.btnLogin` and `HRIS.btnLogin` can resolve to different repository rows.
+
+Only XPath is supported for now. XPath values can contain one dynamic placeholder using `{COLUMN_NAME}`:
+
+```text
+//button[contains(text(),'{ROOM_NAME}')]
+```
+
+If the step `Value` is a data reference such as `BOOKING_DATA.ROOM_NAME`, the framework resolves it using `SCENARIOS.NO` first, then replaces `{ROOM_NAME}` with the resolved value. Literal step values can also fill a single placeholder.
+
+KeywordEngine and Excel-driven Selenium execution are not implemented yet.
 
 ## Future Improvements
 
