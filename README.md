@@ -262,7 +262,9 @@ This is only the foundation for future Excel-driven execution. Scenario executio
 
 The framework can read the `SCENARIOS` sheet from an Excel workbook. Only rows with `RUN` values of `Y`, `YES`, or `TRUE` are selected as active scenarios.
 
-`ACTION` must match an existing sheet name, and `DATA_ROW` is required for active scenarios. `DATA_ROW` will be used by future data readers.
+`NO` is the scenario data key and must be unique across the `SCENARIOS` sheet. Active scenarios require a nonblank `NO`, and future data sheets will use `NO` as the matching key.
+
+`ACTION` must match an existing sheet name.
 
 Scenario sheet execution and step parsing are not implemented yet.
 

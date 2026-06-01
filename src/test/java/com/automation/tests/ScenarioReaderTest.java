@@ -73,14 +73,16 @@ public class ScenarioReaderTest {
     }
 
     @Test
-    public void shouldReadDataRowForActiveScenarios() {
+    public void shouldUseNoAsDataKeyForActiveScenarios() {
         try (ExcelReader excelReader = new ExcelReader(TEMPLATE_FILE.toString())) {
             ScenarioReader scenarioReader = new ScenarioReader(excelReader);
 
             List<Scenario> activeScenarios = scenarioReader.getActiveScenarios();
 
-            Assert.assertEquals(activeScenarios.get(0).getDataRow(), "1");
-            Assert.assertEquals(activeScenarios.get(1).getDataRow(), "2");
+            Assert.assertEquals(activeScenarios.get(0).getNo(), "1");
+            Assert.assertEquals(activeScenarios.get(0).getDataKey(), "1");
+            Assert.assertEquals(activeScenarios.get(1).getNo(), "2");
+            Assert.assertEquals(activeScenarios.get(1).getDataKey(), "2");
         }
     }
 
@@ -88,9 +90,9 @@ public class ScenarioReaderTest {
     public void invalidRunValueShouldThrowClearError() throws IOException {
         Path workbookPath = createWorkbook(
                 "invalid-run.xlsx",
-                new String[]{"NO", "RUN", "ACTION", "SCENARIOS", "DATA_ROW"},
+                new String[]{"NO", "RUN", "ACTION", "SCENARIOS"},
                 new Object[][]{
-                        {1, "MAYBE", "Create New Booking", "Create booking room A", 1}
+                        {1, "MAYBE", "Create New Booking", "Create booking room A"}
                 },
                 "Create New Booking"
         );
@@ -108,9 +110,9 @@ public class ScenarioReaderTest {
     public void missingActionSheetShouldThrowClearError() throws IOException {
         Path workbookPath = createWorkbook(
                 "missing-action-sheet.xlsx",
-                new String[]{"NO", "RUN", "ACTION", "SCENARIOS", "DATA_ROW"},
+                new String[]{"NO", "RUN", "ACTION", "SCENARIOS"},
                 new Object[][]{
-                        {1, "Y", "Create New Booking", "Create booking room A", 1}
+                        {1, "Y", "Create New Booking", "Create booking room A"}
                 }
         );
 
@@ -127,9 +129,9 @@ public class ScenarioReaderTest {
     public void missingRequiredHeaderShouldThrowClearError() throws IOException {
         Path workbookPath = createWorkbook(
                 "missing-action-header.xlsx",
-                new String[]{"NO", "RUN", "SCENARIOS", "DATA_ROW"},
+                new String[]{"NO", "RUN", "SCENARIOS"},
                 new Object[][]{
-                        {1, "Y", "Create booking room A", 1}
+                        {1, "Y", "Create booking room A"}
                 },
                 "Create New Booking"
         );
@@ -141,6 +143,48 @@ public class ScenarioReaderTest {
         });
 
         Assert.assertTrue(exception.getMessage().contains("Header not found: ACTION in sheet SCENARIOS"));
+    }
+
+    @Test
+    public void blankNoForActiveScenarioShouldThrowClearError() throws IOException {
+        Path workbookPath = createWorkbook(
+                "blank-no.xlsx",
+                new String[]{"NO", "RUN", "ACTION", "SCENARIOS"},
+                new Object[][]{
+                        {"", "Y", "Create New Booking", "Create booking room A"}
+                },
+                "Create New Booking"
+        );
+
+        IllegalArgumentException exception = Assert.expectThrows(IllegalArgumentException.class, () -> {
+            try (ExcelReader excelReader = new ExcelReader(workbookPath.toString())) {
+                new ScenarioReader(excelReader).getActiveScenarios();
+            }
+        });
+
+        Assert.assertTrue(exception.getMessage().contains("NO is required for active scenario at SCENARIOS row 2."));
+    }
+
+    @Test
+    public void duplicateNoShouldThrowClearError() throws IOException {
+        Path workbookPath = createWorkbook(
+                "duplicate-no.xlsx",
+                new String[]{"NO", "RUN", "ACTION", "SCENARIOS"},
+                new Object[][]{
+                        {1, "Y", "Create New Booking", "Create booking room A"},
+                        {1, "N", "Cancel Booking", "Cancel booking"}
+                },
+                "Create New Booking",
+                "Cancel Booking"
+        );
+
+        IllegalArgumentException exception = Assert.expectThrows(IllegalArgumentException.class, () -> {
+            try (ExcelReader excelReader = new ExcelReader(workbookPath.toString())) {
+                new ScenarioReader(excelReader).getAllScenarios();
+            }
+        });
+
+        Assert.assertTrue(exception.getMessage().contains("Duplicate NO value '1' in SCENARIOS row 3. First used in SCENARIOS row 2."));
     }
 
     private Path createWorkbook(String fileName, String[] headers, Object[][] scenarioRows, String... scenarioSheetNames) throws IOException {

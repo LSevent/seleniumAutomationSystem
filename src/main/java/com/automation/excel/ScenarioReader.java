@@ -3,8 +3,10 @@ package com.automation.excel;
 import com.automation.models.Scenario;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 public class ScenarioReader {
 
@@ -13,7 +15,6 @@ public class ScenarioReader {
     private static final String RUN_COLUMN = "RUN";
     private static final String ACTION_COLUMN = "ACTION";
     private static final String SCENARIOS_COLUMN = "SCENARIOS";
-    private static final String DATA_ROW_COLUMN = "DATA_ROW";
     private static final String ALLOWED_RUN_VALUES = "Y, YES, TRUE, N, NO, FALSE, blank";
 
     private final ExcelReader excelReader;
@@ -41,6 +42,7 @@ public class ScenarioReader {
                 scenarios.add(toScenario(rowIndex));
             }
         }
+        validateUniqueScenarioNumbers(scenarios);
         return scenarios;
     }
 
@@ -59,7 +61,6 @@ public class ScenarioReader {
         excelReader.findColumnIndex(SCENARIOS_SHEET, RUN_COLUMN);
         excelReader.findColumnIndex(SCENARIOS_SHEET, ACTION_COLUMN);
         excelReader.findColumnIndex(SCENARIOS_SHEET, SCENARIOS_COLUMN);
-        excelReader.findColumnIndex(SCENARIOS_SHEET, DATA_ROW_COLUMN);
     }
 
     private Scenario toScenario(int rowIndex) {
@@ -70,7 +71,6 @@ public class ScenarioReader {
                 run,
                 readCell(rowIndex, ACTION_COLUMN),
                 readCell(rowIndex, SCENARIOS_COLUMN),
-                readCell(rowIndex, DATA_ROW_COLUMN),
                 toExcelRowNumber(rowIndex)
         );
 
@@ -92,17 +92,32 @@ public class ScenarioReader {
     }
 
     private void validateActiveScenario(Scenario scenario) {
+        if (scenario.getNo().isBlank()) {
+            throw new IllegalArgumentException("NO is required for active scenario at SCENARIOS row " + scenario.getExcelRowNumber() + ".");
+        }
         if (scenario.getAction().isBlank()) {
             throw new IllegalArgumentException("ACTION is required for active scenario at SCENARIOS row " + scenario.getExcelRowNumber() + ".");
         }
         if (scenario.getScenarioName().isBlank()) {
             throw new IllegalArgumentException("SCENARIOS description is required for active scenario at SCENARIOS row " + scenario.getExcelRowNumber() + ".");
         }
-        if (scenario.getDataRow().isBlank()) {
-            throw new IllegalArgumentException("DATA_ROW is required for active scenario at SCENARIOS row " + scenario.getExcelRowNumber() + ".");
-        }
         if (!excelReader.isSheetExists(scenario.getAction())) {
             throw new IllegalArgumentException("Scenario sheet not found: " + scenario.getAction() + ". Referenced by SCENARIOS row " + scenario.getExcelRowNumber() + ".");
+        }
+    }
+
+    private void validateUniqueScenarioNumbers(List<Scenario> scenarios) {
+        Map<String, Integer> rowByScenarioNumber = new LinkedHashMap<>();
+        for (Scenario scenario : scenarios) {
+            String scenarioNumber = scenario.getNo();
+            if (scenarioNumber.isBlank()) {
+                continue;
+            }
+
+            Integer existingRow = rowByScenarioNumber.putIfAbsent(scenarioNumber, scenario.getExcelRowNumber());
+            if (existingRow != null) {
+                throw new IllegalArgumentException("Duplicate NO value '" + scenarioNumber + "' in SCENARIOS row " + scenario.getExcelRowNumber() + ". First used in SCENARIOS row " + existingRow + ".");
+            }
         }
     }
 
@@ -110,8 +125,7 @@ public class ScenarioReader {
         return readCell(rowIndex, NO_COLUMN).isBlank()
                 && readCell(rowIndex, RUN_COLUMN).isBlank()
                 && readCell(rowIndex, ACTION_COLUMN).isBlank()
-                && readCell(rowIndex, SCENARIOS_COLUMN).isBlank()
-                && readCell(rowIndex, DATA_ROW_COLUMN).isBlank();
+                && readCell(rowIndex, SCENARIOS_COLUMN).isBlank();
     }
 
     private String readCell(int rowIndex, String columnName) {

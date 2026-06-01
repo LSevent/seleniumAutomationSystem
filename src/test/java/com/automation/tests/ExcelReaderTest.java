@@ -33,21 +33,18 @@ public class ExcelReaderTest {
             header.createCell(1).setCellValue("RUN");
             header.createCell(2).setCellValue("ACTION");
             header.createCell(3).setCellValue("SCENARIOS");
-            header.createCell(4).setCellValue("DATA_ROW");
 
             Row firstDataRow = sheet.createRow(1);
             firstDataRow.createCell(0).setCellValue(1);
             firstDataRow.createCell(1).setCellValue("Y");
             firstDataRow.createCell(2).setCellValue("Create New Booking");
             firstDataRow.createCell(3).setCellValue("Create booking room A");
-            firstDataRow.createCell(4).setCellValue(1);
 
             Row secondDataRow = sheet.createRow(2);
             secondDataRow.createCell(0).setCellValue(2);
             secondDataRow.createCell(1).setCellValue("N");
             secondDataRow.createCell(2).setCellValue("Cancel Booking");
             secondDataRow.createCell(3).setCellValue("Cancel booking");
-            secondDataRow.createCell(4).setCellValue(2);
 
             workbook.write(outputStream);
         }
@@ -59,7 +56,7 @@ public class ExcelReaderTest {
             Assert.assertTrue(excelReader.isSheetExists(SHEET_NAME), "SCENARIOS sheet should exist.");
             Assert.assertEquals(excelReader.getLastRowNumber(SHEET_NAME), 2);
             Assert.assertEquals(excelReader.getPhysicalRowCount(SHEET_NAME), 3);
-            Assert.assertEquals(excelReader.getColumnCount(SHEET_NAME, 0), 5);
+            Assert.assertEquals(excelReader.getColumnCount(SHEET_NAME, 0), 4);
 
             Assert.assertEquals(excelReader.getCellValue(SHEET_NAME, 0, 1), "RUN");
             Assert.assertEquals(excelReader.getCellValue(SHEET_NAME, 1, 0), "1");
@@ -68,12 +65,11 @@ public class ExcelReaderTest {
             Map<String, String> firstRowData = excelReader.getRowDataByHeader(SHEET_NAME, 1);
             Assert.assertEquals(firstRowData.get("ACTION"), "Create New Booking");
             Assert.assertEquals(firstRowData.get("SCENARIOS"), "Create booking room A");
-            Assert.assertEquals(firstRowData.get("DATA_ROW"), "1");
 
             List<Map<String, String>> allRows = excelReader.getAllRowsDataByHeader(SHEET_NAME);
             Assert.assertEquals(allRows.size(), 2);
             Assert.assertEquals(allRows.get(1).get("ACTION"), "Cancel Booking");
-            Assert.assertEquals(allRows.get(1).get("DATA_ROW"), "2");
+            Assert.assertEquals(allRows.get(1).get("SCENARIOS"), "Cancel booking");
 
             Assert.assertEquals(excelReader.findColumnIndex(SHEET_NAME, " Run "), 1);
             Assert.assertEquals(excelReader.findRowIndexByCellValue(SHEET_NAME, "RUN", "N"), 2);

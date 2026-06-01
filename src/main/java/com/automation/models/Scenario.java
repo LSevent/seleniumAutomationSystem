@@ -6,15 +6,13 @@ public class Scenario {
     private final boolean run;
     private final String action;
     private final String scenarioName;
-    private final String dataRow;
     private final int excelRowNumber;
 
-    public Scenario(String no, boolean run, String action, String scenarioName, String dataRow, int excelRowNumber) {
+    public Scenario(String no, boolean run, String action, String scenarioName, int excelRowNumber) {
         this.no = no;
         this.run = run;
         this.action = action;
         this.scenarioName = scenarioName;
-        this.dataRow = dataRow;
         this.excelRowNumber = excelRowNumber;
     }
 
@@ -34,8 +32,8 @@ public class Scenario {
         return scenarioName;
     }
 
-    public String getDataRow() {
-        return dataRow;
+    public String getDataKey() {
+        return no;
     }
 
     public int getExcelRowNumber() {
@@ -49,7 +47,6 @@ public class Scenario {
                 ", run=" + run +
                 ", action='" + action + '\'' +
                 ", scenarioName='" + scenarioName + '\'' +
-                ", dataRow='" + dataRow + '\'' +
                 ", excelRowNumber=" + excelRowNumber +
                 '}';
     }
