@@ -4,13 +4,16 @@ import com.automation.constants.FrameworkConstants;
 import com.automation.models.ExecutionResult;
 import com.automation.models.Scenario;
 import com.automation.models.TestCaseBlock;
-import com.automation.utils.ExtentReportManager;
 import com.automation.utils.ScreenshotUtil;
+import com.aventstack.extentreports.ExtentReports;
 import com.aventstack.extentreports.ExtentTest;
+import com.aventstack.extentreports.reporter.ExtentSparkReporter;
+import com.aventstack.extentreports.reporter.configuration.Theme;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.openqa.selenium.WebDriver;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
@@ -40,10 +43,12 @@ public class ExcelExecutionReporter {
             "Status",
             "Evidence"
     };
+    private static ExtentReports sharedExtentReports;
 
     private final WebDriver driver;
     private final ExcelReportConfig config;
     private final SensitiveDataMasker sensitiveDataMasker;
+    private final ExtentReports extentReports;
 
     private ExtentTest scenarioNode;
     private ExtentTest testCaseNode;
@@ -63,12 +68,13 @@ public class ExcelExecutionReporter {
         this.driver = driver;
         this.config = config == null ? ExcelReportConfig.fromConfig() : config;
         this.sensitiveDataMasker = sensitiveDataMasker == null ? new SensitiveDataMasker() : sensitiveDataMasker;
+        this.extentReports = getExcelReport();
     }
 
     public void startScenario(Scenario scenario) {
         scenarioStartTime = Instant.now();
         String scenarioName = "Scenario: [" + safe(scenario.getNo()) + "] " + safe(scenario.getScenarioName());
-        scenarioNode = ExtentReportManager.createStandaloneTest(scenarioName, "Excel-driven scenario execution");
+        scenarioNode = createScenarioNode(scenarioName);
         scenarioNode.info(scenarioSummaryHtml(scenario, "RUNNING", scenarioStartTime, null, ""));
         LOGGER.info("Excel report scenario node started: {}", scenarioName);
     }
@@ -144,7 +150,47 @@ public class ExcelExecutionReporter {
     }
 
     public void flush() {
-        ExtentReportManager.flushReport();
+        synchronized (ExcelExecutionReporter.class) {
+            extentReports.flush();
+        }
+    }
+
+    public static String getReportFilePath() {
+        return FrameworkConstants.EXCEL_REPORT_FILE;
+    }
+
+    private ExtentTest createScenarioNode(String scenarioName) {
+        synchronized (ExcelExecutionReporter.class) {
+            return extentReports.createTest(scenarioName, "Excel-driven scenario execution");
+        }
+    }
+
+    private static synchronized ExtentReports getExcelReport() {
+        if (sharedExtentReports == null) {
+            sharedExtentReports = createExcelReport();
+        }
+        return sharedExtentReports;
+    }
+
+    private static ExtentReports createExcelReport() {
+        try {
+            Files.createDirectories(Path.of(FrameworkConstants.EXCEL_REPORT_DIR));
+        } catch (Exception exception) {
+            throw new IllegalStateException("Unable to create Excel execution report directory.", exception);
+        }
+
+        ExtentSparkReporter sparkReporter = new ExtentSparkReporter(FrameworkConstants.EXCEL_REPORT_FILE);
+        sparkReporter.config().setTheme(Theme.STANDARD);
+        sparkReporter.config().setDocumentTitle("Excel Automation Report");
+        sparkReporter.config().setReportName("Excel-Driven Automation Execution");
+
+        ExtentReports reports = new ExtentReports();
+        reports.attachReporter(sparkReporter);
+        reports.setSystemInfo("Report Type", "Excel Keyword Execution");
+        reports.setSystemInfo("Framework", "Selenium Java TestNG");
+        reports.setSystemInfo("Java Version", System.getProperty("java.version"));
+        reports.setSystemInfo("Operating System", System.getProperty("os.name"));
+        return reports;
     }
 
     private String evidenceFor(ExecutionResult result) {
@@ -321,7 +367,7 @@ public class ExcelExecutionReporter {
 
     private String toReportRelativePath(String screenshotPath) {
         try {
-            Path reportDir = Path.of(FrameworkConstants.EXTENT_REPORT_DIR).toAbsolutePath();
+            Path reportDir = Path.of(FrameworkConstants.EXCEL_REPORT_DIR).toAbsolutePath();
             Path screenshot = Path.of(screenshotPath).toAbsolutePath();
             return reportDir.relativize(screenshot).toString().replace('\\', '/');
         } catch (RuntimeException exception) {
@@ -330,6 +376,10 @@ public class ExcelExecutionReporter {
     }
 
     private String screenshotLabel(ExecutionResult result) {
+        if ("screenshot".equalsIgnoreCase(safe(result.getFunctionName()).trim())) {
+            String label = safe(result.getResolvedValue());
+            return label.isBlank() ? "Manual screenshot" : "Manual screenshot: " + label;
+        }
         return safe(result.getResolvedValue()).isBlank()
                 ? "Screenshot"
                 : result.getResolvedValue();

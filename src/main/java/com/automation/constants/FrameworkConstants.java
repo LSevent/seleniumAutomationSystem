@@ -13,4 +13,6 @@ public final class FrameworkConstants {
     public static final String SCREENSHOT_DIR = Paths.get(System.getProperty("user.dir"), "test-output", "screenshots").toString();
     public static final String EXTENT_REPORT_DIR = Paths.get(System.getProperty("user.dir"), "test-output", "extent-report").toString();
     public static final String EXTENT_REPORT_FILE = Paths.get(EXTENT_REPORT_DIR, "AutomationReport.html").toString();
+    public static final String EXCEL_REPORT_DIR = Paths.get(System.getProperty("user.dir"), "test-output", "reports").toString();
+    public static final String EXCEL_REPORT_FILE = Paths.get(EXCEL_REPORT_DIR, "ExcelAutomationReport.html").toString();
 }

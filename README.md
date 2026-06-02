@@ -150,7 +150,7 @@ Parallel execution is configured in `src/test/resources/testng.xml`:
 
 ## Reports
 
-ExtentReports are generated at:
+The generic TestNG method-level ExtentReport is generated at:
 
 ```text
 test-output/extent-report/AutomationReport.html
@@ -163,6 +163,12 @@ The report includes:
 - Pass, fail, and skip status
 - Error details
 - Screenshots for failed tests
+
+Excel-driven scenario execution has a separate focused report at:
+
+```text
+test-output/reports/ExcelAutomationReport.html
+```
 
 ## Screenshots
 
@@ -354,7 +360,7 @@ Execution flow:
 
 ## Excel Execution Report
 
-Excel-driven runs generate HTML ExtentReport output with a Scenario -> Testcase -> Step hierarchy.
+Excel-driven runs generate a dedicated HTML ExtentReport at `test-output/reports/ExcelAutomationReport.html` with a Scenario -> Testcase -> Step hierarchy. This report is separate from the generic TestNG method-level report.
 
 Every testcase uses the same step table columns: `Step`, `Excel Row`, `Description`, `Function`, `Object`, `Application`, `Raw Value`, `Resolved Value`, `Raw XPath`, `Resolved XPath`, `Executed By`, `Status`, and `Evidence`.
 

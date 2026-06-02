@@ -15,7 +15,6 @@ import com.automation.reports.ExcelExecutionReporter;
 import com.automation.reports.ExcelReportConfig;
 import com.automation.tests.support.ExcelKeywordTestWorkbookFactory;
 import com.automation.tests.support.FakeWebDriver;
-import com.automation.utils.ExtentReportManager;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -68,21 +67,29 @@ public class ExcelExecutionReportTest {
             Assert.assertEquals(manualScreenshots.size(), 3);
             manualScreenshots.forEach(path -> Assert.assertTrue(Files.exists(Path.of(path)), "Screenshot should exist: " + path));
 
-            Path reportPath = Path.of(ExtentReportManager.getReportFilePath());
+            Path reportPath = Path.of(ExcelExecutionReporter.getReportFilePath());
             Assert.assertTrue(Files.exists(reportPath), "HTML report should be created.");
 
             String reportHtml = Files.readString(reportPath);
             Assert.assertTrue(reportHtml.contains("Scenario: [1] Local keyword execution test"));
             Assert.assertTrue(reportHtml.contains("Testcase: Login BRS"));
             Assert.assertTrue(reportHtml.contains("Testcase: Create Booking"));
+            Assert.assertTrue(reportHtml.contains("Scenario ACTION"));
+            Assert.assertTrue(reportHtml.contains("Scenario status") || reportHtml.contains("Status"));
+            Assert.assertTrue(reportHtml.contains("Duration"));
             Assert.assertTrue(reportHtml.contains("Step"));
             Assert.assertTrue(reportHtml.contains("Excel Row"));
             Assert.assertTrue(reportHtml.contains("Description"));
+            Assert.assertTrue(reportHtml.contains("Function"));
+            Assert.assertTrue(reportHtml.contains("Object"));
+            Assert.assertTrue(reportHtml.contains("Application"));
             Assert.assertTrue(reportHtml.contains("Raw Value"));
             Assert.assertTrue(reportHtml.contains("Resolved Value"));
             Assert.assertTrue(reportHtml.contains("Raw XPath"));
             Assert.assertTrue(reportHtml.contains("Resolved XPath"));
             Assert.assertTrue(reportHtml.contains("Executed By"));
+            Assert.assertTrue(reportHtml.contains("Status"));
+            Assert.assertTrue(reportHtml.contains("Evidence"));
             Assert.assertTrue(reportHtml.contains("LOGIN_DATA.USERNAME"));
             Assert.assertTrue(reportHtml.contains("brs_admin"));
             Assert.assertTrue(reportHtml.contains("LOGIN_DATA.PASSWORD"));
@@ -94,9 +101,17 @@ public class ExcelExecutionReportTest {
             Assert.assertTrue(reportHtml.contains("//button[contains(text(),&#39;Meeting Room A&#39;)]"));
             Assert.assertTrue(reportHtml.contains("BaseFunction.input"));
             Assert.assertTrue(reportHtml.contains("SpecificFunction.click"));
+            Assert.assertTrue(reportHtml.contains("Manual screenshot"));
             Assert.assertTrue(reportHtml.contains("After input title"));
             Assert.assertTrue(reportHtml.contains("After select room"));
             Assert.assertTrue(reportHtml.contains("After submit"));
+            Assert.assertFalse(reportHtml.contains("ExcelReaderTest"), "Excel report should not be the generic TestNG method report.");
+            Assert.assertFalse(reportHtml.contains("ScenarioReaderTest"), "Excel report should not be the generic TestNG method report.");
+            Assert.assertFalse(reportHtml.contains("StepReaderTest"), "Excel report should not be the generic TestNG method report.");
+            Assert.assertFalse(reportHtml.contains("DataReaderTest"), "Excel report should not be the generic TestNG method report.");
+            Assert.assertFalse(reportHtml.contains("ObjectRepositoryReaderTest"), "Excel report should not be the generic TestNG method report.");
+            Assert.assertFalse(reportHtml.contains("LoginTest"), "Excel report should not be the generic TestNG method report.");
+            Assert.assertFalse(reportHtml.contains("DashboardTest"), "Excel report should not be the generic TestNG method report.");
         }
     }
 
@@ -129,6 +144,9 @@ public class ExcelExecutionReportTest {
         Set<String> after = screenshotFilesStartingWith(prefix);
         after.removeAll(before);
         Assert.assertFalse(after.isEmpty(), "Failure screenshot should be created when enabled.");
+
+        String reportHtml = Files.readString(Path.of(ExcelExecutionReporter.getReportFilePath()));
+        Assert.assertTrue(reportHtml.contains("Failure screenshot"));
     }
 
     @Test
