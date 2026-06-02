@@ -14,6 +14,7 @@
             <class name="com.automation.tests.DataReaderTest"/>
             <class name="com.automation.tests.ObjectRepositoryReaderTest"/>
             <class name="com.automation.tests.BaseFunctionTest"/>
+            <class name="com.automation.tests.FunctionResolverTest"/>
         </classes>
     </test>
 </suite>

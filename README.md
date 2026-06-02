@@ -319,7 +319,21 @@ KeywordEngine and Excel-driven Selenium execution are not implemented yet.
 
 Implemented keywords include `openUrl`, `click`, `input`, `clear`, `getText`, `verifyDisplayed`, `verifyText`, `verifyTextContains`, `verifyUrlContains`, `verifyTitle`, `verifyTitleContains`, `waitVisible`, `waitClickable`, `scrollToElement`, `safeClick`, `pressEnter`, `isDisplayed`, and `isNotDisplayed`.
 
-Excel-driven execution is not connected yet. `KeywordEngine`, `SpecificFunction`, and application-specific keyword overrides are not implemented yet.
+Excel-driven execution is not connected yet. `KeywordEngine` and the full scenario runner are not implemented yet.
+
+## Application-Specific Functions
+
+Application-specific keywords live in `SpecificFunction` classes under `src/main/java/com/automation/functions/{APPLICATION}/SpecificFunction.java`.
+
+Examples:
+
+- `com.automation.functions.BRS.SpecificFunction`
+- `com.automation.functions.HRIS.SpecificFunction`
+- `com.automation.functions.CRM.SpecificFunction`
+
+The `Application` value comes from Excel. Values such as `brs`, `Brs`, and `BRS` resolve to the uppercase package segment `BRS`.
+
+Keyword lookup order is `SpecificFunction` first, then `BaseFunction`. If the same keyword exists in both, the application-specific method wins. Full Excel scenario execution is still not implemented.
 
 ## Future Improvements
 
