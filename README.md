@@ -136,12 +136,12 @@ src/test/resources/testdata/Final Excel Template.xlsx
 It contains these sheets:
 
 - `SCENARIOS`
-- `Local Keyword Test`
-- `Create New Booking`
-- `Cancel Booking`
 - `CONFIG`
 - `LOGIN_DATA`
 - `BOOKING_DATA`
+- `Local Keyword Test`
+- `Create New Booking`
+- `Cancel Booking`
 - `OBJECT_REPOSITORY`
 
 `SCENARIOS` must use this header:
@@ -176,11 +176,13 @@ Rules:
 
 Data sheets use `NO` as the matching key. The active scenario `NO` selects the matching row from each data sheet.
 
-`OBJECT_REPOSITORY` must use this header:
+The current final template uses this `OBJECT_REPOSITORY` header order:
 
 ```text
-Application | Object | XPath | Description
+Object | XPath | Application | Description
 ```
+
+The framework resolves object repository columns by header name, so `Application`, `Object`, and `XPath` can be read even when their order changes. `Description` is optional.
 
 ## Data References
 

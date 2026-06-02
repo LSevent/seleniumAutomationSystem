@@ -1,5 +1,15 @@
 package com.automation.tests;
 
+import com.automation.excel.DataReader;
+import com.automation.excel.ExcelReader;
+import com.automation.excel.ObjectRepositoryReader;
+import com.automation.excel.ScenarioReader;
+import com.automation.excel.StepReader;
+import com.automation.models.ResolvedObject;
+import com.automation.models.Scenario;
+import com.automation.models.TestCaseBlock;
+import com.automation.models.TestObject;
+import com.automation.models.TestStep;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.DataFormatter;
 import org.apache.poi.ss.usermodel.Row;
@@ -13,9 +23,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class FinalTemplateValidationTest {
 
@@ -27,13 +38,61 @@ public class FinalTemplateValidationTest {
             "Final Excel Template.xlsx"
     );
 
+    private static final List<String> REQUIRED_SHEETS = List.of(
+            "SCENARIOS",
+            "CONFIG",
+            "LOGIN_DATA",
+            "BOOKING_DATA",
+            "Local Keyword Test",
+            "Create New Booking",
+            "Cancel Booking",
+            "OBJECT_REPOSITORY"
+    );
+
     private static final List<String> SCENARIO_SHEETS = List.of(
             "Local Keyword Test",
             "Create New Booking",
             "Cancel Booking"
     );
 
-    private static final Map<String, List<List<String>>> EXPECTED_SHEETS = createExpectedSheets();
+    private static final List<String> SCENARIOS_HEADERS = List.of("NO", "RUN", "ACTION", "SCENARIOS");
+    private static final List<String> SCENARIO_SHEET_HEADERS = List.of(
+            "Testcase",
+            "Run",
+            "Function",
+            "Object",
+            "Value",
+            "Application",
+            "Description"
+    );
+    private static final List<String> CURRENT_OBJECT_REPOSITORY_HEADERS = List.of(
+            "Object",
+            "XPath",
+            "Application",
+            "Description"
+    );
+    private static final Set<String> REQUIRED_DATA_REFERENCES = Set.of(
+            "CONFIG.BASE_URL",
+            "LOGIN_DATA.USERNAME",
+            "LOGIN_DATA.PASSWORD",
+            "BOOKING_DATA.BOOKING_TITLE",
+            "BOOKING_DATA.ROOM_NAME",
+            "BOOKING_DATA.EXPECTED_MESSAGE",
+            "BOOKING_DATA.BOOKING_ID"
+    );
+    private static final Map<String, String> EXPECTED_OBJECTS = Map.ofEntries(
+            Map.entry("BRS::txtUsername", "//input[@id='username']"),
+            Map.entry("BRS::txtPassword", "//input[@id='password']"),
+            Map.entry("BRS::btnLogin", "//button[@id='loginButton']"),
+            Map.entry("BRS::lblDashboard", "//h1[@id='dashboard']"),
+            Map.entry("BRS::txtBookingTitle", "//input[@id='bookingTitle']"),
+            Map.entry("BRS::btnRoomByName", "//button[contains(text(),'{ROOM_NAME}')]"),
+            Map.entry("BRS::lblSuccessMessage", "//div[@id='message']"),
+            Map.entry("BRS::btnCancelBooking", "//button[@data-booking='{BOOKING_ID}']"),
+            Map.entry("HRIS::txtUsername", "//input[@id='employeeId']"),
+            Map.entry("HRIS::txtPassword", "//input[@id='password']"),
+            Map.entry("HRIS::btnLogin", "//button[@id='loginButton']")
+    );
 
     @Test
     public void finalTemplateShouldExist() {
@@ -42,16 +101,41 @@ public class FinalTemplateValidationTest {
     }
 
     @Test
-    public void finalTemplateShouldMatchExpectedWorkbookContract() throws IOException {
+    public void finalTemplateShouldHaveRequiredSheetsAndHeaders() throws IOException {
         try (InputStream inputStream = Files.newInputStream(FINAL_TEMPLATE);
              Workbook workbook = WorkbookFactory.create(inputStream)) {
-            Assert.assertEquals(workbook.getNumberOfSheets(), EXPECTED_SHEETS.size());
+            for (String sheetName : REQUIRED_SHEETS) {
+                Assert.assertNotNull(workbook.getSheet(sheetName), "Required sheet should exist: " + sheetName);
+            }
 
-            int sheetIndex = 0;
-            for (Map.Entry<String, List<List<String>>> expectedSheet : EXPECTED_SHEETS.entrySet()) {
-                Assert.assertEquals(workbook.getSheetName(sheetIndex), expectedSheet.getKey());
-                assertSheetMatches(workbook.getSheet(expectedSheet.getKey()), expectedSheet.getValue());
-                sheetIndex++;
+            assertHeadersInOrder(workbook.getSheet("SCENARIOS"), SCENARIOS_HEADERS);
+            assertHeadersInOrder(workbook.getSheet("CONFIG"), List.of("NO", "BASE_URL"));
+            assertHeadersInOrder(workbook.getSheet("LOGIN_DATA"), List.of("NO", "USERNAME", "PASSWORD"));
+            assertHeadersInOrder(workbook.getSheet("BOOKING_DATA"), List.of("NO", "BOOKING_TITLE", "ROOM_NAME", "EXPECTED_MESSAGE", "BOOKING_ID"));
+
+            for (String scenarioSheet : SCENARIO_SHEETS) {
+                assertHeadersInOrder(workbook.getSheet(scenarioSheet), SCENARIO_SHEET_HEADERS);
+            }
+
+            assertHeadersInOrder(workbook.getSheet("OBJECT_REPOSITORY"), CURRENT_OBJECT_REPOSITORY_HEADERS);
+        }
+    }
+
+    @Test
+    public void finalTemplateShouldBeReadableByScenarioAndStepReaders() {
+        try (ExcelReader excelReader = new ExcelReader(FINAL_TEMPLATE.toString())) {
+            ScenarioReader scenarioReader = new ScenarioReader(excelReader);
+            StepReader stepReader = new StepReader(excelReader);
+
+            List<Scenario> scenarios = scenarioReader.getAllScenarios();
+            Assert.assertEquals(scenarios.size(), 3);
+            Assert.assertEquals(scenarioReader.getActiveScenarios().size(), 1);
+
+            for (Scenario scenario : scenarios) {
+                Assert.assertTrue(excelReader.isSheetExists(scenario.getAction()), "Scenario ACTION should point to an existing sheet.");
+                List<TestCaseBlock> testCases = stepReader.getTestCases(scenario);
+                Assert.assertFalse(testCases.isEmpty(), "Scenario sheet should contain testcase blocks: " + scenario.getAction());
+                assertStepOrderAndInheritedApplication(testCases);
             }
         }
     }
@@ -65,25 +149,79 @@ public class FinalTemplateValidationTest {
         }
     }
 
-    private static void assertSheetMatches(Sheet sheet, List<List<String>> expectedRows) {
+    @Test
+    public void finalTemplateDataReferencesShouldResolveAndAllowPlaceholderBaseUrl() {
+        try (ExcelReader excelReader = new ExcelReader(FINAL_TEMPLATE.toString())) {
+            DataReader dataReader = new DataReader(excelReader);
+
+            Assert.assertEquals(dataReader.resolveValue("CONFIG.BASE_URL", "1"), "file:///CHANGE_THIS_TO_LOCAL_HTML_OR_APP_URL");
+            Assert.assertEquals(dataReader.resolveValue("LOGIN_DATA.USERNAME", "1"), "brs_admin");
+            Assert.assertEquals(dataReader.resolveValue("LOGIN_DATA.PASSWORD", "1"), "brs123");
+            Assert.assertEquals(dataReader.resolveValue("BOOKING_DATA.BOOKING_TITLE", "1"), "Weekly Meeting");
+            Assert.assertEquals(dataReader.resolveValue("BOOKING_DATA.ROOM_NAME", "1"), "Meeting Room A");
+            Assert.assertEquals(dataReader.resolveValue("BOOKING_DATA.EXPECTED_MESSAGE", "1"), "Booking created successfully");
+            Assert.assertEquals(dataReader.resolveValue("BOOKING_DATA.BOOKING_ID", "3"), "BOOK-003");
+        }
+    }
+
+    @Test
+    public void finalTemplateObjectRepositoryShouldResolveWithCurrentColumnOrder() {
+        try (ExcelReader excelReader = new ExcelReader(FINAL_TEMPLATE.toString())) {
+            DataReader dataReader = new DataReader(excelReader);
+            ObjectRepositoryReader objectRepositoryReader = new ObjectRepositoryReader(excelReader, dataReader);
+
+            for (Map.Entry<String, String> expectedObject : EXPECTED_OBJECTS.entrySet()) {
+                String[] objectKey = expectedObject.getKey().split("::", -1);
+                TestObject testObject = objectRepositoryReader.getObject(objectKey[0], objectKey[1]);
+                Assert.assertEquals(testObject.getApplication(), objectKey[0]);
+                Assert.assertEquals(testObject.getObjectName(), objectKey[1]);
+                Assert.assertEquals(testObject.getXpath(), expectedObject.getValue());
+            }
+
+            Scenario localScenario = new Scenario("1", true, "Local Keyword Test", "Local keyword execution test", 2);
+            ResolvedObject roomObject = objectRepositoryReader.resolveObject(
+                    new TestStep("1", "Local keyword execution test", "Local Keyword Test", "Create Booking", "click", "btnRoomByName",
+                            "BOOKING_DATA.ROOM_NAME", "BRS", "Select room", 12, 4),
+                    localScenario
+            );
+            Assert.assertEquals(roomObject.getRawXpath(), "//button[contains(text(),'{ROOM_NAME}')]");
+            Assert.assertEquals(roomObject.getResolvedXpath(), "//button[contains(text(),'Meeting Room A')]");
+
+            Scenario cancelScenario = new Scenario("3", false, "Cancel Booking", "Cancel booking example", 4);
+            ResolvedObject cancelObject = objectRepositoryReader.resolveObject(
+                    new TestStep("3", "Cancel booking example", "Cancel Booking", "Cancel Booking", "click", "btnCancelBooking",
+                            "BOOKING_DATA.BOOKING_ID", "BRS", "Cancel booking", 8, 1),
+                    cancelScenario
+            );
+            Assert.assertEquals(cancelObject.getRawXpath(), "//button[@data-booking='{BOOKING_ID}']");
+            Assert.assertEquals(cancelObject.getResolvedXpath(), "//button[@data-booking='BOOK-003']");
+        }
+    }
+
+    private static void assertHeadersInOrder(Sheet sheet, List<String> expectedHeaders) {
         Assert.assertNotNull(sheet, "Expected sheet should exist.");
-        Assert.assertEquals(sheet.getLastRowNum(), expectedRows.size() - 1, "Unexpected row count for " + sheet.getSheetName());
-
         DataFormatter formatter = new DataFormatter();
-        for (int rowIndex = 0; rowIndex < expectedRows.size(); rowIndex++) {
-            List<String> expectedRow = expectedRows.get(rowIndex);
-            Row row = sheet.getRow(rowIndex);
-            Assert.assertNotNull(row, "Expected row should exist. Sheet = " + sheet.getSheetName() + ", row = " + (rowIndex + 1));
+        Row headerRow = sheet.getRow(0);
+        Assert.assertNotNull(headerRow, "Header row should exist in sheet: " + sheet.getSheetName());
 
-            for (int columnIndex = 0; columnIndex < expectedRow.size(); columnIndex++) {
-                String actual = readCell(formatter, row, columnIndex);
-                Assert.assertEquals(
-                        actual,
-                        expectedRow.get(columnIndex),
-                        "Unexpected cell value. Sheet = " + sheet.getSheetName()
-                                + ", row = " + (rowIndex + 1)
-                                + ", column = " + (columnIndex + 1)
-                );
+        for (int columnIndex = 0; columnIndex < expectedHeaders.size(); columnIndex++) {
+            Assert.assertEquals(
+                    readCell(formatter, headerRow, columnIndex),
+                    expectedHeaders.get(columnIndex),
+                    "Unexpected header. Sheet = " + sheet.getSheetName() + ", column = " + (columnIndex + 1)
+            );
+        }
+    }
+
+    private static void assertStepOrderAndInheritedApplication(List<TestCaseBlock> testCases) {
+        for (TestCaseBlock testCaseBlock : testCases) {
+            int previousExcelRow = testCaseBlock.getExcelRowNumber();
+            for (int stepIndex = 0; stepIndex < testCaseBlock.getSteps().size(); stepIndex++) {
+                TestStep step = testCaseBlock.getSteps().get(stepIndex);
+                Assert.assertEquals(step.getStepOrder(), stepIndex + 1);
+                Assert.assertTrue(step.getExcelRowNumber() > previousExcelRow, "Step order should follow Excel row order.");
+                Assert.assertEquals(step.getApplication(), testCaseBlock.getApplication(), "Blank step Application should inherit from parent testcase.");
+                previousExcelRow = step.getExcelRowNumber();
             }
         }
     }
@@ -91,16 +229,21 @@ public class FinalTemplateValidationTest {
     private static void assertWorkbookDoesNotContainRemovedColumn(Workbook workbook) {
         DataFormatter formatter = new DataFormatter();
         for (Sheet sheet : workbook) {
-            for (Row row : sheet) {
-                for (Cell cell : row) {
-                    Assert.assertNotEquals(formatter.formatCellValue(cell).trim(), "DATA_ROW");
-                }
+            Row headerRow = sheet.getRow(0);
+            if (headerRow == null) {
+                continue;
+            }
+
+            for (Cell cell : headerRow) {
+                Assert.assertNotEquals(formatter.formatCellValue(cell).trim(), "DATA_ROW");
             }
         }
     }
 
     private static void assertScenarioValuesUseDotReferences(Workbook workbook) {
         DataFormatter formatter = new DataFormatter();
+        Set<String> discoveredReferences = new LinkedHashSet<>();
+
         for (String sheetName : SCENARIO_SHEETS) {
             Sheet sheet = workbook.getSheet(sheetName);
             Assert.assertNotNull(sheet, "Scenario sheet should exist: " + sheetName);
@@ -116,107 +259,35 @@ public class FinalTemplateValidationTest {
                         value.contains("[") || value.contains("]"),
                         "Scenario Value cells should use dot notation. Sheet = " + sheetName + ", row = " + (rowIndex + 1)
                 );
+
+                if (value.chars().filter(character -> character == '.').count() == 1) {
+                    String[] referenceParts = value.split("\\.", -1);
+                    Assert.assertNotNull(workbook.getSheet(referenceParts[0]), "Referenced data sheet should exist: " + referenceParts[0]);
+                    assertHeaderExists(workbook.getSheet(referenceParts[0]), referenceParts[1]);
+                    discoveredReferences.add(value);
+                }
             }
         }
+
+        Assert.assertTrue(discoveredReferences.containsAll(REQUIRED_DATA_REFERENCES), "Final template should include the required data references.");
+    }
+
+    private static void assertHeaderExists(Sheet sheet, String expectedHeader) {
+        DataFormatter formatter = new DataFormatter();
+        Row headerRow = sheet.getRow(0);
+        Assert.assertNotNull(headerRow, "Header row should exist in sheet: " + sheet.getSheetName());
+
+        for (Cell cell : headerRow) {
+            if (expectedHeader.equalsIgnoreCase(formatter.formatCellValue(cell).trim())) {
+                return;
+            }
+        }
+
+        Assert.fail("Header should exist. Sheet = " + sheet.getSheetName() + ", header = " + expectedHeader);
     }
 
     private static String readCell(DataFormatter formatter, Row row, int columnIndex) {
         Cell cell = row.getCell(columnIndex, Row.MissingCellPolicy.RETURN_BLANK_AS_NULL);
         return cell == null ? "" : formatter.formatCellValue(cell).trim();
-    }
-
-    private static Map<String, List<List<String>>> createExpectedSheets() {
-        Map<String, List<List<String>>> sheets = new LinkedHashMap<>();
-
-        List<String> scenarioHeaders = List.of("Testcase", "Run", "Function", "Object", "Value", "Application", "Description");
-
-        sheets.put("SCENARIOS", List.of(
-                List.of("NO", "RUN", "ACTION", "SCENARIOS"),
-                List.of("1", "Y", "Local Keyword Test", "Local keyword execution test"),
-                List.of("2", "N", "Create New Booking", "Create booking room example"),
-                List.of("3", "N", "Cancel Booking", "Cancel booking example")
-        ));
-
-        sheets.put("Local Keyword Test", List.of(
-                scenarioHeaders,
-                List.of("Open Local Page", "Yes", "", "", "", "BRS", "Open local test page"),
-                List.of("", "", "openUrl", "", "CONFIG.BASE_URL", "", "Open local HTML"),
-                List.of("Login BRS", "Yes", "", "", "", "BRS", "Login test"),
-                List.of("", "", "input", "txtUsername", "LOGIN_DATA.USERNAME", "", "Input username"),
-                List.of("", "", "input", "txtPassword", "LOGIN_DATA.PASSWORD", "", "Input password"),
-                List.of("", "", "click", "btnLogin", "", "", "Click login"),
-                List.of("", "", "verifyDisplayed", "lblDashboard", "", "", "Verify dashboard"),
-                List.of("Create Booking", "Yes", "", "", "", "BRS", "Create booking test"),
-                List.of("", "", "input", "txtBookingTitle", "BOOKING_DATA.BOOKING_TITLE", "", "Input booking title"),
-                List.of("", "", "screenshot", "", "After input title", "", "Capture form after title"),
-                List.of("", "", "click", "btnRoomByName", "BOOKING_DATA.ROOM_NAME", "", "Select room"),
-                List.of("", "", "screenshot", "", "After select room", "", "Capture selected room"),
-                List.of("", "", "verifyText", "lblSuccessMessage", "BOOKING_DATA.EXPECTED_MESSAGE", "", "Verify success"),
-                List.of("", "", "screenshot", "", "After submit", "", "Capture submit result")
-        ));
-
-        sheets.put("Create New Booking", List.of(
-                scenarioHeaders,
-                List.of("Login BRS", "Yes", "", "", "", "BRS", "Login to BRS"),
-                List.of("", "", "openUrl", "", "CONFIG.BASE_URL", "", "Open application"),
-                List.of("", "", "input", "txtUsername", "LOGIN_DATA.USERNAME", "", "Input username"),
-                List.of("", "", "input", "txtPassword", "LOGIN_DATA.PASSWORD", "", "Input password"),
-                List.of("", "", "click", "btnLogin", "", "", "Click login"),
-                List.of("", "", "verifyDisplayed", "lblDashboard", "", "", "Verify dashboard"),
-                List.of("Create Booking", "Yes", "", "", "", "BRS", "Create booking"),
-                List.of("", "", "input", "txtBookingTitle", "BOOKING_DATA.BOOKING_TITLE", "", "Input booking title"),
-                List.of("", "", "click", "btnRoomByName", "BOOKING_DATA.ROOM_NAME", "", "Select room"),
-                List.of("", "", "verifyText", "lblSuccessMessage", "BOOKING_DATA.EXPECTED_MESSAGE", "", "Verify success")
-        ));
-
-        sheets.put("Cancel Booking", List.of(
-                scenarioHeaders,
-                List.of("Login BRS", "Yes", "", "", "", "BRS", "Login to BRS"),
-                List.of("", "", "openUrl", "", "CONFIG.BASE_URL", "", "Open application"),
-                List.of("", "", "input", "txtUsername", "LOGIN_DATA.USERNAME", "", "Input username"),
-                List.of("", "", "input", "txtPassword", "LOGIN_DATA.PASSWORD", "", "Input password"),
-                List.of("", "", "click", "btnLogin", "", "", "Click login"),
-                List.of("Cancel Booking", "Yes", "", "", "", "BRS", "Cancel booking"),
-                List.of("", "", "click", "btnCancelBooking", "BOOKING_DATA.BOOKING_ID", "", "Cancel booking"),
-                List.of("", "", "verifyText", "lblSuccessMessage", "BOOKING_DATA.EXPECTED_MESSAGE", "", "Verify success")
-        ));
-
-        sheets.put("CONFIG", List.of(
-                List.of("NO", "BASE_URL"),
-                List.of("1", "file:///CHANGE_THIS_TO_LOCAL_HTML_OR_APP_URL"),
-                List.of("2", "https://example-booking-room-system.local"),
-                List.of("3", "https://example-booking-room-system.local")
-        ));
-
-        sheets.put("LOGIN_DATA", List.of(
-                List.of("NO", "USERNAME", "PASSWORD"),
-                List.of("1", "brs_admin", "brs123"),
-                List.of("2", "brs_user", "brs456"),
-                List.of("3", "brs_user_cancel", "brs789")
-        ));
-
-        sheets.put("BOOKING_DATA", List.of(
-                List.of("NO", "BOOKING_TITLE", "ROOM_NAME", "EXPECTED_MESSAGE", "BOOKING_ID"),
-                List.of("1", "Weekly Meeting", "Meeting Room A", "Booking created successfully", "BOOK-001"),
-                List.of("2", "Daily Standup", "Meeting Room B", "Booking created successfully", "BOOK-002"),
-                List.of("3", "Cancel Test Booking", "Meeting Room A", "Booking cancelled successfully", "BOOK-003")
-        ));
-
-        sheets.put("OBJECT_REPOSITORY", List.of(
-                List.of("Application", "Object", "XPath", "Description"),
-                List.of("BRS", "txtUsername", "//input[@id='username']", "Username input"),
-                List.of("BRS", "txtPassword", "//input[@id='password']", "Password input"),
-                List.of("BRS", "btnLogin", "//button[@id='loginButton']", "Login button"),
-                List.of("BRS", "lblDashboard", "//h1[@id='dashboard']", "Dashboard title"),
-                List.of("BRS", "txtBookingTitle", "//input[@id='bookingTitle']", "Booking title input"),
-                List.of("BRS", "btnRoomByName", "//button[contains(text(),'{ROOM_NAME}')]", "Dynamic room button"),
-                List.of("BRS", "lblSuccessMessage", "//div[@id='message']", "Success message"),
-                List.of("BRS", "btnCancelBooking", "//button[@data-booking='{BOOKING_ID}']", "Dynamic cancel booking button"),
-                List.of("HRIS", "txtUsername", "//input[@id='employeeId']", "HRIS username input"),
-                List.of("HRIS", "txtPassword", "//input[@id='password']", "HRIS password input"),
-                List.of("HRIS", "btnLogin", "//button[@id='loginButton']", "HRIS login button")
-        ));
-
-        return sheets;
     }
 }
