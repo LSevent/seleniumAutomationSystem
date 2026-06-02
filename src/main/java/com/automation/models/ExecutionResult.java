@@ -2,10 +2,15 @@ package com.automation.models;
 
 public class ExecutionResult {
 
+    public static final String STATUS_PASS = "PASS";
+    public static final String STATUS_FAIL = "FAIL";
+    public static final String STATUS_SKIP = "SKIP";
+
     private final String scenarioNo;
     private final String scenarioName;
     private final String scenarioAction;
     private final String testcaseName;
+    private final String description;
     private final String functionName;
     private final String objectName;
     private final String application;
@@ -16,6 +21,8 @@ public class ExecutionResult {
     private final String executedByClass;
     private final String executionSource;
     private final boolean success;
+    private final String status;
+    private final String evidence;
     private final String message;
     private final int excelRowNumber;
     private final int stepOrder;
@@ -25,6 +32,7 @@ public class ExecutionResult {
             String scenarioName,
             String scenarioAction,
             String testcaseName,
+            String description,
             String functionName,
             String objectName,
             String application,
@@ -35,6 +43,8 @@ public class ExecutionResult {
             String executedByClass,
             String executionSource,
             boolean success,
+            String status,
+            String evidence,
             String message,
             int excelRowNumber,
             int stepOrder
@@ -43,6 +53,7 @@ public class ExecutionResult {
         this.scenarioName = scenarioName;
         this.scenarioAction = scenarioAction;
         this.testcaseName = testcaseName;
+        this.description = description;
         this.functionName = functionName;
         this.objectName = objectName;
         this.application = application;
@@ -53,6 +64,8 @@ public class ExecutionResult {
         this.executedByClass = executedByClass;
         this.executionSource = executionSource;
         this.success = success;
+        this.status = status;
+        this.evidence = evidence;
         this.message = message;
         this.excelRowNumber = excelRowNumber;
         this.stepOrder = stepOrder;
@@ -68,7 +81,21 @@ public class ExecutionResult {
             String executionSource,
             String message
     ) {
-        return fromStep(scenario, step, resolvedValue, rawXpath, resolvedXpath, executedByClass, executionSource, true, message);
+        return fromStep(scenario, step, resolvedValue, rawXpath, resolvedXpath, executedByClass, executionSource, true, STATUS_PASS, "", message);
+    }
+
+    public static ExecutionResult success(
+            Scenario scenario,
+            TestStep step,
+            String resolvedValue,
+            String rawXpath,
+            String resolvedXpath,
+            String executedByClass,
+            String executionSource,
+            String evidence,
+            String message
+    ) {
+        return fromStep(scenario, step, resolvedValue, rawXpath, resolvedXpath, executedByClass, executionSource, true, STATUS_PASS, evidence, message);
     }
 
     public static ExecutionResult failure(
@@ -81,7 +108,21 @@ public class ExecutionResult {
             String executionSource,
             String message
     ) {
-        return fromStep(scenario, step, resolvedValue, rawXpath, resolvedXpath, executedByClass, executionSource, false, message);
+        return fromStep(scenario, step, resolvedValue, rawXpath, resolvedXpath, executedByClass, executionSource, false, STATUS_FAIL, "", message);
+    }
+
+    public static ExecutionResult skipped(
+            Scenario scenario,
+            TestStep step,
+            String resolvedValue,
+            String rawXpath,
+            String resolvedXpath,
+            String executedByClass,
+            String executionSource,
+            String evidence,
+            String message
+    ) {
+        return fromStep(scenario, step, resolvedValue, rawXpath, resolvedXpath, executedByClass, executionSource, true, STATUS_SKIP, evidence, message);
     }
 
     private static ExecutionResult fromStep(
@@ -93,6 +134,8 @@ public class ExecutionResult {
             String executedByClass,
             String executionSource,
             boolean success,
+            String status,
+            String evidence,
             String message
     ) {
         return new ExecutionResult(
@@ -100,6 +143,7 @@ public class ExecutionResult {
                 safe(scenario == null ? "" : scenario.getScenarioName()),
                 safe(scenario == null ? "" : scenario.getAction()),
                 safe(step == null ? "" : step.getTestcaseName()),
+                safe(step == null ? "" : step.getDescription()),
                 safe(step == null ? "" : step.getFunction()),
                 safe(step == null ? "" : step.getObject()),
                 safe(step == null ? "" : step.getApplication()),
@@ -110,6 +154,8 @@ public class ExecutionResult {
                 safe(executedByClass),
                 safe(executionSource),
                 success,
+                safe(status),
+                safe(evidence),
                 safe(message),
                 step == null ? 0 : step.getExcelRowNumber(),
                 step == null ? 0 : step.getStepOrder()
@@ -130,6 +176,10 @@ public class ExecutionResult {
 
     public String getTestcaseName() {
         return testcaseName;
+    }
+
+    public String getDescription() {
+        return description;
     }
 
     public String getFunctionName() {
@@ -172,6 +222,14 @@ public class ExecutionResult {
         return success;
     }
 
+    public String getStatus() {
+        return status;
+    }
+
+    public String getEvidence() {
+        return evidence;
+    }
+
     public String getMessage() {
         return message;
     }
@@ -191,6 +249,7 @@ public class ExecutionResult {
                 ", scenarioName='" + scenarioName + '\'' +
                 ", scenarioAction='" + scenarioAction + '\'' +
                 ", testcaseName='" + testcaseName + '\'' +
+                ", description='" + description + '\'' +
                 ", functionName='" + functionName + '\'' +
                 ", objectName='" + objectName + '\'' +
                 ", application='" + application + '\'' +
@@ -201,6 +260,8 @@ public class ExecutionResult {
                 ", executedByClass='" + executedByClass + '\'' +
                 ", executionSource='" + executionSource + '\'' +
                 ", success=" + success +
+                ", status='" + status + '\'' +
+                ", evidence='" + evidence + '\'' +
                 ", message='" + message + '\'' +
                 ", excelRowNumber=" + excelRowNumber +
                 ", stepOrder=" + stepOrder +

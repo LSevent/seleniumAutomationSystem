@@ -53,11 +53,20 @@ public final class ExtentReportManager {
         return test;
     }
 
+    public static synchronized ExtentTest createStandaloneTest(String testName, String description) {
+        initializeReport();
+        return extentReports.createTest(testName, description);
+    }
+
     public static ExtentTest getTest() {
         return EXTENT_TEST.get();
     }
 
     public static void unloadTest() {
         EXTENT_TEST.remove();
+    }
+
+    public static String getReportFilePath() {
+        return FrameworkConstants.EXTENT_REPORT_FILE;
     }
 }

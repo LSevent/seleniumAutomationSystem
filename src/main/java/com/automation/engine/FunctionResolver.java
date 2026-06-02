@@ -61,6 +61,10 @@ public class FunctionResolver {
         return resolveInternal(application, functionName).resolvedFunction();
     }
 
+    public WebDriver getDriver() {
+        return driver;
+    }
+
     public FunctionExecutionResult execute(
             String application,
             String functionName,

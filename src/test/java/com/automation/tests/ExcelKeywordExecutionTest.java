@@ -43,12 +43,12 @@ public class ExcelKeywordExecutionTest {
 
             List<ExecutionResult> results = scenarioRunner.runActiveScenarios();
 
-            Assert.assertEquals(results.size(), 8);
+            Assert.assertEquals(results.size(), 11);
             Assert.assertTrue(results.stream().allMatch(ExecutionResult::isSuccess), failureMessages(results));
             Assert.assertTrue(results.stream().allMatch(result -> "1".equals(result.getScenarioNo())));
             Assert.assertEquals(
                     results.stream().map(ExecutionResult::getFunctionName).toList(),
-                    List.of("openUrl", "input", "input", "click", "verifyDisplayed", "input", "click", "verifyText")
+                    List.of("openUrl", "input", "input", "click", "verifyDisplayed", "input", "screenshot", "click", "screenshot", "verifyText", "screenshot")
             );
             Assert.assertEquals(results.get(0).getResolvedValue(), baseUrl);
             Assert.assertEquals(fakeDriver.getCurrentUrl(), baseUrl);
@@ -56,7 +56,7 @@ public class ExcelKeywordExecutionTest {
             Assert.assertEquals(fakeDriver.element("//input[@id='password']").getValue(), "brs123");
             Assert.assertEquals(fakeDriver.element("//input[@id='bookingTitle']").getValue(), "Weekly Meeting");
             Assert.assertTrue(fakeDriver.element("//button[contains(text(),'Meeting Room A')]").isClicked());
-            Assert.assertEquals(results.get(6).getResolvedXpath(), "//button[contains(text(),'Meeting Room A')]");
+            Assert.assertEquals(results.get(7).getResolvedXpath(), "//button[contains(text(),'Meeting Room A')]");
         }
     }
 

@@ -17,6 +17,8 @@
             <class name="com.automation.tests.FunctionResolverTest"/>
             <class name="com.automation.tests.KeywordEngineTest"/>
             <class name="com.automation.tests.ExcelKeywordExecutionTest"/>
+            <class name="com.automation.tests.SensitiveDataMaskerTest"/>
+            <class name="com.automation.tests.ExcelExecutionReportTest"/>
         </classes>
     </test>
 </suite>

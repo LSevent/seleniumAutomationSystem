@@ -41,8 +41,11 @@ public final class ExcelKeywordTestWorkbookFactory {
                             {"", "", "verifyDisplayed", "lblDashboard", "", "", "Verify dashboard"},
                             {"Create Booking", "Yes", "", "", "", "BRS", "Create booking test"},
                             {"", "", "input", "txtBookingTitle", "BOOKING_DATA.BOOKING_TITLE", "", "Input booking title"},
+                            {"", "", "screenshot", "", "After input title", "", "Capture form after title"},
                             {"", "", "click", "btnRoomByName", "BOOKING_DATA.ROOM_NAME", "", "Select room"},
-                            {"", "", "verifyText", "lblSuccessMessage", "BOOKING_DATA.EXPECTED_MESSAGE", "", "Verify success"}
+                            {"", "", "screenshot", "", "After select room", "", "Capture selected room"},
+                            {"", "", "verifyText", "lblSuccessMessage", "BOOKING_DATA.EXPECTED_MESSAGE", "", "Verify success"},
+                            {"", "", "screenshot", "", "After submit", "", "Capture submit result"}
                     }
             );
             createSheet(
@@ -84,6 +87,60 @@ public final class ExcelKeywordTestWorkbookFactory {
                             {"BRS", "txtBookingTitle", "//input[@id='bookingTitle']", "Booking title input"},
                             {"BRS", "btnRoomByName", "//button[contains(text(),'{ROOM_NAME}')]", "Dynamic room button"},
                             {"BRS", "lblSuccessMessage", "//div[@id='message']", "Success message"}
+                    }
+            );
+            workbook.write(outputStream);
+        }
+        return workbookPath;
+    }
+
+    public static Path createFailureWorkbook(Path workbookPath, String baseUrl) throws IOException {
+        return createFailureWorkbook(workbookPath, baseUrl, 9, "Failing Keyword Test", "Failing keyword execution test", "Failing Step");
+    }
+
+    public static Path createFailureWorkbook(
+            Path workbookPath,
+            String baseUrl,
+            int scenarioNo,
+            String action,
+            String scenarioDescription,
+            String testcaseName
+    ) throws IOException {
+        Files.createDirectories(workbookPath.getParent());
+        try (Workbook workbook = new XSSFWorkbook(); OutputStream outputStream = Files.newOutputStream(workbookPath)) {
+            createSheet(
+                    workbook,
+                    "SCENARIOS",
+                    new String[]{"NO", "RUN", "ACTION", "SCENARIOS"},
+                    new Object[][]{
+                            {scenarioNo, "Y", action, scenarioDescription}
+                    }
+            );
+            createSheet(
+                    workbook,
+                    action,
+                    new String[]{"Testcase", "Run", "Function", "Object", "Value", "Application", "Description"},
+                    new Object[][]{
+                            {"Open Local Page", "Yes", "", "", "", "BRS", "Open local test page"},
+                            {"", "", "openUrl", "", "CONFIG.BASE_URL", "", "Open local HTML"},
+                            {testcaseName, "Yes", "", "", "", "BRS", "Failing testcase"},
+                            {"", "", "click", "btnMissing", "", "", "Click missing button"}
+                    }
+            );
+            createSheet(
+                    workbook,
+                    "CONFIG",
+                    new String[]{"NO", "BASE_URL"},
+                    new Object[][]{
+                            {scenarioNo, baseUrl}
+                    }
+            );
+            createSheet(
+                    workbook,
+                    "OBJECT_REPOSITORY",
+                    new String[]{"Application", "Object", "XPath", "Description"},
+                    new Object[][]{
+                            {"BRS", "btnLogin", "//button[@id='loginButton']", "Login button"}
                     }
             );
             workbook.write(outputStream);

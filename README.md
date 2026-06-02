@@ -85,6 +85,9 @@ timeout=10
 remote=false
 gridUrl=http://localhost:4444/wd/hub
 demoMode=true
+report.showSensitiveData=false
+report.screenshotOnFailure=true
+report.manualScreenshotEnabled=true
 ```
 
 Supported browser values:
@@ -311,7 +314,7 @@ Only XPath is supported for now. XPath values can contain one dynamic placeholde
 
 If the step `Value` is a data reference such as `BOOKING_DATA.ROOM_NAME`, the framework resolves it using `SCENARIOS.NO` first, then replaces `{ROOM_NAME}` with the resolved value. Literal step values can also fill a single placeholder.
 
-KeywordEngine and Excel-driven Selenium execution are not implemented yet.
+Excel-driven Selenium execution is connected through `KeywordEngine` and `ScenarioRunner`.
 
 ## BaseFunction Keywords
 
@@ -347,7 +350,33 @@ Execution flow:
 4. `ObjectRepositoryReader` resolves object names into XPath values, including single dynamic placeholders.
 5. `FunctionResolver` executes the keyword through `SpecificFunction` first, then `BaseFunction`.
 
-`ScenarioRunner` executes steps in Excel row order and stops the current run on the first failed step. Advanced Excel-step reporting, screenshots per step, retry handling, and parallel Excel execution are not implemented yet.
+`ScenarioRunner` executes steps in Excel row order and stops the current run on the first failed step. Retry handling and parallel Excel execution are not implemented yet.
+
+## Excel Execution Report
+
+Excel-driven runs generate HTML ExtentReport output with a Scenario -> Testcase -> Step hierarchy.
+
+Every testcase uses the same step table columns: `Step`, `Excel Row`, `Description`, `Function`, `Object`, `Application`, `Raw Value`, `Resolved Value`, `Raw XPath`, `Resolved XPath`, `Executed By`, `Status`, and `Evidence`.
+
+The report includes raw and resolved values, raw and resolved XPath, and whether a keyword was executed by `BaseFunction` or `SpecificFunction`. Sensitive resolved values are masked by default.
+
+Excel report config:
+
+```properties
+report.showSensitiveData=false
+report.screenshotOnFailure=true
+report.manualScreenshotEnabled=true
+```
+
+Manual screenshots can be added from Excel with:
+
+```text
+Function = screenshot
+```
+
+One `screenshot` keyword row creates one evidence screenshot when manual screenshots are enabled. Multiple manual screenshots are supported. Failure screenshots are captured automatically when `report.screenshotOnFailure=true`.
+
+Excel result export, PDF export, retry logic, and parallel Excel execution are not implemented yet.
 
 ## Future Improvements
 

@@ -7,6 +7,7 @@ import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.OutputType;
 import org.openqa.selenium.Point;
 import org.openqa.selenium.Rectangle;
+import org.openqa.selenium.TakesScreenshot;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 
@@ -21,6 +22,19 @@ import java.util.Set;
 
 public class FakeWebDriver implements InvocationHandler {
 
+    private static final byte[] PNG_BYTES = new byte[]{
+            (byte) 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A,
+            0x00, 0x00, 0x00, 0x0D, 0x49, 0x48, 0x44, 0x52,
+            0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01,
+            0x08, 0x02, 0x00, 0x00, 0x00, (byte) 0x90, 0x77,
+            0x53, (byte) 0xDE, 0x00, 0x00, 0x00, 0x0C, 0x49,
+            0x44, 0x41, 0x54, 0x08, (byte) 0xD7, 0x63, (byte) 0xF8,
+            (byte) 0xFF, (byte) 0xFF, 0x3F, 0x00, 0x05, (byte) 0xFE,
+            0x02, (byte) 0xFE, (byte) 0xDC, (byte) 0xCC, 0x59,
+            (byte) 0xE7, 0x00, 0x00, 0x00, 0x00, 0x49, 0x45,
+            0x4E, 0x44, (byte) 0xAE, 0x42, 0x60, (byte) 0x82
+    };
+
     private final Map<String, FakeWebElement> elements = new HashMap<>();
     private final List<String> scripts = new ArrayList<>();
     private final WebDriver proxy;
@@ -28,9 +42,9 @@ public class FakeWebDriver implements InvocationHandler {
     private String title = "";
 
     public FakeWebDriver() {
-        this.proxy = (WebDriver) Proxy.newProxyInstance(
+            this.proxy = (WebDriver) Proxy.newProxyInstance(
                 FakeWebDriver.class.getClassLoader(),
-                new Class[]{WebDriver.class, JavascriptExecutor.class},
+                new Class[]{WebDriver.class, JavascriptExecutor.class, TakesScreenshot.class},
                 this
         );
     }
@@ -82,6 +96,7 @@ public class FakeWebDriver implements InvocationHandler {
                 scripts.add((String) safeArgs[0]);
                 yield null;
             }
+            case "getScreenshotAs" -> getScreenshot((OutputType<?>) safeArgs[0]);
             case "getPageSource" -> "";
             case "close", "quit" -> null;
             case "getWindowHandles" -> Set.of("fake-window");
@@ -136,6 +151,10 @@ public class FakeWebDriver implements InvocationHandler {
 
     private String key(By by) {
         return by.toString();
+    }
+
+    private <X> X getScreenshot(OutputType<X> target) {
+        return target.convertFromPngBytes(PNG_BYTES);
     }
 
     public static class FakeWebElement implements InvocationHandler {
