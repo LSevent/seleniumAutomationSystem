@@ -74,6 +74,8 @@ public class ExcelExecutionReportTest {
             Assert.assertTrue(reportHtml.contains("Scenario: [1] Local keyword execution test"));
             Assert.assertTrue(reportHtml.contains("Testcase: Login BRS"));
             Assert.assertTrue(reportHtml.contains("Testcase: Create Booking"));
+            Assert.assertTrue(reportHtml.contains("Scenario Summary"));
+            Assert.assertTrue(reportHtml.contains("Testcase Summary"));
             Assert.assertTrue(reportHtml.contains("Scenario ACTION"));
             Assert.assertTrue(reportHtml.contains("Scenario status") || reportHtml.contains("Status"));
             Assert.assertTrue(reportHtml.contains("Duration"));
@@ -104,14 +106,19 @@ public class ExcelExecutionReportTest {
             Assert.assertTrue(reportHtml.contains("BaseFunction.input"));
             Assert.assertTrue(reportHtml.contains("SpecificFunction.click"));
             Assert.assertTrue(reportHtml.contains("Manual screenshot"));
+            Assert.assertTrue(reportHtml.contains("Evidence Gallery"));
             Assert.assertTrue(reportHtml.contains("After input title"));
             Assert.assertTrue(reportHtml.contains("After select room"));
             Assert.assertTrue(reportHtml.contains("After submit"));
+            Assert.assertTrue(countOccurrences(reportHtml, "Manual screenshot:") >= 3);
             Assert.assertFalse(reportHtml.contains("RUNNING"), "Report should only render final scenario/testcase metadata.");
-            Assert.assertFalse(reportHtml.contains("Step 1 passed"), "Passed steps should be represented by the step table.");
-            Assert.assertFalse(reportHtml.contains("Step 2 passed"), "Passed steps should be represented by the step table.");
+            Assert.assertFalse(reportHtml.contains("Step 1 passed:"), "Passed steps should be represented by the step table.");
+            Assert.assertFalse(reportHtml.contains("Step 2 passed:"), "Passed steps should be represented by the step table.");
+            Assert.assertFalse(reportHtml.contains("Step 3 passed:"), "Passed steps should be represented by the step table.");
             Assert.assertFalse(reportHtml.contains("Scenario finished successfully."));
             Assert.assertFalse(reportHtml.contains("Testcase finished successfully."));
+            Assert.assertFalse(reportHtml.contains("Failure Summary"), "Passed scenario summary should not show an empty failure row.");
+            Assert.assertFalse(reportHtml.contains("Message</th>"), "Passed testcase summary should not show an empty message row.");
             Assert.assertFalse(reportHtml.contains("ExcelReaderTest"), "Excel report should not be the generic TestNG method report.");
             Assert.assertFalse(reportHtml.contains("ScenarioReaderTest"), "Excel report should not be the generic TestNG method report.");
             Assert.assertFalse(reportHtml.contains("StepReaderTest"), "Excel report should not be the generic TestNG method report.");
@@ -154,6 +161,9 @@ public class ExcelExecutionReportTest {
 
         String reportHtml = Files.readString(Path.of(ExcelExecutionReporter.getReportFilePath()));
         Assert.assertTrue(reportHtml.contains("Failure screenshot"));
+        Assert.assertTrue(reportHtml.contains("Failure Details"));
+        Assert.assertTrue(reportHtml.contains("Evidence Gallery"));
+        Assert.assertFalse(reportHtml.contains("Scenario failed. Scenario failed."));
     }
 
     @Test
@@ -246,6 +256,16 @@ public class ExcelExecutionReportTest {
                 .map(ExecutionResult::getMessage)
                 .toList()
                 .toString();
+    }
+
+    private int countOccurrences(String value, String searchText) {
+        int count = 0;
+        int index = value.indexOf(searchText);
+        while (index >= 0) {
+            count++;
+            index = value.indexOf(searchText, index + searchText.length());
+        }
+        return count;
     }
 
     private FakeWebDriver localPageDriver() {

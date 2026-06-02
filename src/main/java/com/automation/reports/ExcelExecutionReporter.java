@@ -45,6 +45,9 @@ public class ExcelExecutionReporter {
     };
     private static ExtentReports sharedExtentReports;
 
+    private record EvidenceItem(String label, String path) {
+    }
+
     private final WebDriver driver;
     private final ExcelReportConfig config;
     private final SensitiveDataMasker sensitiveDataMasker;
@@ -55,6 +58,9 @@ public class ExcelExecutionReporter {
     private Instant scenarioStartTime;
     private Instant testCaseStartTime;
     private final List<String[]> currentStepRows = new ArrayList<>();
+    private final List<EvidenceItem> currentEvidenceItems = new ArrayList<>();
+    private ExecutionResult currentFailureResult;
+    private String currentFailureEvidence;
 
     public ExcelExecutionReporter(WebDriver driver) {
         this(driver, ExcelReportConfig.fromConfig());
@@ -93,6 +99,9 @@ public class ExcelExecutionReporter {
     public void startTestCase(TestCaseBlock testCaseBlock) {
         testCaseStartTime = Instant.now();
         currentStepRows.clear();
+        currentEvidenceItems.clear();
+        currentFailureResult = null;
+        currentFailureEvidence = "";
         if (scenarioNode == null) {
             LOGGER.warn("Scenario node was not initialized before testcase reporting.");
             return;
@@ -113,6 +122,12 @@ public class ExcelExecutionReporter {
             testCaseNode.fail(testcaseSummaryHtml(testCaseBlock, status, testCaseStartTime, endTime, message));
         }
         testCaseNode.info(stepTableHtml(currentStepRows));
+        if (!currentEvidenceItems.isEmpty()) {
+            testCaseNode.info(evidenceGalleryHtml(currentEvidenceItems));
+        }
+        if (!success && currentFailureResult != null) {
+            testCaseNode.info(failureDetailHtml(currentFailureResult, currentFailureEvidence));
+        }
     }
 
     public void logStep(ExecutionResult result) {
@@ -126,8 +141,8 @@ public class ExcelExecutionReporter {
         if (ExecutionResult.STATUS_SKIP.equals(result.getStatus())) {
             testCaseNode.skip("Step " + result.getStepOrder() + " skipped: " + safe(result.getMessage()));
         } else if (!result.isSuccess()) {
-            testCaseNode.fail("Step " + result.getStepOrder() + " failed: " + safe(result.getMessage()));
-            testCaseNode.info(failureDetailHtml(result, evidence));
+            currentFailureResult = result;
+            currentFailureEvidence = evidence;
         }
     }
 
@@ -135,12 +150,7 @@ public class ExcelExecutionReporter {
         if (testCaseNode == null || screenshotPath == null || screenshotPath.isBlank()) {
             return;
         }
-
-        try {
-            testCaseNode.addScreenCaptureFromPath(toReportRelativePath(screenshotPath), safe(label));
-        } catch (Exception exception) {
-            LOGGER.warn("Could not attach screenshot to Excel execution report: {}", screenshotPath, exception);
-        }
+        currentEvidenceItems.add(new EvidenceItem(safe(label), screenshotPath));
     }
 
     public void flush() {
@@ -289,6 +299,7 @@ public class ExcelExecutionReporter {
 
     private String stepTableHtml(List<String[]> rows) {
         StringBuilder html = new StringBuilder();
+        html.append("<h4>Step Table</h4>");
         html.append("<table class='excel-step-table' style='border-collapse:collapse;width:100%;font-size:12px;'>");
         html.append("<thead><tr>");
         for (String header : STEP_TABLE_HEADERS) {
@@ -311,40 +322,48 @@ public class ExcelExecutionReporter {
     }
 
     private String scenarioSummaryHtml(Scenario scenario, String status, Instant startTime, Instant endTime, String message) {
-        return summaryTableHtml(new String[][]{
-                {"Scenario NO", safe(scenario.getNo())},
-                {"Scenario Name", safe(scenario.getScenarioName())},
-                {"Scenario ACTION", safe(scenario.getAction())},
-                {"Status", status},
-                {"Start Time", formatTime(startTime)},
-                {"End Time", formatTime(endTime)},
-                {"Duration", formatDuration(startTime, endTime)},
-                {"Failure Summary", safe(message)}
-        });
+        List<String[]> rows = new ArrayList<>();
+        rows.add(new String[]{"Scenario NO", safe(scenario.getNo())});
+        rows.add(new String[]{"Scenario Name", safe(scenario.getScenarioName())});
+        rows.add(new String[]{"Scenario ACTION", safe(scenario.getAction())});
+        rows.add(new String[]{"Status", status});
+        rows.add(new String[]{"Start Time", formatTime(startTime)});
+        rows.add(new String[]{"End Time", formatTime(endTime)});
+        rows.add(new String[]{"Duration", formatDuration(startTime, endTime)});
+        String failureMessage = cleanFailureMessage(message);
+        if (!ExecutionResult.STATUS_PASS.equals(status) && !failureMessage.isBlank()) {
+            rows.add(new String[]{"Failure Summary", failureMessage});
+        }
+        return sectionHtml("Scenario Summary", summaryTableHtml(rows));
     }
 
     private String testcaseSummaryHtml(TestCaseBlock testCaseBlock, String status, Instant startTime, Instant endTime, String message) {
-        return summaryTableHtml(new String[][]{
-                {"Testcase", safe(testCaseBlock.getTestcaseName())},
-                {"Application", safe(testCaseBlock.getApplication())},
-                {"Parent Excel Row", String.valueOf(testCaseBlock.getExcelRowNumber())},
-                {"Step Count", String.valueOf(testCaseBlock.getSteps().size())},
-                {"Status", status},
-                {"Start Time", formatTime(startTime)},
-                {"End Time", formatTime(endTime)},
-                {"Duration", formatDuration(startTime, endTime)},
-                {"Message", safe(message)}
-        });
+        List<String[]> rows = new ArrayList<>();
+        rows.add(new String[]{"Testcase", safe(testCaseBlock.getTestcaseName())});
+        rows.add(new String[]{"Application", safe(testCaseBlock.getApplication())});
+        rows.add(new String[]{"Parent Excel Row", String.valueOf(testCaseBlock.getExcelRowNumber())});
+        rows.add(new String[]{"Step Count", String.valueOf(testCaseBlock.getSteps().size())});
+        rows.add(new String[]{"Status", status});
+        rows.add(new String[]{"Duration", formatDuration(startTime, endTime)});
+        String safeMessage = safe(message);
+        if (!ExecutionResult.STATUS_PASS.equals(status) && !safeMessage.isBlank()) {
+            rows.add(new String[]{"Message", safeMessage});
+        }
+        return sectionHtml("Testcase Summary", summaryTableHtml(rows));
     }
 
-    private String summaryTableHtml(String[][] rows) {
+    private String sectionHtml(String heading, String bodyHtml) {
+        return "<section><h4>" + escape(heading) + "</h4>" + bodyHtml + "</section>";
+    }
+
+    private String summaryTableHtml(List<String[]> rows) {
         StringBuilder html = new StringBuilder();
         html.append("<table style='border-collapse:collapse;width:70%;font-size:12px;'>");
         for (String[] row : rows) {
             html.append("<tr><th style='border:1px solid #d0d7de;padding:5px;background:#f6f8fa;text-align:left;width:180px;'>")
                     .append(escape(row[0]))
                     .append("</th><td style='border:1px solid #d0d7de;padding:5px;'>")
-                    .append(escape(row[1]))
+                    .append(row[1].startsWith("<a ") ? row[1] : escape(row[1]))
                     .append("</td></tr>");
         }
         html.append("</table>");
@@ -354,24 +373,48 @@ public class ExcelExecutionReporter {
     private String failureDetailHtml(ExecutionResult result, String evidence) {
         StringBuilder html = new StringBuilder();
         html.append("<div class='excel-failure-detail'>");
-        html.append("<h4>Failure Detail</h4>");
-        html.append(summaryTableHtml(new String[][]{
-                {"Error Message", safe(result.getMessage())},
-                {"Scenario NO", safe(result.getScenarioNo())},
-                {"Scenario ACTION", safe(result.getScenarioAction())},
-                {"Testcase", safe(result.getTestcaseName())},
-                {"Excel Row", String.valueOf(result.getExcelRowNumber())},
-                {"Function", safe(result.getFunctionName())},
-                {"Object", safe(result.getObjectName())},
-                {"Application", safe(result.getApplication())},
-                {"Raw Value", displayRawValue(result)},
-                {"Resolved Value", displayResolvedValue(result)},
-                {"Raw XPath", safe(result.getRawXpath())},
-                {"Resolved XPath", safe(result.getResolvedXpath())},
-                {"Executed By", executedBy(result)},
-                {"Screenshot", safe(evidence)}
-        }));
+        html.append("<h4>Failure Details</h4>");
+        List<String[]> rows = new ArrayList<>();
+        rows.add(new String[]{"Scenario NO", safe(result.getScenarioNo())});
+        rows.add(new String[]{"Scenario ACTION", safe(result.getScenarioAction())});
+        rows.add(new String[]{"Testcase", safe(result.getTestcaseName())});
+        rows.add(new String[]{"Excel Row", String.valueOf(result.getExcelRowNumber())});
+        rows.add(new String[]{"Function", safe(result.getFunctionName())});
+        rows.add(new String[]{"Object", safe(result.getObjectName())});
+        rows.add(new String[]{"Application", safe(result.getApplication())});
+        rows.add(new String[]{"Error Message", safe(result.getMessage())});
+        if (!safe(evidence).isBlank()) {
+            rows.add(new String[]{"Screenshot", evidence});
+        }
+        html.append(summaryTableHtml(rows));
         html.append("</div>");
+        return html.toString();
+    }
+
+    private String evidenceGalleryHtml(List<EvidenceItem> evidenceItems) {
+        StringBuilder html = new StringBuilder();
+        html.append("<div class='excel-evidence-gallery'>");
+        html.append("<h4>Evidence Gallery</h4>");
+        html.append("<div style='display:flex;flex-wrap:wrap;gap:12px;'>");
+        for (EvidenceItem item : evidenceItems) {
+            String relativePath = toReportRelativePath(item.path());
+            String label = safe(item.label());
+            html.append("<figure style='margin:0;width:220px;'>");
+            html.append("<a href='")
+                    .append(escapeAttribute(relativePath))
+                    .append("' target='_blank'>")
+                    .append("<img src='")
+                    .append(escapeAttribute(relativePath))
+                    .append("' alt='")
+                    .append(escapeAttribute(label))
+                    .append("' style='width:220px;max-height:140px;object-fit:contain;border:1px solid #d0d7de;'>")
+                    .append("</a>");
+            html.append("<figcaption style='font-size:12px;margin-top:4px;'>")
+                    .append(escape(label))
+                    .append("</figcaption>");
+            html.append("</figure>");
+        }
+        html.append("</div></div>");
         return html.toString();
     }
 
@@ -421,6 +464,26 @@ public class ExcelExecutionReporter {
         }
         long millis = Duration.between(startTime, endTime).toMillis();
         return millis + " ms";
+    }
+
+    private String cleanFailureMessage(String message) {
+        String cleanedMessage = safe(message).trim();
+        if (cleanedMessage.isBlank()) {
+            return "";
+        }
+
+        String duplicatedPrefix = "Scenario failed. Scenario failed.";
+        while (cleanedMessage.startsWith(duplicatedPrefix)) {
+            cleanedMessage = "Scenario failed." + cleanedMessage.substring(duplicatedPrefix.length());
+        }
+
+        if (cleanedMessage.startsWith("Scenario failed.")) {
+            int errorStartIndex = cleanedMessage.indexOf(". Failed");
+            if (errorStartIndex >= 0 && errorStartIndex < cleanedMessage.length() - 2) {
+                return cleanedMessage.substring(errorStartIndex + 2);
+            }
+        }
+        return cleanedMessage;
     }
 
     private String safe(String value) {
