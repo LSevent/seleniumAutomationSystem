@@ -358,9 +358,41 @@ Execution flow:
 
 `ScenarioRunner` executes steps in Excel row order and stops the current run on the first failed step. Retry handling and parallel Excel execution are not implemented yet.
 
+## Excel Execution Configuration
+
+Excel-driven execution paths are configured in:
+
+```text
+src/test/resources/excelConfig.properties
+```
+
+Supported keys:
+
+- `excel.scenarioFilePath`: path to the `.xlsx` scenario workbook.
+- `report.outputDirectory`: directory where the Excel execution report is written.
+- `report.fileName`: Excel execution report file name. `.html` is appended when omitted.
+- `screenshot.outputDirectory`: directory for Excel execution screenshots.
+
+Default values keep the framework runnable from the repository:
+
+```properties
+excel.scenarioFilePath=src/test/resources/testdata/Template Testing.xlsx
+report.outputDirectory=test-output/reports
+report.fileName=ExcelAutomationReport.html
+screenshot.outputDirectory=test-output/screenshots
+```
+
+Users can override these values with Maven system properties without editing Git-tracked config:
+
+```bash
+mvn test -Dexcel.scenarioFilePath="C:/Automation/scenarios/BookingRoomScenarios.xlsx" -Dreport.outputDirectory="C:/Automation/reports"
+```
+
+Before Excel execution, the framework validates that the scenario file exists, is a file, and ends with `.xlsx`. Report and screenshot directories are created automatically when possible.
+
 ## Excel Execution Report
 
-Excel-driven runs generate a dedicated HTML ExtentReport at `test-output/reports/ExcelAutomationReport.html` with a Scenario -> Testcase -> Step hierarchy. This report is separate from the generic TestNG method-level report.
+Excel-driven runs generate a dedicated HTML ExtentReport at the configured report path. By default this is `test-output/reports/ExcelAutomationReport.html`. The report uses a Scenario -> Testcase -> Step hierarchy and is separate from the generic TestNG method-level report.
 
 Every testcase uses the same step table columns: `Step`, `Excel Row`, `Description`, `Function`, `Object`, `Application`, `Raw Value`, `Resolved Value`, `Raw XPath`, `Resolved XPath`, `Executed By`, `Status`, and `Evidence`.
 

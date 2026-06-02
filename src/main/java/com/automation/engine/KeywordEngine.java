@@ -3,13 +3,14 @@ package com.automation.engine;
 import com.automation.excel.DataReader;
 import com.automation.excel.ObjectRepositoryReader;
 import com.automation.exceptions.ErrorContext;
+import com.automation.config.ExcelExecutionConfig;
 import com.automation.models.ExecutionResult;
 import com.automation.models.FunctionExecutionResult;
 import com.automation.models.ResolvedObject;
 import com.automation.models.Scenario;
 import com.automation.models.TestStep;
 import com.automation.reports.ExcelReportConfig;
-import com.automation.utils.ScreenshotUtil;
+import com.automation.services.ScreenshotService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.openqa.selenium.WebDriver;
@@ -27,6 +28,8 @@ public class KeywordEngine {
     private final FunctionResolver functionResolver;
     private final WebDriver driver;
     private final ExcelReportConfig reportConfig;
+    private final ExcelExecutionConfig executionConfig;
+    private final ScreenshotService screenshotService;
 
     public KeywordEngine(
             DataReader dataReader,
@@ -42,6 +45,27 @@ public class KeywordEngine {
             FunctionResolver functionResolver,
             ExcelReportConfig reportConfig
     ) {
+        this(dataReader, objectRepositoryReader, functionResolver, reportConfig, ExcelExecutionConfig.load());
+    }
+
+    public KeywordEngine(
+            DataReader dataReader,
+            ObjectRepositoryReader objectRepositoryReader,
+            FunctionResolver functionResolver,
+            ExcelReportConfig reportConfig,
+            ExcelExecutionConfig executionConfig
+    ) {
+        this(dataReader, objectRepositoryReader, functionResolver, reportConfig, executionConfig, null);
+    }
+
+    public KeywordEngine(
+            DataReader dataReader,
+            ObjectRepositoryReader objectRepositoryReader,
+            FunctionResolver functionResolver,
+            ExcelReportConfig reportConfig,
+            ExcelExecutionConfig executionConfig,
+            ScreenshotService screenshotService
+    ) {
         if (dataReader == null) {
             throw new IllegalArgumentException("DataReader must not be null.");
         }
@@ -56,6 +80,10 @@ public class KeywordEngine {
         this.functionResolver = functionResolver;
         this.driver = functionResolver.getDriver();
         this.reportConfig = reportConfig == null ? ExcelReportConfig.fromConfig() : reportConfig;
+        this.executionConfig = executionConfig == null ? ExcelExecutionConfig.load() : executionConfig;
+        this.screenshotService = screenshotService == null
+                ? new ScreenshotService(this.executionConfig.getScreenshotOutputDirectory())
+                : screenshotService;
     }
 
     public ExecutionResult executeStep(Scenario scenario, TestStep step) {
@@ -246,7 +274,7 @@ public class KeywordEngine {
 
         try {
             String label = isBlank(context.getResolvedValue()) ? "ManualScreenshot" : context.getResolvedValue();
-            String screenshotPath = ScreenshotUtil.captureScreenshot(driver, screenshotBaseName(context, label));
+            String screenshotPath = screenshotService.capture(driver, screenshotBaseName(context, label));
             String evidence = screenshotPath == null
                     ? "Screenshot not available: driver does not support screenshots."
                     : screenshotPath;

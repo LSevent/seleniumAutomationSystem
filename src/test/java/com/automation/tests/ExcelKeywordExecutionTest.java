@@ -1,5 +1,6 @@
 package com.automation.tests;
 
+import com.automation.config.ExcelExecutionConfig;
 import com.automation.engine.FunctionResolver;
 import com.automation.engine.KeywordEngine;
 import com.automation.engine.ScenarioRunner;
@@ -18,12 +19,15 @@ import org.testng.annotations.Test;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
+import java.util.Properties;
 
 public class ExcelKeywordExecutionTest {
 
     private static final Path TEMP_DIR = Path.of("target", "excel-keyword-execution-test");
     private static final Path LOCAL_HTML = Path.of("src", "test", "resources", "test-pages", "excel-keyword-test.html");
     private Path workbookPath;
+    private ExcelExecutionConfig executionConfig;
     private String baseUrl;
 
     @BeforeClass
@@ -33,12 +37,14 @@ public class ExcelKeywordExecutionTest {
                 TEMP_DIR.resolve("excel-keyword-execution-test.xlsx"),
                 baseUrl
         );
+        executionConfig = executionConfig(workbookPath);
+        executionConfig.validate();
     }
 
     @Test
     public void activeScenarioShouldExecuteExcelKeywordFlow() {
         FakeWebDriver fakeDriver = localPageDriver();
-        try (ExcelReader excelReader = new ExcelReader(workbookPath.toString())) {
+        try (ExcelReader excelReader = new ExcelReader(executionConfig.getScenarioFilePath().toString())) {
             ScenarioRunner scenarioRunner = scenarioRunner(excelReader, fakeDriver);
 
             List<ExecutionResult> results = scenarioRunner.runActiveScenarios();
@@ -66,8 +72,17 @@ public class ExcelKeywordExecutionTest {
         DataReader dataReader = new DataReader(excelReader);
         ObjectRepositoryReader objectRepositoryReader = new ObjectRepositoryReader(excelReader, dataReader);
         FunctionResolver functionResolver = new FunctionResolver(fakeDriver.driver());
-        KeywordEngine keywordEngine = new KeywordEngine(dataReader, objectRepositoryReader, functionResolver);
+        KeywordEngine keywordEngine = new KeywordEngine(dataReader, objectRepositoryReader, functionResolver, null, executionConfig);
         return new ScenarioRunner(scenarioReader, stepReader, keywordEngine);
+    }
+
+    private ExcelExecutionConfig executionConfig(Path scenarioFilePath) {
+        Properties properties = new Properties();
+        properties.setProperty(ExcelExecutionConfig.SCENARIO_FILE_PATH_KEY, scenarioFilePath.toString());
+        properties.setProperty(ExcelExecutionConfig.REPORT_OUTPUT_DIRECTORY_KEY, TEMP_DIR.resolve("reports").toString());
+        properties.setProperty(ExcelExecutionConfig.REPORT_FILE_NAME_KEY, "ExcelAutomationReport.html");
+        properties.setProperty(ExcelExecutionConfig.SCREENSHOT_OUTPUT_DIRECTORY_KEY, TEMP_DIR.resolve("reports").resolve("screenshots").toString());
+        return ExcelExecutionConfig.fromProperties(properties, Map.of());
     }
 
     private String failureMessages(List<ExecutionResult> results) {

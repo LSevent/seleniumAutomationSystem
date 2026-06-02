@@ -1,10 +1,10 @@
 package com.automation.reports;
 
-import com.automation.constants.FrameworkConstants;
+import com.automation.config.ExcelExecutionConfig;
 import com.automation.models.ExecutionResult;
 import com.automation.models.Scenario;
 import com.automation.models.TestCaseBlock;
-import com.automation.utils.ScreenshotUtil;
+import com.automation.services.ScreenshotService;
 import com.aventstack.extentreports.ExtentReports;
 import com.aventstack.extentreports.ExtentTest;
 import com.aventstack.extentreports.reporter.ExtentSparkReporter;
@@ -44,12 +44,16 @@ public class ExcelExecutionReporter {
             "Evidence"
     };
     private static ExtentReports sharedExtentReports;
+    private static Path sharedReportFilePath;
+    private static Path latestReportFilePath;
 
     private record EvidenceItem(String label, String path) {
     }
 
     private final WebDriver driver;
     private final ExcelReportConfig config;
+    private final ExcelExecutionConfig executionConfig;
+    private final ScreenshotService screenshotService;
     private final SensitiveDataMasker sensitiveDataMasker;
     private final ExtentReports extentReports;
 
@@ -67,14 +71,30 @@ public class ExcelExecutionReporter {
     }
 
     public ExcelExecutionReporter(WebDriver driver, ExcelReportConfig config) {
-        this(driver, config, new SensitiveDataMasker());
+        this(driver, config, ExcelExecutionConfig.load());
+    }
+
+    public ExcelExecutionReporter(WebDriver driver, ExcelReportConfig config, ExcelExecutionConfig executionConfig) {
+        this(driver, config, executionConfig, new SensitiveDataMasker());
     }
 
     public ExcelExecutionReporter(WebDriver driver, ExcelReportConfig config, SensitiveDataMasker sensitiveDataMasker) {
+        this(driver, config, ExcelExecutionConfig.load(), sensitiveDataMasker);
+    }
+
+    public ExcelExecutionReporter(
+            WebDriver driver,
+            ExcelReportConfig config,
+            ExcelExecutionConfig executionConfig,
+            SensitiveDataMasker sensitiveDataMasker
+    ) {
         this.driver = driver;
         this.config = config == null ? ExcelReportConfig.fromConfig() : config;
+        this.executionConfig = executionConfig == null ? ExcelExecutionConfig.load() : executionConfig;
+        this.executionConfig.validate();
+        this.screenshotService = new ScreenshotService(this.executionConfig.getScreenshotOutputDirectory());
         this.sensitiveDataMasker = sensitiveDataMasker == null ? new SensitiveDataMasker() : sensitiveDataMasker;
-        this.extentReports = getExcelReport();
+        this.extentReports = getExcelReport(this.executionConfig);
     }
 
     public void startScenario(Scenario scenario) {
@@ -160,7 +180,12 @@ public class ExcelExecutionReporter {
     }
 
     public static String getReportFilePath() {
-        return FrameworkConstants.EXCEL_REPORT_FILE;
+        synchronized (ExcelExecutionReporter.class) {
+            if (latestReportFilePath != null) {
+                return latestReportFilePath.toString();
+            }
+        }
+        return ExcelExecutionConfig.load().getReportFilePath().toString();
     }
 
     private ExtentTest createScenarioNode(String scenarioName) {
@@ -169,21 +194,24 @@ public class ExcelExecutionReporter {
         }
     }
 
-    private static synchronized ExtentReports getExcelReport() {
-        if (sharedExtentReports == null) {
-            sharedExtentReports = createExcelReport();
+    private static synchronized ExtentReports getExcelReport(ExcelExecutionConfig executionConfig) {
+        Path reportFilePath = executionConfig.getReportFilePath();
+        if (sharedExtentReports == null || sharedReportFilePath == null || !sharedReportFilePath.equals(reportFilePath)) {
+            sharedExtentReports = createExcelReport(executionConfig);
+            sharedReportFilePath = reportFilePath;
         }
+        latestReportFilePath = reportFilePath;
         return sharedExtentReports;
     }
 
-    private static ExtentReports createExcelReport() {
+    private static ExtentReports createExcelReport(ExcelExecutionConfig executionConfig) {
         try {
-            Files.createDirectories(Path.of(FrameworkConstants.EXCEL_REPORT_DIR));
+            Files.createDirectories(executionConfig.getReportOutputDirectory());
         } catch (Exception exception) {
             throw new IllegalStateException("Unable to create Excel execution report directory.", exception);
         }
 
-        ExtentSparkReporter sparkReporter = new ExtentSparkReporter(FrameworkConstants.EXCEL_REPORT_FILE);
+        ExtentSparkReporter sparkReporter = new ExtentSparkReporter(executionConfig.getReportFilePath().toString());
         sparkReporter.config().setTheme(Theme.STANDARD);
         sparkReporter.config().setDocumentTitle("Excel Automation Report");
         sparkReporter.config().setReportName("Excel-Driven Automation Execution");
@@ -194,6 +222,9 @@ public class ExcelExecutionReporter {
         reports.setSystemInfo("Framework", "Selenium Java TestNG");
         reports.setSystemInfo("Java Version", System.getProperty("java.version"));
         reports.setSystemInfo("Operating System", System.getProperty("os.name"));
+        reports.setSystemInfo("Scenario File", executionConfig.getScenarioFilePath().toString());
+        reports.setSystemInfo("Report File", executionConfig.getReportFilePath().toString());
+        reports.setSystemInfo("Screenshot Directory", executionConfig.getScreenshotOutputDirectory().toString());
         return reports;
     }
 
@@ -219,7 +250,7 @@ public class ExcelExecutionReporter {
             return "";
         }
         String screenshotName = screenshotBaseName(result, "Failure");
-        String screenshotPath = ScreenshotUtil.captureScreenshot(driver, screenshotName);
+        String screenshotPath = screenshotService.capture(driver, screenshotName);
         return screenshotPath == null ? "" : screenshotPath;
     }
 
@@ -425,7 +456,7 @@ public class ExcelExecutionReporter {
 
     private String toReportRelativePath(String screenshotPath) {
         try {
-            Path reportDir = Path.of(FrameworkConstants.EXCEL_REPORT_DIR).toAbsolutePath();
+            Path reportDir = executionConfig.getReportOutputDirectory().toAbsolutePath();
             Path screenshot = Path.of(screenshotPath).toAbsolutePath();
             return reportDir.relativize(screenshot).toString().replace('\\', '/');
         } catch (RuntimeException exception) {

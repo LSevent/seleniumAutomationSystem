@@ -24,15 +24,22 @@ public final class ScreenshotUtil {
     }
 
     public static String captureScreenshot(WebDriver driver, String testName) {
+        return captureScreenshot(driver, testName, Path.of(FrameworkConstants.SCREENSHOT_DIR));
+    }
+
+    public static String captureScreenshot(WebDriver driver, String testName, Path screenshotDirectory) {
         if (!(driver instanceof TakesScreenshot takesScreenshot)) {
             LOGGER.warn("Driver does not support screenshots.");
             return null;
         }
 
         try {
-            Files.createDirectories(Path.of(FrameworkConstants.SCREENSHOT_DIR));
+            Path targetDirectory = screenshotDirectory == null
+                    ? Path.of(FrameworkConstants.SCREENSHOT_DIR)
+                    : screenshotDirectory;
+            Files.createDirectories(targetDirectory);
             String fileName = sanitizeFileName(testName) + "_" + LocalDateTime.now().format(TIMESTAMP_FORMAT) + ".png";
-            Path destination = Path.of(FrameworkConstants.SCREENSHOT_DIR, fileName);
+            Path destination = targetDirectory.resolve(fileName);
             File source = takesScreenshot.getScreenshotAs(OutputType.FILE);
             FileUtils.copyFile(source, destination.toFile());
             LOGGER.info("Screenshot captured: {}", destination.toAbsolutePath());

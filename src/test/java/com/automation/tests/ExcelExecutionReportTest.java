@@ -1,5 +1,6 @@
 package com.automation.tests;
 
+import com.automation.config.ExcelExecutionConfig;
 import com.automation.engine.FunctionResolver;
 import com.automation.engine.KeywordEngine;
 import com.automation.engine.ScenarioRunner;
@@ -24,6 +25,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Properties;
 import java.util.Set;
 
 @Test(singleThreaded = true)
@@ -31,9 +33,10 @@ public class ExcelExecutionReportTest {
 
     private static final Path TEMP_DIR = Path.of("target", "excel-execution-report-test");
     private static final Path LOCAL_HTML = Path.of("src", "test", "resources", "test-pages", "excel-keyword-test.html");
-    private static final Path SCREENSHOT_DIR = Path.of("test-output", "screenshots");
 
     private Path workbookPath;
+    private Path screenshotDirectory;
+    private ExcelExecutionConfig executionConfig;
     private String baseUrl;
 
     @BeforeClass
@@ -43,6 +46,8 @@ public class ExcelExecutionReportTest {
                 TEMP_DIR.resolve("excel-execution-report-test.xlsx"),
                 baseUrl
         );
+        screenshotDirectory = TEMP_DIR.resolve("reports").resolve("screenshots").toAbsolutePath().normalize();
+        executionConfig = executionConfig(workbookPath);
     }
 
     @Test(priority = 1)
@@ -111,6 +116,7 @@ public class ExcelExecutionReportTest {
             Assert.assertTrue(reportHtml.contains("SpecificFunction.click"));
             Assert.assertTrue(reportHtml.contains("Manual screenshot"));
             Assert.assertTrue(reportHtml.contains("Evidence Gallery"));
+            Assert.assertTrue(reportHtml.contains("screenshots/"));
             Assert.assertTrue(reportHtml.contains("After input title"));
             Assert.assertTrue(reportHtml.contains("After select room"));
             Assert.assertTrue(reportHtml.contains("After submit"));
@@ -143,6 +149,7 @@ public class ExcelExecutionReportTest {
                 "Failing keyword execution test enabled",
                 "Failure With Screenshot"
         );
+        executionConfig = executionConfig(failureWorkbook);
         String prefix = "91_Failure_With_Screenshot_step1_row5_Failure";
         Set<String> before = screenshotFilesStartingWith(prefix);
 
@@ -186,6 +193,7 @@ public class ExcelExecutionReportTest {
                 "Failing keyword execution test disabled",
                 "Failure Without Screenshot"
         );
+        executionConfig = executionConfig(failureWorkbook);
         String prefix = "92_Failure_Without_Screenshot_step1_row5_Failure";
         Set<String> before = screenshotFilesStartingWith(prefix);
 
@@ -209,6 +217,7 @@ public class ExcelExecutionReportTest {
 
     @Test(priority = 4)
     public void manualScreenshotDisabledShouldSkipWithoutFailing() {
+        executionConfig = executionConfig(workbookPath);
         FakeWebDriver fakeDriver = localPageDriver();
         try (ExcelReader excelReader = new ExcelReader(workbookPath.toString())) {
             Scenario scenario = new ScenarioReader(excelReader).getActiveScenarios().get(0);
@@ -234,8 +243,8 @@ public class ExcelExecutionReportTest {
         DataReader dataReader = new DataReader(excelReader);
         ObjectRepositoryReader objectRepositoryReader = new ObjectRepositoryReader(excelReader, dataReader);
         FunctionResolver functionResolver = new FunctionResolver(fakeDriver.driver());
-        KeywordEngine keywordEngine = new KeywordEngine(dataReader, objectRepositoryReader, functionResolver, reportConfig);
-        ExcelExecutionReporter reporter = new ExcelExecutionReporter(fakeDriver.driver(), reportConfig);
+        KeywordEngine keywordEngine = new KeywordEngine(dataReader, objectRepositoryReader, functionResolver, reportConfig, executionConfig);
+        ExcelExecutionReporter reporter = new ExcelExecutionReporter(fakeDriver.driver(), reportConfig, executionConfig);
         return new ScenarioRunner(new ScenarioReader(excelReader), new StepReader(excelReader), keywordEngine, reporter);
     }
 
@@ -243,21 +252,30 @@ public class ExcelExecutionReportTest {
         DataReader dataReader = new DataReader(excelReader);
         ObjectRepositoryReader objectRepositoryReader = new ObjectRepositoryReader(excelReader, dataReader);
         FunctionResolver functionResolver = new FunctionResolver(fakeDriver.driver());
-        return new KeywordEngine(dataReader, objectRepositoryReader, functionResolver, reportConfig);
+        return new KeywordEngine(dataReader, objectRepositoryReader, functionResolver, reportConfig, executionConfig);
     }
 
     private Set<String> screenshotFilesStartingWith(String prefix) throws IOException {
-        if (!Files.exists(SCREENSHOT_DIR)) {
+        if (!Files.exists(screenshotDirectory)) {
             return Set.of();
         }
         Set<String> fileNames = new HashSet<>();
-        try (var files = Files.list(SCREENSHOT_DIR)) {
+        try (var files = Files.list(screenshotDirectory)) {
             files.filter(Files::isRegularFile)
                     .map(path -> path.getFileName().toString())
                     .filter(fileName -> fileName.startsWith(prefix))
                     .forEach(fileNames::add);
         }
         return fileNames;
+    }
+
+    private ExcelExecutionConfig executionConfig(Path scenarioFilePath) {
+        Properties properties = new Properties();
+        properties.setProperty(ExcelExecutionConfig.SCENARIO_FILE_PATH_KEY, scenarioFilePath.toString());
+        properties.setProperty(ExcelExecutionConfig.REPORT_OUTPUT_DIRECTORY_KEY, TEMP_DIR.resolve("reports").toString());
+        properties.setProperty(ExcelExecutionConfig.REPORT_FILE_NAME_KEY, "ExcelAutomationReport.html");
+        properties.setProperty(ExcelExecutionConfig.SCREENSHOT_OUTPUT_DIRECTORY_KEY, screenshotDirectory.toString());
+        return ExcelExecutionConfig.fromProperties(properties, java.util.Map.of());
     }
 
     private String failureMessages(List<ExecutionResult> results) {

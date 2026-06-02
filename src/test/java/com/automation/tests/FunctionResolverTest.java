@@ -138,6 +138,21 @@ public class FunctionResolverTest {
     }
 
     @Test
+    public void screenshotShouldNotResolveAsNormalFunctionKeyword() {
+        FunctionResolver resolver = new FunctionResolver(testDriver().driver());
+
+        IllegalArgumentException exception = Assert.expectThrows(
+                IllegalArgumentException.class,
+                () -> resolver.resolve("BRS", "screenshot")
+        );
+
+        Assert.assertEquals(
+                exception.getMessage(),
+                "Keyword 'screenshot' not found in SpecificFunction for application 'BRS' or BaseFunction."
+        );
+    }
+
+    @Test
     public void shouldFailClearlyForBlankApplication() {
         FunctionResolver resolver = new FunctionResolver(testDriver().driver());
 
