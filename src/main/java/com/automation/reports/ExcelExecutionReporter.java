@@ -299,7 +299,7 @@ public class ExcelExecutionReporter {
 
     private String stepTableHtml(List<String[]> rows) {
         StringBuilder html = new StringBuilder();
-        html.append("<h4>Step Table</h4>");
+        html.append("<h4>Steps</h4>");
         html.append("<table class='excel-step-table' style='border-collapse:collapse;width:100%;font-size:12px;'>");
         html.append("<thead><tr>");
         for (String header : STEP_TABLE_HEADERS) {
@@ -334,7 +334,7 @@ public class ExcelExecutionReporter {
         if (!ExecutionResult.STATUS_PASS.equals(status) && !failureMessage.isBlank()) {
             rows.add(new String[]{"Failure Summary", failureMessage});
         }
-        return sectionHtml("Scenario Summary", summaryTableHtml(rows));
+        return sectionHtml("Summary", summaryTableHtml(rows));
     }
 
     private String testcaseSummaryHtml(TestCaseBlock testCaseBlock, String status, Instant startTime, Instant endTime, String message) {
@@ -349,7 +349,7 @@ public class ExcelExecutionReporter {
         if (!ExecutionResult.STATUS_PASS.equals(status) && !safeMessage.isBlank()) {
             rows.add(new String[]{"Message", safeMessage});
         }
-        return sectionHtml("Testcase Summary", summaryTableHtml(rows));
+        return sectionHtml("Summary", summaryTableHtml(rows));
     }
 
     private String sectionHtml(String heading, String bodyHtml) {

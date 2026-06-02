@@ -74,8 +74,11 @@ public class ExcelExecutionReportTest {
             Assert.assertTrue(reportHtml.contains("Scenario: [1] Local keyword execution test"));
             Assert.assertTrue(reportHtml.contains("Testcase: Login BRS"));
             Assert.assertTrue(reportHtml.contains("Testcase: Create Booking"));
-            Assert.assertTrue(reportHtml.contains("Scenario Summary"));
-            Assert.assertTrue(reportHtml.contains("Testcase Summary"));
+            Assert.assertTrue(reportHtml.contains("Summary"));
+            Assert.assertTrue(reportHtml.contains("Steps"));
+            Assert.assertFalse(reportHtml.contains("Scenario Summary"));
+            Assert.assertFalse(reportHtml.contains("Testcase Summary"));
+            Assert.assertFalse(reportHtml.contains("Step Table"));
             Assert.assertTrue(reportHtml.contains("Scenario ACTION"));
             Assert.assertTrue(reportHtml.contains("Scenario status") || reportHtml.contains("Status"));
             Assert.assertTrue(reportHtml.contains("Duration"));
