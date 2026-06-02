@@ -319,7 +319,7 @@ KeywordEngine and Excel-driven Selenium execution are not implemented yet.
 
 Implemented keywords include `openUrl`, `click`, `input`, `clear`, `getText`, `verifyDisplayed`, `verifyText`, `verifyTextContains`, `verifyUrlContains`, `verifyTitle`, `verifyTitleContains`, `waitVisible`, `waitClickable`, `scrollToElement`, `safeClick`, `pressEnter`, `isDisplayed`, and `isNotDisplayed`.
 
-Excel-driven execution is not connected yet. `KeywordEngine` and the full scenario runner are not implemented yet.
+Excel-driven execution is connected through the basic `KeywordEngine` and `ScenarioRunner` flow.
 
 ## Application-Specific Functions
 
@@ -333,7 +333,21 @@ Examples:
 
 The `Application` value comes from Excel. Values such as `brs`, `Brs`, and `BRS` resolve to the uppercase package segment `BRS`.
 
-Keyword lookup order is `SpecificFunction` first, then `BaseFunction`. If the same keyword exists in both, the application-specific method wins. Full Excel scenario execution is still not implemented.
+Keyword lookup order is `SpecificFunction` first, then `BaseFunction`. If the same keyword exists in both, the application-specific method wins.
+
+## Excel Keyword Execution Flow
+
+The framework can now connect `SCENARIOS`, scenario sheets, data references, the object repository, and keyword functions for a basic Excel-driven execution flow.
+
+Execution flow:
+
+1. `ScenarioReader` reads active scenarios.
+2. `StepReader` parses active testcase blocks and step rows.
+3. `DataReader` resolves `Value` cells using `SCENARIOS.NO` as the data key.
+4. `ObjectRepositoryReader` resolves object names into XPath values, including single dynamic placeholders.
+5. `FunctionResolver` executes the keyword through `SpecificFunction` first, then `BaseFunction`.
+
+`ScenarioRunner` executes steps in Excel row order and stops the current run on the first failed step. Advanced Excel-step reporting, screenshots per step, retry handling, and parallel Excel execution are not implemented yet.
 
 ## Future Improvements
 

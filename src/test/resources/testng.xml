@@ -15,6 +15,8 @@
             <class name="com.automation.tests.ObjectRepositoryReaderTest"/>
             <class name="com.automation.tests.BaseFunctionTest"/>
             <class name="com.automation.tests.FunctionResolverTest"/>
+            <class name="com.automation.tests.KeywordEngineTest"/>
+            <class name="com.automation.tests.ExcelKeywordExecutionTest"/>
         </classes>
     </test>
 </suite>
