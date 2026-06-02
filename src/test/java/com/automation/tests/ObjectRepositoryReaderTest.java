@@ -204,7 +204,7 @@ public class ObjectRepositoryReaderTest {
             }
         });
 
-        Assert.assertEquals(exception.getMessage(), "Duplicate object found in OBJECT_REPOSITORY: Application = brs, Object = BTNLOGIN.");
+        Assert.assertEquals(exception.getMessage(), "Duplicate object found in OBJECT_REPOSITORY. Application = BRS, Object = btnLogin.");
     }
 
     @Test
@@ -220,7 +220,7 @@ public class ObjectRepositoryReaderTest {
             }
         });
 
-        Assert.assertEquals(exception.getMessage(), "Sheet not found: OBJECT_REPOSITORY");
+        Assert.assertEquals(exception.getMessage(), "Required sheet not found: OBJECT_REPOSITORY.");
     }
 
     @Test
@@ -319,7 +319,7 @@ public class ObjectRepositoryReaderTest {
             }
         });
 
-        Assert.assertEquals(exception.getMessage(), "Multiple XPath placeholders are not supported in Phase 6 for object btnRoomByName.");
+        Assert.assertEquals(exception.getMessage(), "Multiple XPath placeholders are not supported in Phase 11 for object btnRoomByName.");
     }
 
     @Test

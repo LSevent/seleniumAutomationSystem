@@ -1,5 +1,6 @@
 package com.automation.excel;
 
+import com.automation.exceptions.FrameworkException;
 import com.automation.models.Scenario;
 import com.automation.models.TestCaseBlock;
 import com.automation.models.TestStep;
@@ -74,11 +75,11 @@ public class StepReader {
                 testCases.add(currentTestCase);
             } else if (!rowData.function().isBlank()) {
                 if (currentTestCase == null) {
-                    throw new IllegalArgumentException("Step row found before any testcase parent row in sheet " + sheetName + " row " + excelRowNumber + ".");
+                    throw new FrameworkException("Step row found before any testcase parent row. Sheet: " + sheetName + ". Row: " + excelRowNumber + ".");
                 }
                 currentTestCase.addStep(toTestStep(scenario, currentTestCase, rowData, excelRowNumber));
             } else {
-                throw new IllegalArgumentException("Step row is missing Function in sheet " + sheetName + " row " + excelRowNumber + ".");
+                throw new FrameworkException("Function is required for step row. Sheet: " + sheetName + ". Row: " + excelRowNumber + ".");
             }
         }
         return testCases;
@@ -89,10 +90,10 @@ public class StepReader {
         boolean run = parseRunValue(rowData.run(), sheetName, excelRowNumber);
 
         if (!rowData.function().isBlank() || !rowData.object().isBlank() || !rowData.value().isBlank()) {
-            throw new IllegalArgumentException("Testcase parent row should not contain Function, Object, or Value. Sheet " + sheetName + " row " + excelRowNumber + ".");
+            throw new FrameworkException("Testcase parent row should not contain Function, Object, or Value. Sheet: " + sheetName + ". Row: " + excelRowNumber + ".");
         }
         if (run && rowData.application().isBlank()) {
-            throw new IllegalArgumentException("Application is required for active testcase '" + rowData.testcase() + "' in sheet " + sheetName + " row " + excelRowNumber + ".");
+            throw new FrameworkException("Application is required for active testcase '" + rowData.testcase() + "'. Sheet: " + sheetName + ". Row: " + excelRowNumber + ".");
         }
 
         return new TestCaseBlock(
@@ -134,12 +135,12 @@ public class StepReader {
         if ("Y".equals(normalizedValue) || "YES".equals(normalizedValue) || "TRUE".equals(normalizedValue)) {
             return true;
         }
-        throw new IllegalArgumentException("Invalid Run value '" + runValue + "' in sheet " + sheetName + " row " + excelRowNumber + ". Allowed values: " + ALLOWED_RUN_VALUES + ".");
+        throw new FrameworkException("Invalid Run value '" + runValue + "' in sheet " + sheetName + " row " + excelRowNumber + ". Allowed values: " + ALLOWED_RUN_VALUES + ".");
     }
 
     private void validateScenarioSheetExists(Scenario scenario) {
         if (!excelReader.isSheetExists(scenario.getAction())) {
-            throw new IllegalArgumentException("Scenario sheet not found: " + scenario.getAction() + ". Referenced by SCENARIOS row " + scenario.getExcelRowNumber() + ".");
+            throw new FrameworkException("Scenario sheet not found: " + scenario.getAction() + ". Referenced by SCENARIOS row " + scenario.getExcelRowNumber() + ".");
         }
     }
 
@@ -158,7 +159,7 @@ public class StepReader {
             String normalizedTestcaseName = normalize(testCase.getTestcaseName());
             Integer existingRow = rowByTestcaseName.putIfAbsent(normalizedTestcaseName, testCase.getExcelRowNumber());
             if (existingRow != null) {
-                throw new IllegalArgumentException("Duplicate testcase name '" + testCase.getTestcaseName() + "' found in sheet " + sheetName + ".");
+                throw new FrameworkException("Duplicate testcase name '" + testCase.getTestcaseName() + "' found in sheet " + sheetName + ".");
             }
         }
     }
@@ -166,7 +167,7 @@ public class StepReader {
     private void validateActiveTestCasesHaveSteps(String sheetName, List<TestCaseBlock> testCases) {
         for (TestCaseBlock testCase : testCases) {
             if (testCase.isRun() && testCase.getSteps().isEmpty()) {
-                throw new IllegalArgumentException("Active testcase '" + testCase.getTestcaseName() + "' has no steps in sheet " + sheetName + " row " + testCase.getExcelRowNumber() + ".");
+                throw new FrameworkException("Active testcase '" + testCase.getTestcaseName() + "' has no steps. Sheet: " + sheetName + ". Row: " + testCase.getExcelRowNumber() + ".");
             }
         }
     }
@@ -207,7 +208,7 @@ public class StepReader {
             return excelReader.findColumnIndex(sheetName, columnName);
         } catch (IllegalArgumentException exception) {
             if (exception.getMessage() != null && exception.getMessage().startsWith("Header not found:")) {
-                throw new IllegalArgumentException("Header not found: " + columnName + " in sheet " + sheetName + ".");
+                throw new FrameworkException("Header not found: " + columnName + " in sheet " + sheetName + ".", exception);
             }
             throw exception;
         }

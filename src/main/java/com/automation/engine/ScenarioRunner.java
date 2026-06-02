@@ -2,6 +2,7 @@ package com.automation.engine;
 
 import com.automation.excel.ScenarioReader;
 import com.automation.excel.StepReader;
+import com.automation.exceptions.FrameworkException;
 import com.automation.models.ExecutionResult;
 import com.automation.models.Scenario;
 import com.automation.models.TestCaseBlock;
@@ -77,8 +78,16 @@ public class ScenarioRunner {
         List<ExecutionResult> results = new ArrayList<>();
         boolean scenarioSuccess = true;
         String scenarioMessage = "";
+        List<TestCaseBlock> activeTestCases = stepReader.getActiveTestCases(scenario);
 
-        for (TestCaseBlock testCaseBlock : stepReader.getActiveTestCases(scenario)) {
+        if (activeTestCases.isEmpty()) {
+            String message = "Active scenario has no active testcase. Scenario NO = "
+                    + scenario.getNo() + ", ACTION = " + scenario.getAction() + ".";
+            finishScenarioReport(scenario, false, message);
+            throw new FrameworkException(message);
+        }
+
+        for (TestCaseBlock testCaseBlock : activeTestCases) {
             LOGGER.info(
                     "Testcase started. Scenario NO = {}, ACTION = {}, Testcase = {}",
                     scenario.getNo(),

@@ -1,5 +1,6 @@
 package com.automation.excel;
 
+import com.automation.exceptions.FrameworkException;
 import com.automation.models.Scenario;
 
 import java.util.ArrayList;
@@ -42,6 +43,7 @@ public class ScenarioReader {
                 scenarios.add(toScenario(rowIndex));
             }
         }
+        validateUniqueActiveScenarioIdentities(scenarios);
         validateUniqueScenarioNumbers(scenarios);
         return scenarios;
     }
@@ -54,13 +56,13 @@ public class ScenarioReader {
 
     private void validateRequiredHeaders() {
         if (!excelReader.isSheetExists(SCENARIOS_SHEET)) {
-            throw new IllegalArgumentException("Sheet not found: " + SCENARIOS_SHEET);
+            throw new FrameworkException("Required sheet not found: SCENARIOS.");
         }
 
-        excelReader.findColumnIndex(SCENARIOS_SHEET, NO_COLUMN);
-        excelReader.findColumnIndex(SCENARIOS_SHEET, RUN_COLUMN);
-        excelReader.findColumnIndex(SCENARIOS_SHEET, ACTION_COLUMN);
-        excelReader.findColumnIndex(SCENARIOS_SHEET, SCENARIOS_COLUMN);
+        findRequiredColumnIndex(NO_COLUMN);
+        findRequiredColumnIndex(RUN_COLUMN);
+        findRequiredColumnIndex(ACTION_COLUMN);
+        findRequiredColumnIndex(SCENARIOS_COLUMN);
     }
 
     private Scenario toScenario(int rowIndex) {
@@ -74,6 +76,9 @@ public class ScenarioReader {
                 toExcelRowNumber(rowIndex)
         );
 
+        if (scenario.getNo().isBlank()) {
+            throw new FrameworkException("Scenario NO is required in sheet SCENARIOS row " + scenario.getExcelRowNumber() + ".");
+        }
         if (scenario.isRun()) {
             validateActiveScenario(scenario);
         }
@@ -88,21 +93,18 @@ public class ScenarioReader {
         if ("Y".equals(normalizedValue) || "YES".equals(normalizedValue) || "TRUE".equals(normalizedValue)) {
             return true;
         }
-        throw new IllegalArgumentException("Invalid RUN value '" + runValue + "' in SCENARIOS row " + excelRowNumber + ". Allowed values: " + ALLOWED_RUN_VALUES + ".");
+        throw new FrameworkException("Invalid RUN value '" + runValue + "' in sheet SCENARIOS row " + excelRowNumber + ". Allowed values: " + ALLOWED_RUN_VALUES + ".");
     }
 
     private void validateActiveScenario(Scenario scenario) {
-        if (scenario.getNo().isBlank()) {
-            throw new IllegalArgumentException("NO is required for active scenario at SCENARIOS row " + scenario.getExcelRowNumber() + ".");
-        }
         if (scenario.getAction().isBlank()) {
-            throw new IllegalArgumentException("ACTION is required for active scenario at SCENARIOS row " + scenario.getExcelRowNumber() + ".");
+            throw new FrameworkException("ACTION is required for active scenario in sheet SCENARIOS row " + scenario.getExcelRowNumber() + ".");
         }
         if (scenario.getScenarioName().isBlank()) {
-            throw new IllegalArgumentException("SCENARIOS description is required for active scenario at SCENARIOS row " + scenario.getExcelRowNumber() + ".");
+            throw new FrameworkException("SCENARIOS description is required for active scenario in sheet SCENARIOS row " + scenario.getExcelRowNumber() + ".");
         }
         if (!excelReader.isSheetExists(scenario.getAction())) {
-            throw new IllegalArgumentException("Scenario sheet not found: " + scenario.getAction() + ". Referenced by SCENARIOS row " + scenario.getExcelRowNumber() + ".");
+            throw new FrameworkException("Scenario sheet not found: " + scenario.getAction() + ". Referenced by SCENARIOS row " + scenario.getExcelRowNumber() + ".");
         }
     }
 
@@ -116,7 +118,23 @@ public class ScenarioReader {
 
             Integer existingRow = rowByScenarioNumber.putIfAbsent(scenarioNumber, scenario.getExcelRowNumber());
             if (existingRow != null) {
-                throw new IllegalArgumentException("Duplicate NO value '" + scenarioNumber + "' in SCENARIOS row " + scenario.getExcelRowNumber() + ". First used in SCENARIOS row " + existingRow + ".");
+                throw new FrameworkException("Duplicate Scenario NO found in sheet SCENARIOS: " + scenarioNumber + ".");
+            }
+        }
+    }
+
+    private void validateUniqueActiveScenarioIdentities(List<Scenario> scenarios) {
+        Map<String, Integer> rowByIdentity = new LinkedHashMap<>();
+        for (Scenario scenario : scenarios) {
+            if (!scenario.isRun()) {
+                continue;
+            }
+
+            String identity = normalize(scenario.getNo()) + "::" + normalize(scenario.getAction());
+            Integer existingRow = rowByIdentity.putIfAbsent(identity, scenario.getExcelRowNumber());
+            if (existingRow != null) {
+                throw new FrameworkException("Duplicate active scenario row found for NO = "
+                        + scenario.getNo() + " and ACTION = " + scenario.getAction() + ".");
             }
         }
     }
@@ -129,7 +147,7 @@ public class ScenarioReader {
     }
 
     private String readCell(int rowIndex, String columnName) {
-        int columnIndex = excelReader.findColumnIndex(SCENARIOS_SHEET, columnName);
+        int columnIndex = findRequiredColumnIndex(columnName);
         try {
             if (columnIndex >= excelReader.getColumnCount(SCENARIOS_SHEET, rowIndex)) {
                 return "";
@@ -138,6 +156,17 @@ public class ScenarioReader {
         } catch (IllegalArgumentException exception) {
             if (exception.getMessage() != null && exception.getMessage().startsWith("Row not found: row " + rowIndex + " in sheet " + SCENARIOS_SHEET)) {
                 return "";
+            }
+            throw exception;
+        }
+    }
+
+    private int findRequiredColumnIndex(String columnName) {
+        try {
+            return excelReader.findColumnIndex(SCENARIOS_SHEET, columnName);
+        } catch (IllegalArgumentException exception) {
+            if (exception.getMessage() != null && exception.getMessage().startsWith("Header not found:")) {
+                throw new FrameworkException("Header not found: " + columnName + " in sheet SCENARIOS.", exception);
             }
             throw exception;
         }

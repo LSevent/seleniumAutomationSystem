@@ -114,7 +114,7 @@ public class ScenarioReaderTest {
             }
         });
 
-        Assert.assertTrue(exception.getMessage().contains("Invalid RUN value 'MAYBE' in SCENARIOS row 2."));
+        Assert.assertTrue(exception.getMessage().contains("Invalid RUN value 'MAYBE' in sheet SCENARIOS row 2."));
     }
 
     @Test
@@ -173,7 +173,7 @@ public class ScenarioReaderTest {
             }
         });
 
-        Assert.assertTrue(exception.getMessage().contains("NO is required for active scenario at SCENARIOS row 2."));
+        Assert.assertTrue(exception.getMessage().contains("Scenario NO is required in sheet SCENARIOS row 2."));
     }
 
     @Test
@@ -195,7 +195,7 @@ public class ScenarioReaderTest {
             }
         });
 
-        Assert.assertTrue(exception.getMessage().contains("Duplicate NO value '1' in SCENARIOS row 3. First used in SCENARIOS row 2."));
+        Assert.assertTrue(exception.getMessage().contains("Duplicate Scenario NO found in sheet SCENARIOS: 1."));
     }
 
     private Path createWorkbook(String fileName, String[] headers, Object[][] scenarioRows, String... scenarioSheetNames) throws IOException {

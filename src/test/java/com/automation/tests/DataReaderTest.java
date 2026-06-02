@@ -151,7 +151,7 @@ public class DataReaderTest {
             }
         });
 
-        Assert.assertEquals(exception.getMessage(), "Header not found: NO in sheet LOGIN_DATA");
+        Assert.assertEquals(exception.getMessage(), "Header not found: NO in sheet LOGIN_DATA.");
     }
 
     @Test
@@ -183,7 +183,7 @@ public class DataReaderTest {
             }
         });
 
-        Assert.assertEquals(exception.getMessage(), "Header not found: USERNAME in sheet LOGIN_DATA");
+        Assert.assertEquals(exception.getMessage(), "Header not found: USERNAME in sheet LOGIN_DATA.");
     }
 
     @Test

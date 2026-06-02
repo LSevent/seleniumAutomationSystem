@@ -90,7 +90,7 @@ public class BaseFunctionTest {
                 () -> baseFunction.click(" ")
         );
 
-        Assert.assertEquals(exception.getMessage(), "XPath is required for keyword click.");
+        Assert.assertEquals(exception.getMessage(), "XPath is required for keyword 'click'.");
     }
 
     @Test
@@ -102,7 +102,7 @@ public class BaseFunctionTest {
                 () -> baseFunction.verifyUrlContains("")
         );
 
-        Assert.assertEquals(exception.getMessage(), "Expected value is required for keyword verifyUrlContains.");
+        Assert.assertEquals(exception.getMessage(), "Expected value is required for keyword 'verifyUrlContains'.");
     }
 
     @Test

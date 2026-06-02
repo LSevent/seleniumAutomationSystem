@@ -1,5 +1,6 @@
 package com.automation.excel;
 
+import com.automation.exceptions.FrameworkException;
 import com.automation.models.DataReference;
 import com.automation.models.Scenario;
 
@@ -57,10 +58,10 @@ public class DataReader {
         String columnName = referenceParts[1].trim();
 
         if (sheetName.isBlank()) {
-            throw new IllegalArgumentException("Invalid data reference format: " + rawReference + ". Sheet name is required.");
+            throw new FrameworkException("Invalid data reference format: " + rawReference + ". Sheet name is required.");
         }
         if (columnName.isBlank()) {
-            throw new IllegalArgumentException("Invalid data reference format: " + sheetName + ". Column name is required.");
+            throw new FrameworkException("Invalid data reference format: " + sheetName + ". Column name is required.");
         }
 
         return new DataReference(rawReference, sheetName, columnName);
@@ -76,14 +77,14 @@ public class DataReader {
 
         DataReference dataReference = parseReference(rawValue);
         if (scenarioNo == null || scenarioNo.isBlank()) {
-            throw new IllegalArgumentException("Scenario NO is required to resolve data reference " + dataReference.getRawReference() + ".");
+            throw new FrameworkException("Scenario NO is required to resolve data reference " + dataReference.getRawReference() + ".");
         }
         if (!excelReader.isSheetExists(dataReference.getSheetName())) {
-            throw new IllegalArgumentException("Data sheet not found: " + dataReference.getSheetName() + ". Referenced by value " + dataReference.getRawReference() + ".");
+            throw new FrameworkException("Data sheet not found: " + dataReference.getSheetName() + ". Referenced by value " + dataReference.getRawReference() + ".");
         }
 
         Map<String, String> dataRow = getDataRow(dataReference.getSheetName(), scenarioNo);
-        int columnIndex = excelReader.findColumnIndex(dataReference.getSheetName(), dataReference.getColumnName());
+        int columnIndex = findRequiredColumnIndex(dataReference.getSheetName(), dataReference.getColumnName());
         String actualHeader = excelReader.getCellValue(dataReference.getSheetName(), 0, columnIndex).trim();
 
         return dataRow.getOrDefault(actualHeader, "");
@@ -97,26 +98,29 @@ public class DataReader {
             return rawValue;
         }
         if (scenario == null) {
-            throw new IllegalArgumentException("Scenario is required to resolve data reference " + rawValue.trim() + ".");
+            throw new FrameworkException("Scenario is required to resolve data reference " + rawValue.trim() + ".");
         }
         return resolveValue(rawValue, scenario.getNo());
     }
 
     public Map<String, String> getDataRow(String sheetName, String scenarioNo) {
         if (sheetName == null || sheetName.isBlank()) {
-            throw new IllegalArgumentException("Data sheet name must not be null or blank.");
+            throw new FrameworkException("Data sheet name must not be null or blank.");
         }
         if (scenarioNo == null || scenarioNo.isBlank()) {
-            throw new IllegalArgumentException("Scenario NO is required to resolve data sheet " + sheetName.trim() + ".");
+            throw new FrameworkException("Scenario NO is required to resolve data sheet " + sheetName.trim() + ".");
         }
 
         String dataSheetName = sheetName.trim();
-        excelReader.findColumnIndex(dataSheetName, DATA_KEY_COLUMN);
+        if (!excelReader.isSheetExists(dataSheetName)) {
+            throw new FrameworkException("Data sheet not found: " + dataSheetName + ".");
+        }
+        findRequiredColumnIndex(dataSheetName, DATA_KEY_COLUMN);
 
         return excelReader.getAllRowsDataByHeader(dataSheetName).stream()
                 .filter(rowData -> scenarioNo.trim().equals(rowData.getOrDefault(DATA_KEY_COLUMN, "").trim()))
                 .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("Data row not found in sheet " + dataSheetName + " for NO = " + scenarioNo.trim() + "."));
+                .orElseThrow(() -> new FrameworkException("Data row not found in sheet " + dataSheetName + " for NO = " + scenarioNo.trim() + "."));
     }
 
     private boolean containsBracketNotation(String value) {
@@ -124,6 +128,17 @@ public class DataReader {
     }
 
     private IllegalArgumentException invalidReferenceFormat(String rawReference) {
-        return new IllegalArgumentException("Invalid data reference format: " + rawReference + ". Expected format: " + REFERENCE_FORMAT + ".");
+        return new FrameworkException("Invalid data reference format: " + rawReference + ". Expected format: " + REFERENCE_FORMAT + ".");
+    }
+
+    private int findRequiredColumnIndex(String sheetName, String columnName) {
+        try {
+            return excelReader.findColumnIndex(sheetName, columnName);
+        } catch (IllegalArgumentException exception) {
+            if (exception.getMessage() != null && exception.getMessage().startsWith("Header not found:")) {
+                throw new FrameworkException("Header not found: " + columnName + " in sheet " + sheetName + ".", exception);
+            }
+            throw exception;
+        }
     }
 }

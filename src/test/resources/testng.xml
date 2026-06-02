@@ -10,13 +10,20 @@
             <class name="com.automation.tests.DashboardTest"/>
             <class name="com.automation.tests.ExcelReaderTest"/>
             <class name="com.automation.tests.ScenarioReaderTest"/>
+            <class name="com.automation.tests.ScenarioReaderValidationTest"/>
             <class name="com.automation.tests.StepReaderTest"/>
+            <class name="com.automation.tests.StepReaderValidationTest"/>
             <class name="com.automation.tests.DataReaderTest"/>
+            <class name="com.automation.tests.DataReaderValidationTest"/>
             <class name="com.automation.tests.ObjectRepositoryReaderTest"/>
+            <class name="com.automation.tests.ObjectRepositoryValidationTest"/>
             <class name="com.automation.tests.BaseFunctionTest"/>
             <class name="com.automation.tests.FunctionResolverTest"/>
+            <class name="com.automation.tests.FunctionResolverValidationTest"/>
             <class name="com.automation.tests.KeywordEngineTest"/>
+            <class name="com.automation.tests.KeywordEngineValidationTest"/>
             <class name="com.automation.tests.ExcelKeywordExecutionTest"/>
+            <class name="com.automation.tests.ScenarioRunnerValidationTest"/>
             <class name="com.automation.tests.SensitiveDataMaskerTest"/>
             <class name="com.automation.tests.ExcelExecutionReportTest"/>
         </classes>

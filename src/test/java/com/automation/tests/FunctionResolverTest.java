@@ -116,12 +116,10 @@ public class FunctionResolverTest {
                 () -> resolver.execute("UNKNOWN", "unknownKeyword", LOGIN_BUTTON_XPATH, "value")
         );
 
-        Assert.assertTrue(exception.getMessage().contains(
-                "SpecificFunction not found for application 'UNKNOWN'. Expected class: com.automation.functions.UNKNOWN.SpecificFunction."
-        ));
-        Assert.assertTrue(exception.getMessage().contains(
+        Assert.assertEquals(
+                exception.getMessage(),
                 "Keyword 'unknownKeyword' not found in SpecificFunction for application 'UNKNOWN' or BaseFunction."
-        ));
+        );
     }
 
     @Test

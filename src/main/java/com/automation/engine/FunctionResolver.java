@@ -1,6 +1,7 @@
 package com.automation.engine;
 
 import com.automation.base.BaseFunction;
+import com.automation.exceptions.FrameworkException;
 import com.automation.models.FunctionExecutionResult;
 import com.automation.models.FunctionSourceType;
 import com.automation.models.ResolvedFunction;
@@ -142,11 +143,7 @@ public class FunctionResolver {
 
         String missingKeywordMessage = "Keyword '" + keyword + "' not found in SpecificFunction for application '"
                 + normalizedApplication + "' or BaseFunction.";
-        if (specificClass == null) {
-            throw new IllegalArgumentException("SpecificFunction not found for application '" + normalizedApplication
-                    + "'. Expected class: " + specificClassName + ". " + missingKeywordMessage);
-        }
-        throw new IllegalArgumentException(missingKeywordMessage);
+        throw new FrameworkException(missingKeywordMessage);
     }
 
     private Class<?> loadSpecificFunctionClass(String className, String application) {
@@ -167,10 +164,10 @@ public class FunctionResolver {
             Constructor<?> constructor = functionClass.getConstructor(WebDriver.class);
             return constructor.newInstance(driver);
         } catch (NoSuchMethodException exception) {
-            throw new IllegalStateException("SpecificFunction for application '" + application
+            throw new FrameworkException("SpecificFunction for application '" + application
                     + "' must have a constructor that accepts WebDriver.", exception);
         } catch (InstantiationException | IllegalAccessException | InvocationTargetException exception) {
-            throw new IllegalStateException("Could not create SpecificFunction for application '" + application + "'.", exception);
+            throw new FrameworkException("Could not create SpecificFunction for application '" + application + "'.", exception);
         }
     }
 
@@ -234,33 +231,33 @@ public class FunctionResolver {
         }
 
         if (argumentStyle.requiresXpath() && isBlank(resolvedXpath)) {
-            throw new IllegalArgumentException("XPath is required for keyword '" + keyword + "'.");
+            throw new FrameworkException("XPath is required for keyword '" + keyword + "'.");
         }
         if (argumentStyle.requiresValue() && isBlank(resolvedValue)) {
-            throw new IllegalArgumentException("Value is required for keyword '" + keyword + "'.");
+            throw new FrameworkException(requiredValueMessage(keyword));
         }
     }
 
     private RuntimeException keywordExecutionFailure(String keyword, ResolvedFunction resolvedFunction, Throwable cause) {
         String message = "Failed to execute keyword '" + keyword + "' using "
-                + resolvedFunction.getResolvedClassName() + ". Cause: " + cause.getMessage();
+                + simpleClassName(resolvedFunction.getResolvedClassName()) + ". Cause: " + cause.getMessage();
         LOGGER.error(message, cause);
         if (cause instanceof AssertionError) {
             throw new AssertionError(message, cause);
         }
-        return new IllegalStateException(message, cause);
+        return new FrameworkException(message, cause);
     }
 
     private String normalizeApplication(String application, String keyword) {
         if (isBlank(application)) {
-            throw new IllegalArgumentException("Application is required to resolve keyword '" + keyword + "'.");
+            throw new FrameworkException("Application is required to resolve keyword '" + keyword + "'.");
         }
         return application.trim().toUpperCase(Locale.ROOT);
     }
 
     private void validateFunctionName(String functionName) {
         if (isBlank(functionName)) {
-            throw new IllegalArgumentException("Function name is required.");
+            throw new FrameworkException("Function name is required.");
         }
     }
 
@@ -280,6 +277,23 @@ public class FunctionResolver {
 
     private boolean isBlank(String value) {
         return value == null || value.isBlank();
+    }
+
+    private String requiredValueMessage(String keyword) {
+        return switch (keyword) {
+            case "openUrl" -> "URL is required for keyword 'openUrl'.";
+            case "verifyText", "verifyTextContains" -> "Expected text is required for keyword '" + keyword + "'.";
+            case "verifyUrlContains" -> "Expected value is required for keyword 'verifyUrlContains'.";
+            case "verifyTitle", "verifyTitleContains" -> "Expected title is required for keyword '" + keyword + "'.";
+            default -> "Value is required for keyword '" + keyword + "'.";
+        };
+    }
+
+    private String simpleClassName(String className) {
+        if (className == null || className.isBlank()) {
+            return "";
+        }
+        return className.substring(className.lastIndexOf('.') + 1);
     }
 
     private enum ArgumentStyle {

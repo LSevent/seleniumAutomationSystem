@@ -26,6 +26,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+@Test(singleThreaded = true)
 public class ExcelExecutionReportTest {
 
     private static final Path TEMP_DIR = Path.of("target", "excel-execution-report-test");
@@ -44,7 +45,7 @@ public class ExcelExecutionReportTest {
         );
     }
 
-    @Test
+    @Test(priority = 1)
     public void excelExecutionReportShouldContainStepDetailsAndManualScreenshots() throws IOException {
         FakeWebDriver fakeDriver = localPageDriver();
         try (ExcelReader excelReader = new ExcelReader(workbookPath.toString())) {
@@ -132,7 +133,7 @@ public class ExcelExecutionReportTest {
         }
     }
 
-    @Test
+    @Test(priority = 2)
     public void failureScreenshotShouldBeCreatedWhenEnabled() throws IOException {
         Path failureWorkbook = ExcelKeywordTestWorkbookFactory.createFailureWorkbook(
                 TEMP_DIR.resolve("failure-screenshot-enabled.xlsx"),
@@ -165,11 +166,17 @@ public class ExcelExecutionReportTest {
         String reportHtml = Files.readString(Path.of(ExcelExecutionReporter.getReportFilePath()));
         Assert.assertTrue(reportHtml.contains("Failure screenshot"));
         Assert.assertTrue(reportHtml.contains("Failure Details"));
+        Assert.assertTrue(reportHtml.contains("Error Message"));
+        Assert.assertTrue(reportHtml.contains("Excel Row"));
+        Assert.assertTrue(reportHtml.contains("Function"));
+        Assert.assertTrue(reportHtml.contains("Object"));
+        Assert.assertTrue(reportHtml.contains("Application"));
+        Assert.assertTrue(reportHtml.contains("Evidence"));
         Assert.assertTrue(reportHtml.contains("Evidence Gallery"));
         Assert.assertFalse(reportHtml.contains("Scenario failed. Scenario failed."));
     }
 
-    @Test
+    @Test(priority = 3)
     public void failureScreenshotShouldNotBeCreatedWhenDisabled() throws IOException {
         Path failureWorkbook = ExcelKeywordTestWorkbookFactory.createFailureWorkbook(
                 TEMP_DIR.resolve("failure-screenshot-disabled.xlsx"),
@@ -200,7 +207,7 @@ public class ExcelExecutionReportTest {
         Assert.assertTrue(after.isEmpty(), "Failure screenshot should not be created when disabled.");
     }
 
-    @Test
+    @Test(priority = 4)
     public void manualScreenshotDisabledShouldSkipWithoutFailing() {
         FakeWebDriver fakeDriver = localPageDriver();
         try (ExcelReader excelReader = new ExcelReader(workbookPath.toString())) {
@@ -219,7 +226,7 @@ public class ExcelExecutionReportTest {
 
             Assert.assertTrue(result.isSuccess());
             Assert.assertEquals(result.getStatus(), ExecutionResult.STATUS_SKIP);
-            Assert.assertEquals(result.getEvidence(), "Manual screenshot disabled by config.");
+            Assert.assertEquals(result.getEvidence(), "Manual screenshot skipped because report.manualScreenshotEnabled=false.");
         }
     }
 

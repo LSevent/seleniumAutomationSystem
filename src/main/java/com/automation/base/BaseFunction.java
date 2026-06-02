@@ -48,7 +48,8 @@ public class BaseFunction {
 
     public void input(String xpath, String value) {
         validateXPath(xpath, "input");
-        String safeValue = value == null ? "" : value;
+        validateRequired(value, "input", "Value");
+        String safeValue = value;
         LOGGER.info("Executing keyword input on XPath: {} with value: {}", xpath, maskValueIfNeeded(xpath, safeValue));
         WebElement element = waitForVisibleElement(xpath, "input");
         try {
@@ -87,7 +88,8 @@ public class BaseFunction {
 
     public void verifyText(String xpath, String expectedText) {
         validateXPath(xpath, "verifyText");
-        String expected = expectedText == null ? "" : expectedText;
+        validateRequired(expectedText, "verifyText", "Expected text");
+        String expected = expectedText;
         LOGGER.info("Executing keyword verifyText on XPath: {}", xpath);
         String actual = getText(xpath);
         if (!expected.equals(actual)) {
@@ -98,7 +100,8 @@ public class BaseFunction {
 
     public void verifyTextContains(String xpath, String expectedText) {
         validateXPath(xpath, "verifyTextContains");
-        String expected = expectedText == null ? "" : expectedText;
+        validateRequired(expectedText, "verifyTextContains", "Expected text");
+        String expected = expectedText;
         LOGGER.info("Executing keyword verifyTextContains on XPath: {}", xpath);
         String actual = getText(xpath);
         if (!actual.contains(expected)) {
@@ -214,7 +217,7 @@ public class BaseFunction {
 
     private void validateRequired(String value, String keyword, String fieldName) {
         if (value == null || value.isBlank()) {
-            throw new IllegalArgumentException(fieldName + " is required for keyword " + keyword + ".");
+            throw new IllegalArgumentException(fieldName + " is required for keyword '" + keyword + "'.");
         }
     }
 

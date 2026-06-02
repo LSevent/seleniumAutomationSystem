@@ -384,6 +384,33 @@ One `screenshot` keyword row creates one evidence screenshot when manual screens
 
 Excel result export, PDF export, retry logic, and parallel Excel execution are not implemented yet.
 
+## Validation and Error Handling
+
+Phase 11 adds framework-level validation around the Excel-driven flow so setup issues fail early with clear messages. Validation errors use `FrameworkException`, which includes the sheet, row, scenario, testcase, keyword, object, or application context where it is useful.
+
+Current validation coverage:
+
+- `SCENARIOS` must exist with `NO`, `RUN`, `ACTION`, and `SCENARIOS` headers.
+- Active scenarios require a non-blank unique `NO`, valid `RUN`, non-blank `ACTION`, and an existing scenario sheet.
+- Scenario sheets must use `Testcase`, `Run`, `Function`, `Object`, `Value`, `Application`, and `Description`.
+- Testcase parent rows require `Application` when active; step rows inherit parent `Run` and `Application` unless overridden.
+- Data references must use `SHEET_NAME.COLUMN_NAME`; bracket notation is intentionally not supported.
+- Data sheets must include `NO`, and `SCENARIOS.NO` is the matching key for data rows.
+- `OBJECT_REPOSITORY` must include `Application`, `Object`, and `XPath`, with unique `Application + Object` keys.
+- XPath replacement supports one placeholder per object at this phase.
+- Keyword lookup checks application-specific `SpecificFunction` first, then `BaseFunction`, and fails clearly when no method exists.
+- `KeywordEngine` and `ScenarioRunner` add scenario, testcase, row, object, application, and function context to execution failures.
+
+Example validation messages:
+
+```text
+Header not found: Function in sheet Create New Booking.
+Scenario NO is required in sheet SCENARIOS row 2.
+Data reference must use SHEET_NAME.COLUMN_NAME format. Found: LOGIN_DATA[USERNAME].
+Object not found in OBJECT_REPOSITORY. Application = BRS, Object = btnMissing.
+Keyword 'approveBooking' not found in SpecificFunction for application 'BRS' or BaseFunction.
+```
+
 ## Future Improvements
 
 - Add environment-specific config files for QA, staging, and production.

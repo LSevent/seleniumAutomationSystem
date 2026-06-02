@@ -2,6 +2,7 @@ package com.automation.engine;
 
 import com.automation.excel.DataReader;
 import com.automation.excel.ObjectRepositoryReader;
+import com.automation.exceptions.ErrorContext;
 import com.automation.models.ExecutionResult;
 import com.automation.models.FunctionExecutionResult;
 import com.automation.models.ResolvedObject;
@@ -19,6 +20,7 @@ import java.util.List;
 public class KeywordEngine {
 
     private static final Logger LOGGER = LogManager.getLogger(KeywordEngine.class);
+    private static final String MANUAL_SCREENSHOT_DISABLED_MESSAGE = "Manual screenshot skipped because report.manualScreenshotEnabled=false.";
 
     private final DataReader dataReader;
     private final ObjectRepositoryReader objectRepositoryReader;
@@ -143,8 +145,13 @@ public class KeywordEngine {
             context.setResolvedValue("");
             context.setResolvedXpath("");
             context.setRawXpath("");
-            context.setMessage("Failed to resolve value for step row " + step.getExcelRowNumber()
-                    + ". Raw value: " + rawValue + ". Cause: " + exception.getMessage());
+            context.setMessage("Failed to resolve value for step row " + step.getExcelRowNumber() + "."
+                    + System.lineSeparator()
+                    + "Raw value: " + rawValue + "."
+                    + System.lineSeparator()
+                    + stepContext(context)
+                    + System.lineSeparator()
+                    + "Cause: " + exception.getMessage());
             return false;
         }
     }
@@ -169,10 +176,15 @@ public class KeywordEngine {
         } catch (RuntimeException exception) {
             context.setExecutedBySource("OBJECT");
             context.setExecutedByClass(ObjectRepositoryReader.class.getName());
-            context.setMessage("Failed to resolve object for step row " + step.getExcelRowNumber()
-                    + ". Application: " + safe(step.getApplication())
-                    + ", Object: " + safe(step.getObject())
-                    + ". Cause: " + exception.getMessage());
+            context.setMessage("Failed to resolve object for step row " + step.getExcelRowNumber() + "."
+                    + System.lineSeparator()
+                    + "Application: " + safe(step.getApplication()) + "."
+                    + System.lineSeparator()
+                    + "Object: " + safe(step.getObject()) + "."
+                    + System.lineSeparator()
+                    + stepContext(context)
+                    + System.lineSeparator()
+                    + "Cause: " + exception.getMessage());
             return false;
         }
     }
@@ -200,7 +212,15 @@ public class KeywordEngine {
             );
         } catch (RuntimeException | AssertionError exception) {
             context.setMessage("Failed to execute keyword '" + safe(step.getFunction()) + "' for step row "
-                    + step.getExcelRowNumber() + ". Cause: " + exception.getMessage());
+                    + step.getExcelRowNumber() + "."
+                    + System.lineSeparator()
+                    + "Application: " + safe(step.getApplication()) + "."
+                    + System.lineSeparator()
+                    + "Object: " + safe(step.getObject()) + "."
+                    + System.lineSeparator()
+                    + stepContext(context)
+                    + System.lineSeparator()
+                    + "Cause: " + exception.getMessage());
             return failureFromContext(context);
         }
     }
@@ -219,8 +239,8 @@ public class KeywordEngine {
                     "",
                     context.getExecutedByClass(),
                     context.getExecutedBySource(),
-                    "Manual screenshot disabled by config.",
-                    "Manual screenshot disabled by config."
+                    MANUAL_SCREENSHOT_DISABLED_MESSAGE,
+                    MANUAL_SCREENSHOT_DISABLED_MESSAGE
             );
         }
 
@@ -316,6 +336,17 @@ public class KeywordEngine {
 
     private boolean isBlank(String value) {
         return value == null || value.isBlank();
+    }
+
+    private String stepContext(ExecutionContext context) {
+        Scenario scenario = context.getScenario();
+        TestStep step = context.getTestStep();
+        return new ErrorContext()
+                .scenarioNo(scenario == null ? "" : scenario.getNo())
+                .scenarioAction(scenario == null ? "" : scenario.getAction())
+                .testcase(step == null ? "" : step.getTestcaseName())
+                .function(step == null ? "" : step.getFunction())
+                .render();
     }
 
     private boolean isScreenshotKeyword(String functionName) {

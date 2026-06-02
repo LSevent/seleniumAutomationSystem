@@ -179,7 +179,7 @@ public class StepReaderTest {
             }
         });
 
-        Assert.assertTrue(exception.getMessage().contains("Step row found before any testcase parent row in sheet Create New Booking row 2."));
+        Assert.assertTrue(exception.getMessage().contains("Step row found before any testcase parent row. Sheet: Create New Booking. Row: 2."));
     }
 
     @Test
@@ -220,7 +220,7 @@ public class StepReaderTest {
             }
         });
 
-        Assert.assertTrue(exception.getMessage().contains("Application is required for active testcase 'Login BRS' in sheet Create New Booking row 2."));
+        Assert.assertTrue(exception.getMessage().contains("Application is required for active testcase 'Login BRS'. Sheet: Create New Booking. Row: 2."));
     }
 
     @Test
@@ -261,7 +261,7 @@ public class StepReaderTest {
             }
         });
 
-        Assert.assertTrue(exception.getMessage().contains("Active testcase 'Login BRS' has no steps in sheet Create New Booking row 2."));
+        Assert.assertTrue(exception.getMessage().contains("Active testcase 'Login BRS' has no steps. Sheet: Create New Booking. Row: 2."));
     }
 
     @Test
@@ -282,7 +282,7 @@ public class StepReaderTest {
             }
         });
 
-        Assert.assertTrue(exception.getMessage().contains("Testcase parent row should not contain Function, Object, or Value. Sheet Create New Booking row 2."));
+        Assert.assertTrue(exception.getMessage().contains("Testcase parent row should not contain Function, Object, or Value. Sheet: Create New Booking. Row: 2."));
     }
 
     @Test

@@ -1,5 +1,6 @@
 package com.automation.excel;
 
+import com.automation.exceptions.FrameworkException;
 import com.automation.models.DataReference;
 import com.automation.models.ResolvedObject;
 import com.automation.models.Scenario;
@@ -59,17 +60,17 @@ public class ObjectRepositoryReader {
         String normalizedObjectName = normalize(objectName);
 
         if (normalizedApplication.isBlank()) {
-            throw new IllegalArgumentException("Application is required to resolve object '" + safeValue(objectName) + "'.");
+            throw new FrameworkException("Application is required to resolve object '" + safeValue(objectName) + "'.");
         }
         if (normalizedObjectName.isBlank()) {
-            throw new IllegalArgumentException("Object name is required to resolve object.");
+            throw new FrameworkException("Object name is required to resolve object.");
         }
 
         return getAllObjects().stream()
                 .filter(testObject -> normalize(testObject.getApplication()).equals(normalizedApplication))
                 .filter(testObject -> normalize(testObject.getObjectName()).equals(normalizedObjectName))
                 .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("Object not found in OBJECT_REPOSITORY. Application = "
+                .orElseThrow(() -> new FrameworkException("Object not found in OBJECT_REPOSITORY. Application = "
                         + application.trim() + ", Object = " + objectName.trim() + "."));
     }
 
@@ -81,7 +82,7 @@ public class ObjectRepositoryReader {
             return null;
         }
         if (step.getApplication() == null || step.getApplication().isBlank()) {
-            throw new IllegalArgumentException("Application is required to resolve object '" + step.getObject().trim() + "'.");
+            throw new FrameworkException("Application is required to resolve object '" + step.getObject().trim() + "'.");
         }
 
         TestObject testObject = getObject(step.getApplication(), step.getObject());
@@ -111,7 +112,7 @@ public class ObjectRepositoryReader {
 
     private void validateRequiredHeaders() {
         if (!excelReader.isSheetExists(OBJECT_REPOSITORY_SHEET)) {
-            throw new IllegalArgumentException("Sheet not found: OBJECT_REPOSITORY");
+            throw new FrameworkException("Required sheet not found: OBJECT_REPOSITORY.");
         }
 
         findRequiredColumnIndex(APPLICATION_COLUMN);
@@ -152,7 +153,7 @@ public class ObjectRepositoryReader {
             return excelReader.findColumnIndex(OBJECT_REPOSITORY_SHEET, columnName);
         } catch (IllegalArgumentException exception) {
             if (exception.getMessage() != null && exception.getMessage().startsWith("Header not found:")) {
-                throw new IllegalArgumentException("Header not found: " + columnName + " in sheet OBJECT_REPOSITORY.");
+                throw new FrameworkException("Header not found: " + columnName + " in sheet OBJECT_REPOSITORY.", exception);
             }
             throw exception;
         }
@@ -181,13 +182,13 @@ public class ObjectRepositoryReader {
 
     private void validateObjectRow(ObjectRow objectRow, int excelRowNumber) {
         if (objectRow.application().isBlank()) {
-            throw new IllegalArgumentException("Application is required in OBJECT_REPOSITORY row " + excelRowNumber + ".");
+            throw new FrameworkException("Application is required in OBJECT_REPOSITORY row " + excelRowNumber + ".");
         }
         if (objectRow.objectName().isBlank()) {
-            throw new IllegalArgumentException("Object is required in OBJECT_REPOSITORY row " + excelRowNumber + ".");
+            throw new FrameworkException("Object is required in OBJECT_REPOSITORY row " + excelRowNumber + ".");
         }
         if (objectRow.xpath().isBlank()) {
-            throw new IllegalArgumentException("XPath is required in OBJECT_REPOSITORY row " + excelRowNumber + ".");
+            throw new FrameworkException("XPath is required in OBJECT_REPOSITORY row " + excelRowNumber + ".");
         }
     }
 
@@ -197,8 +198,8 @@ public class ObjectRepositoryReader {
             String key = normalize(testObject.getApplication()) + "::" + normalize(testObject.getObjectName());
             TestObject existingObject = objectByKey.putIfAbsent(key, testObject);
             if (existingObject != null) {
-                throw new IllegalArgumentException("Duplicate object found in OBJECT_REPOSITORY: Application = "
-                        + testObject.getApplication() + ", Object = " + testObject.getObjectName() + ".");
+                throw new FrameworkException("Duplicate object found in OBJECT_REPOSITORY. Application = "
+                        + existingObject.getApplication() + ", Object = " + existingObject.getObjectName() + ".");
             }
         }
     }
@@ -218,16 +219,16 @@ public class ObjectRepositoryReader {
             return rawXpath;
         }
         if (placeholders.size() > 1) {
-            throw new IllegalArgumentException("Multiple XPath placeholders are not supported in Phase 6 for object " + objectName + ".");
+            throw new FrameworkException("Multiple XPath placeholders are not supported in Phase 11 for object " + objectName + ".");
         }
 
         String placeholderName = placeholders.get(0);
         String placeholder = "{" + placeholderName + "}";
         if (placeholderName.isBlank()) {
-            throw new IllegalArgumentException("XPath placeholder name is required for object " + objectName + ".");
+            throw new FrameworkException("XPath placeholder cannot be blank for object " + objectName + ".");
         }
         if (rawValue == null || rawValue.isBlank()) {
-            throw new IllegalArgumentException("XPath placeholder " + placeholder + " requires a value for object " + objectName + ".");
+            throw new FrameworkException("XPath placeholder " + placeholder + " requires a value for object " + objectName + ".");
         }
 
         return xpathResolver.replacePlaceholder(rawXpath, placeholderName, resolvedValue);

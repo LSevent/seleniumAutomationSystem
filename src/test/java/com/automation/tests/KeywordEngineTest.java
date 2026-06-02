@@ -134,7 +134,11 @@ public class KeywordEngineTest {
             ExecutionResult result = keywordEngine.executeStep(scenario, step);
 
             Assert.assertFalse(result.isSuccess());
-            Assert.assertTrue(result.getMessage().contains("Failed to resolve value for step row 4. Raw value: MISSING_DATA.USERNAME."));
+            Assert.assertTrue(result.getMessage().contains("Failed to resolve value for step row 4."));
+            Assert.assertTrue(result.getMessage().contains("Raw value: MISSING_DATA.USERNAME."));
+            Assert.assertTrue(result.getMessage().contains("Scenario NO: 1."));
+            Assert.assertTrue(result.getMessage().contains("Scenario ACTION: Local Keyword Test."));
+            Assert.assertTrue(result.getMessage().contains("Testcase: Login BRS."));
             Assert.assertTrue(result.getMessage().contains("Data sheet not found: MISSING_DATA."));
         }
     }
@@ -150,10 +154,12 @@ public class KeywordEngineTest {
             ExecutionResult result = keywordEngine.executeStep(scenario, step);
 
             Assert.assertFalse(result.isSuccess());
-            Assert.assertEquals(
-                    result.getMessage(),
-                    "Failed to resolve object for step row 5. Application: BRS, Object: btnMissing. Cause: Object not found in OBJECT_REPOSITORY. Application = BRS, Object = btnMissing."
-            );
+            Assert.assertTrue(result.getMessage().contains("Failed to resolve object for step row 5."));
+            Assert.assertTrue(result.getMessage().contains("Application: BRS."));
+            Assert.assertTrue(result.getMessage().contains("Object: btnMissing."));
+            Assert.assertTrue(result.getMessage().contains("Scenario NO: 1."));
+            Assert.assertTrue(result.getMessage().contains("Testcase: Login BRS."));
+            Assert.assertTrue(result.getMessage().contains("Object not found in OBJECT_REPOSITORY. Application = BRS, Object = btnMissing."));
         }
     }
 
@@ -168,10 +174,10 @@ public class KeywordEngineTest {
             ExecutionResult result = keywordEngine.executeStep(scenario, step);
 
             Assert.assertFalse(result.isSuccess());
-            Assert.assertEquals(
-                    result.getMessage(),
-                    "Failed to execute keyword 'click' for step row 6. Cause: XPath is required for keyword 'click'."
-            );
+            Assert.assertTrue(result.getMessage().contains("Failed to execute keyword 'click' for step row 6."));
+            Assert.assertTrue(result.getMessage().contains("Application: BRS."));
+            Assert.assertTrue(result.getMessage().contains("Scenario ACTION: Local Keyword Test."));
+            Assert.assertTrue(result.getMessage().contains("Cause: XPath is required for keyword 'click'."));
         }
     }
 
