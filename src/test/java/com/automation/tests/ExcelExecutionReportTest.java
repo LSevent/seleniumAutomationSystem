@@ -95,6 +95,8 @@ public class ExcelExecutionReportTest {
             Assert.assertTrue(reportHtml.contains("LOGIN_DATA.PASSWORD"));
             Assert.assertTrue(reportHtml.contains("****"));
             Assert.assertFalse(reportHtml.contains("brs123"), "Resolved password should be masked.");
+            Assert.assertTrue(reportHtml.contains("file:///.../excel-keyword-test.html"));
+            Assert.assertFalse(reportHtml.contains(baseUrl), "Resolved CONFIG.BASE_URL should be shortened in the report.");
             Assert.assertTrue(reportHtml.contains("BOOKING_DATA.ROOM_NAME"));
             Assert.assertTrue(reportHtml.contains("Meeting Room A"));
             Assert.assertTrue(reportHtml.contains("//button[contains(text(),&#39;{ROOM_NAME}&#39;)]"));
@@ -105,6 +107,11 @@ public class ExcelExecutionReportTest {
             Assert.assertTrue(reportHtml.contains("After input title"));
             Assert.assertTrue(reportHtml.contains("After select room"));
             Assert.assertTrue(reportHtml.contains("After submit"));
+            Assert.assertFalse(reportHtml.contains("RUNNING"), "Report should only render final scenario/testcase metadata.");
+            Assert.assertFalse(reportHtml.contains("Step 1 passed"), "Passed steps should be represented by the step table.");
+            Assert.assertFalse(reportHtml.contains("Step 2 passed"), "Passed steps should be represented by the step table.");
+            Assert.assertFalse(reportHtml.contains("Scenario finished successfully."));
+            Assert.assertFalse(reportHtml.contains("Testcase finished successfully."));
             Assert.assertFalse(reportHtml.contains("ExcelReaderTest"), "Excel report should not be the generic TestNG method report.");
             Assert.assertFalse(reportHtml.contains("ScenarioReaderTest"), "Excel report should not be the generic TestNG method report.");
             Assert.assertFalse(reportHtml.contains("StepReaderTest"), "Excel report should not be the generic TestNG method report.");

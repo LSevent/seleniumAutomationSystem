@@ -75,7 +75,6 @@ public class ExcelExecutionReporter {
         scenarioStartTime = Instant.now();
         String scenarioName = "Scenario: [" + safe(scenario.getNo()) + "] " + safe(scenario.getScenarioName());
         scenarioNode = createScenarioNode(scenarioName);
-        scenarioNode.info(scenarioSummaryHtml(scenario, "RUNNING", scenarioStartTime, null, ""));
         LOGGER.info("Excel report scenario node started: {}", scenarioName);
     }
 
@@ -83,11 +82,10 @@ public class ExcelExecutionReporter {
         Instant endTime = Instant.now();
         String status = success ? ExecutionResult.STATUS_PASS : ExecutionResult.STATUS_FAIL;
         if (scenarioNode != null) {
-            scenarioNode.info(scenarioSummaryHtml(scenario, status, scenarioStartTime, endTime, message));
             if (success) {
-                scenarioNode.pass("Scenario finished successfully.");
+                scenarioNode.pass(scenarioSummaryHtml(scenario, status, scenarioStartTime, endTime, message));
             } else {
-                scenarioNode.fail("Scenario failed. " + safe(message));
+                scenarioNode.fail(scenarioSummaryHtml(scenario, status, scenarioStartTime, endTime, message));
             }
         }
     }
@@ -100,7 +98,6 @@ public class ExcelExecutionReporter {
             return;
         }
         testCaseNode = scenarioNode.createNode("Testcase: " + safe(testCaseBlock.getTestcaseName()));
-        testCaseNode.info(testcaseSummaryHtml(testCaseBlock, "RUNNING", testCaseStartTime, null, ""));
         LOGGER.info("Excel report testcase node started: {}", testCaseBlock.getTestcaseName());
     }
 
@@ -110,13 +107,12 @@ public class ExcelExecutionReporter {
         if (testCaseNode == null) {
             return;
         }
-        testCaseNode.info(stepTableHtml(currentStepRows));
-        testCaseNode.info(testcaseSummaryHtml(testCaseBlock, status, testCaseStartTime, endTime, message));
         if (success) {
-            testCaseNode.pass("Testcase finished successfully.");
+            testCaseNode.pass(testcaseSummaryHtml(testCaseBlock, status, testCaseStartTime, endTime, message));
         } else {
-            testCaseNode.fail("Testcase failed. " + safe(message));
+            testCaseNode.fail(testcaseSummaryHtml(testCaseBlock, status, testCaseStartTime, endTime, message));
         }
+        testCaseNode.info(stepTableHtml(currentStepRows));
     }
 
     public void logStep(ExecutionResult result) {
@@ -129,9 +125,7 @@ public class ExcelExecutionReporter {
 
         if (ExecutionResult.STATUS_SKIP.equals(result.getStatus())) {
             testCaseNode.skip("Step " + result.getStepOrder() + " skipped: " + safe(result.getMessage()));
-        } else if (result.isSuccess()) {
-            testCaseNode.pass("Step " + result.getStepOrder() + " passed: " + result.getFunctionName());
-        } else {
+        } else if (!result.isSuccess()) {
             testCaseNode.fail("Step " + result.getStepOrder() + " failed: " + safe(result.getMessage()));
             testCaseNode.info(failureDetailHtml(result, evidence));
         }
@@ -227,8 +221,8 @@ public class ExcelExecutionReporter {
                 safe(result.getFunctionName()),
                 safe(result.getObjectName()),
                 safe(result.getApplication()),
-                maskedRawValue(result),
-                maskedResolvedValue(result),
+                displayRawValue(result),
+                displayResolvedValue(result),
                 safe(result.getRawXpath()),
                 safe(result.getResolvedXpath()),
                 executedBy(result),
@@ -248,6 +242,10 @@ public class ExcelExecutionReporter {
         );
     }
 
+    private String displayRawValue(ExecutionResult result) {
+        return shortenLocalFileUri(maskedRawValue(result));
+    }
+
     private String maskedResolvedValue(ExecutionResult result) {
         return sensitiveDataMasker.maskIfNeeded(
                 safe(result.getResolvedValue()),
@@ -258,6 +256,23 @@ public class ExcelExecutionReporter {
                 result.getDescription(),
                 result.getFunctionName()
         );
+    }
+
+    private String displayResolvedValue(ExecutionResult result) {
+        return shortenLocalFileUri(maskedResolvedValue(result));
+    }
+
+    private String shortenLocalFileUri(String value) {
+        String safeValue = safe(value);
+        if (!safeValue.toLowerCase(Locale.ROOT).startsWith("file:/")) {
+            return safeValue;
+        }
+
+        int lastSlashIndex = Math.max(safeValue.lastIndexOf('/'), safeValue.lastIndexOf('\\'));
+        if (lastSlashIndex < 0 || lastSlashIndex >= safeValue.length() - 1) {
+            return "file:///...";
+        }
+        return "file:///.../" + safeValue.substring(lastSlashIndex + 1);
     }
 
     private String executedBy(ExecutionResult result) {
@@ -349,8 +364,8 @@ public class ExcelExecutionReporter {
                 {"Function", safe(result.getFunctionName())},
                 {"Object", safe(result.getObjectName())},
                 {"Application", safe(result.getApplication())},
-                {"Raw Value", maskedRawValue(result)},
-                {"Resolved Value", maskedResolvedValue(result)},
+                {"Raw Value", displayRawValue(result)},
+                {"Resolved Value", displayResolvedValue(result)},
                 {"Raw XPath", safe(result.getRawXpath())},
                 {"Resolved XPath", safe(result.getResolvedXpath())},
                 {"Executed By", executedBy(result)},
