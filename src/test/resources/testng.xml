@@ -13,6 +13,7 @@
             <class name="com.automation.tests.StepReaderTest"/>
             <class name="com.automation.tests.DataReaderTest"/>
             <class name="com.automation.tests.ObjectRepositoryReaderTest"/>
+            <class name="com.automation.tests.BaseFunctionTest"/>
         </classes>
     </test>
 </suite>

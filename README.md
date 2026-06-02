@@ -313,6 +313,14 @@ If the step `Value` is a data reference such as `BOOKING_DATA.ROOM_NAME`, the fr
 
 KeywordEngine and Excel-driven Selenium execution are not implemented yet.
 
+## BaseFunction Keywords
+
+`BaseFunction` contains reusable Selenium keywords shared by all applications. It accepts resolved XPath values and resolved step values, but it does not read Excel by itself.
+
+Implemented keywords include `openUrl`, `click`, `input`, `clear`, `getText`, `verifyDisplayed`, `verifyText`, `verifyTextContains`, `verifyUrlContains`, `verifyTitle`, `verifyTitleContains`, `waitVisible`, `waitClickable`, `scrollToElement`, `safeClick`, `pressEnter`, `isDisplayed`, and `isNotDisplayed`.
+
+Excel-driven execution is not connected yet. `KeywordEngine`, `SpecificFunction`, and application-specific keyword overrides are not implemented yet.
+
 ## Future Improvements
 
 - Add environment-specific config files for QA, staging, and production.
