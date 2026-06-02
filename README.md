@@ -1,8 +1,17 @@
 # Selenium Java Automation Framework
 
-A clean Selenium UI automation framework built with Java 17, Maven, TestNG, Page Object Model, WebDriverManager, ExtentReports, Log4j2, and JSON test data.
+A Java 17 Selenium automation framework for normal TestNG UI tests and Excel-driven keyword execution.
 
-This project is intentionally beginner-friendly while keeping production-minded patterns: reusable base classes, explicit waits, ThreadLocal WebDriver management for parallel tests, external configuration, external test data, reporting, screenshots, logging, and Excel-driven test design foundations.
+The project is designed to be beginner-friendly while still using production-minded patterns: Page Object Model, `ThreadLocal` WebDriver management, explicit waits, external configuration, external test data, Excel scenario parsing, data resolution, object repository resolution, keyword dispatching, screenshots, logging, validation, and HTML reporting.
+
+## Overview
+
+The framework supports two testing styles:
+
+- Standard TestNG tests that use page objects such as `LoginPage` and `DashboardPage`.
+- Excel-driven tests that read scenarios, testcases, steps, test data, and object locators from an `.xlsx` workbook.
+
+The Excel runner is the main automation design now. A scenario is selected from the `SCENARIOS` sheet, its action points to a scenario sheet, steps are parsed in Excel row order, values and XPath locators are resolved, then keywords are executed through application-specific or common Selenium functions.
 
 ## Tech Stack
 
@@ -13,10 +22,11 @@ This project is intentionally beginner-friendly while keeping production-minded 
 - WebDriverManager
 - ExtentReports
 - Log4j2
-- Jackson Databind for JSON test data
-- Apache Commons IO for screenshot file handling
+- Apache POI
+- Jackson Databind
+- Apache Commons IO
 
-## Folder Structure
+## Project Structure
 
 ```text
 src
@@ -24,58 +34,60 @@ src
 |   `-- java
 |       `-- com.automation
 |           |-- base
-|           |   |-- BasePage.java
-|           |   `-- BaseTest.java
 |           |-- config
-|           |   `-- ConfigReader.java
 |           |-- constants
-|           |   `-- FrameworkConstants.java
 |           |-- drivers
-|           |   `-- DriverFactory.java
+|           |-- engine
+|           |-- excel
+|           |-- exceptions
+|           |-- functions
+|           |   |-- BRS
+|           |   |-- CRM
+|           |   `-- HRIS
 |           |-- listeners
-|           |   `-- TestListener.java
+|           |-- models
 |           |-- pages
-|           |   |-- LoginPage.java
-|           |   `-- DashboardPage.java
+|           |-- reports
+|           |-- services
 |           `-- utils
-|               |-- DataProviderUtil.java
-|               |-- ExtentReportManager.java
-|               |-- JavaScriptUtil.java
-|               |-- ScreenshotUtil.java
-|               `-- WaitUtil.java
 `-- test
     |-- java
     |   `-- com.automation.tests
-    |       |-- DashboardTest.java
-    |       `-- LoginTest.java
     `-- resources
         |-- config.properties
+        |-- excelConfig.properties
         |-- log4j2.xml
         |-- testng.xml
+        |-- test-pages
         `-- testdata
+            |-- Final Excel Template.xlsx
+            |-- Template Testing.xlsx
+            |-- README.md
             `-- login-data.json
 ```
 
-## Setup
+## Excel Execution Flow
 
-Install:
-
-1. Java 17 or newer
-2. Maven
-3. Chrome, Firefox, or Edge
-
-Verify installation:
-
-```bash
-java -version
-mvn -version
-```
-
-Maven downloads project dependencies automatically during the first test run.
+1. `ExcelExecutionConfig` loads the Excel file path, report path, screenshot path, and report flags.
+2. `ScenarioReader` reads `SCENARIOS` and selects active rows where `RUN` is `Y`, `YES`, or `TRUE`.
+3. `StepReader` parses the scenario sheet named by `SCENARIOS.ACTION`.
+4. Parent testcase rows define testcase name, run flag, application, and description.
+5. Step rows inherit `Run` and `Application` from the latest parent testcase row unless the step overrides them.
+6. `DataReader` resolves step `Value` cells that use `SHEET_NAME.COLUMN_NAME`.
+7. `ObjectRepositoryReader` resolves step `Object` names into XPath values for the current application.
+8. `KeywordEngine` executes the step. The special `screenshot` keyword is handled by the engine for reporting evidence.
+9. `FunctionResolver` looks for the keyword in application-specific `SpecificFunction` first, then `BaseFunction`.
+10. `ScenarioRunner` collects step results and sends them to `ExcelExecutionReporter`.
 
 ## Configuration
 
-Edit `src/test/resources/config.properties`:
+Browser and normal UI-test configuration lives in:
+
+```text
+src/test/resources/config.properties
+```
+
+Important keys:
 
 ```properties
 browser=chrome
@@ -90,39 +102,275 @@ report.screenshotOnFailure=true
 report.manualScreenshotEnabled=true
 ```
 
-Supported browser values:
+Excel execution configuration lives in:
 
-- `chrome`
-- `firefox`
-- `edge`
-- `chrome-headless`
-
-You can also run Chrome headless with:
-
-```properties
-browser=chrome
-headless=true
+```text
+src/test/resources/excelConfig.properties
 ```
 
-For Selenium Grid:
+Default values keep the test suite stable inside the repository:
 
 ```properties
-remote=true
-gridUrl=http://localhost:4444/wd/hub
+excel.scenarioFilePath=src/test/resources/testdata/Template Testing.xlsx
+report.outputDirectory=test-output/reports
+report.fileName=ExcelAutomationReport.html
+screenshot.outputDirectory=test-output/screenshots
 ```
 
-## Demo Mode
+`Final Excel Template.xlsx` is the user-facing sample workbook. The default config stays pointed at `Template Testing.xlsx` because that file is the stable automated-test workbook.
 
-The default `baseUrl` is `https://example.com`, and the page locators are placeholders. Because of that, `demoMode=true` skips browser startup and the sample UI assertions until you connect the framework to a real application.
+You can override Excel settings from Maven:
 
-Before using this framework against a real app:
+```bash
+mvn test -Dexcel.scenarioFilePath="C:/Automation/scenarios/BookingRoomScenarios.xlsx" -Dreport.outputDirectory="C:/Automation/reports"
+```
 
-1. Set `baseUrl` to the real application URL.
-2. Update locators in `LoginPage.java` and `DashboardPage.java`.
-3. Update `src/test/resources/testdata/login-data.json`.
-4. Set `demoMode=false`.
+## Excel Template Format
 
-## Run Tests
+The final example workbook is:
+
+```text
+src/test/resources/testdata/Final Excel Template.xlsx
+```
+
+It contains these sheets:
+
+- `SCENARIOS`
+- `Local Keyword Test`
+- `Create New Booking`
+- `Cancel Booking`
+- `CONFIG`
+- `LOGIN_DATA`
+- `BOOKING_DATA`
+- `OBJECT_REPOSITORY`
+
+`SCENARIOS` must use this header:
+
+```text
+NO | RUN | ACTION | SCENARIOS
+```
+
+Example:
+
+```text
+1 | Y | Local Keyword Test | Local keyword execution test
+2 | N | Create New Booking | Create booking room example
+3 | N | Cancel Booking | Cancel booking example
+```
+
+Scenario sheets must use this header:
+
+```text
+Testcase | Run | Function | Object | Value | Application | Description
+```
+
+Rules:
+
+- Execution follows Excel row order.
+- A row with `Testcase` filled is a testcase parent row.
+- Rows below a parent row are step rows.
+- Parent rows require `Application`.
+- Step rows inherit `Run` and `Application` from the latest parent row.
+- Step row `Application` can override the parent only when needed.
+- `Description` is optional.
+
+Data sheets use `NO` as the matching key. The active scenario `NO` selects the matching row from each data sheet.
+
+`OBJECT_REPOSITORY` must use this header:
+
+```text
+Application | Object | XPath | Description
+```
+
+## Data References
+
+Step values can reference data sheets with dot notation:
+
+```text
+SHEET_NAME.COLUMN_NAME
+```
+
+Examples:
+
+- `CONFIG.BASE_URL`
+- `LOGIN_DATA.USERNAME`
+- `LOGIN_DATA.PASSWORD`
+- `BOOKING_DATA.ROOM_NAME`
+- `BOOKING_DATA.EXPECTED_MESSAGE`
+
+If a step `Value` does not match a data reference, the framework treats it as literal text.
+
+## Dynamic XPath
+
+The object repository supports a single dynamic placeholder in an XPath:
+
+```text
+//button[contains(text(),'{ROOM_NAME}')]
+```
+
+When a step uses:
+
+```text
+Object = btnRoomByName
+Value = BOOKING_DATA.ROOM_NAME
+```
+
+the framework resolves `BOOKING_DATA.ROOM_NAME` for the current scenario `NO`, then replaces `{ROOM_NAME}` in the XPath.
+
+Another example:
+
+```text
+//button[@data-booking='{BOOKING_ID}']
+```
+
+## Keywords
+
+Common Selenium keywords live in `BaseFunction`.
+
+Implemented common keywords include:
+
+- `openUrl`
+- `click`
+- `input`
+- `clear`
+- `getText`
+- `verifyDisplayed`
+- `verifyText`
+- `verifyTextContains`
+- `verifyUrlContains`
+- `verifyTitle`
+- `verifyTitleContains`
+- `waitVisible`
+- `waitClickable`
+- `scrollToElement`
+- `safeClick`
+- `pressEnter`
+- `isDisplayed`
+- `isNotDisplayed`
+
+The `screenshot` keyword is special. It is handled by `KeywordEngine`, not by `BaseFunction`, because it needs scenario, testcase, step, report config, screenshot naming, and evidence-link context.
+
+## BaseFunction vs SpecificFunction
+
+`BaseFunction` contains reusable Selenium actions that are shared by all applications.
+
+Application-specific keywords live in:
+
+```text
+src/main/java/com/automation/functions/{APPLICATION}/SpecificFunction.java
+```
+
+Examples:
+
+- `com.automation.functions.BRS.SpecificFunction`
+- `com.automation.functions.HRIS.SpecificFunction`
+- `com.automation.functions.CRM.SpecificFunction`
+
+Application values from Excel are normalized to uppercase package segments. For example, `brs`, `Brs`, and `BRS` resolve to `BRS`.
+
+Keyword lookup order:
+
+1. `SpecificFunction` for the current `Application`
+2. `BaseFunction`
+3. Clear failure when the keyword is not found
+
+If the same method exists in both `SpecificFunction` and `BaseFunction`, the application-specific method wins.
+
+## Screenshots
+
+Failure screenshots are controlled by:
+
+```properties
+report.screenshotOnFailure=true
+```
+
+Manual Excel screenshot steps are controlled by:
+
+```properties
+report.manualScreenshotEnabled=true
+```
+
+Manual screenshot step example:
+
+```text
+Function = screenshot
+Value = After select room
+```
+
+Screenshots are saved under the configured screenshot directory. The default is:
+
+```text
+test-output/screenshots
+```
+
+Manual screenshots and failure screenshots are attached as evidence in the Excel HTML report.
+
+## HTML Report
+
+Excel execution generates a dedicated report at the configured report directory and file name. The default is:
+
+```text
+test-output/reports/ExcelAutomationReport.html
+```
+
+This report is separate from the generic TestNG method-level ExtentReport.
+
+The Excel report hierarchy is:
+
+```text
+Scenario
+  -> Testcase
+      -> Steps
+```
+
+Every testcase uses the same step columns:
+
+```text
+Step | Excel Row | Description | Function | Object | Application | Raw Value | Resolved Value | Raw XPath | Resolved XPath | Executed By | Status | Evidence
+```
+
+Sensitive resolved values are masked by default:
+
+```properties
+report.showSensitiveData=false
+```
+
+For example, resolved password values display as:
+
+```text
+****
+```
+
+## Validations And Error Handling
+
+The Excel flow fails early with clear validation messages.
+
+Current validation coverage includes:
+
+- `SCENARIOS` sheet exists.
+- `SCENARIOS` contains `NO`, `RUN`, `ACTION`, and `SCENARIOS`.
+- Active scenario `NO` is required and unique.
+- Active scenario `ACTION` matches an existing sheet.
+- Scenario sheets contain `Testcase`, `Run`, `Function`, `Object`, `Value`, `Application`, and `Description`.
+- Active testcase parent rows require `Application`.
+- Step rows inherit parent `Run` and `Application`.
+- Data references use `SHEET_NAME.COLUMN_NAME`.
+- Data sheets contain `NO`.
+- Object repository rows are unique by `Application + Object`.
+- XPath placeholder replacement supports one placeholder.
+- Keyword lookup fails clearly when no matching method exists.
+- Execution errors include scenario, testcase, Excel row, function, object, and application context where available.
+
+Example validation messages:
+
+```text
+Scenario NO is required in sheet SCENARIOS row 2.
+Scenario sheet not found: Create New Booking. Referenced by SCENARIOS row 2.
+Object not found in OBJECT_REPOSITORY. Application = BRS, Object = btnMissing.
+Keyword 'approveBooking' not found in SpecificFunction for application 'BRS' or BaseFunction.
+```
+
+## How To Run
 
 Run the full suite:
 
@@ -136,319 +384,44 @@ Run the configured TestNG suite explicitly:
 mvn test -DsuiteXmlFile=src/test/resources/testng.xml
 ```
 
-The project is configured in `pom.xml` to run `src/test/resources/testng.xml` through Maven Surefire.
+Run with a different Excel workbook:
 
-## Parallel Execution
+```bash
+mvn test -Dexcel.scenarioFilePath="C:/Automation/scenarios/BookingRoomScenarios.xlsx"
+```
 
-Parallel execution is configured in `src/test/resources/testng.xml`:
+Run tests in parallel by editing:
+
+```text
+src/test/resources/testng.xml
+```
+
+The suite currently uses:
 
 ```xml
 <suite name="Selenium Automation Suite" parallel="methods" thread-count="2">
 ```
 
-`DriverFactory` uses `ThreadLocal<WebDriver>`, so each parallel test method receives its own browser instance.
-
-## Reports
-
-The generic TestNG method-level ExtentReport is generated at:
-
-```text
-test-output/extent-report/AutomationReport.html
-```
-
-The report includes:
-
-- Test name
-- Test description
-- Pass, fail, and skip status
-- Error details
-- Screenshots for failed tests
-
-Excel-driven scenario execution has a separate focused report at:
-
-```text
-test-output/reports/ExcelAutomationReport.html
-```
-
-## Screenshots
-
-Screenshots are captured automatically on test failure and saved to:
-
-```text
-test-output/screenshots
-```
-
-Filename format:
-
-```text
-testName_timestamp.png
-```
-
-## Logging
-
-Log4j2 logs important framework actions:
-
-- Browser launch
-- URL opened
-- Test started
-- Test passed
-- Test failed
-- Screenshot captured
-- Driver quit
-
-Console and file logging are configured in:
-
-```text
-src/test/resources/log4j2.xml
-```
-
-The log file is written to:
-
-```text
-test-output/logs/automation.log
-```
-
-## Add a New Page Object
-
-Create a new class under `src/main/java/com/automation/pages` and extend `BasePage`:
-
-```java
-public class ProfilePage extends BasePage {
-    private final By profileHeader = By.cssSelector("[data-testid='profile-header']");
-
-    public ProfilePage(WebDriver driver) {
-        super(driver);
-    }
-
-    public boolean isLoaded() {
-        return isDisplayed(profileHeader);
-    }
-}
-```
-
-Keep page classes focused on page actions and page verifications. Assertions should stay in test classes.
-
-## Add a New Test
-
-Create a new class under `src/test/java/com/automation/tests` and extend `BaseTest`:
-
-```java
-public class ProfileTest extends BaseTest {
-    @Test
-    public void profilePageShouldLoad() {
-        skipIfDemoMode();
-        ProfilePage profilePage = new ProfilePage(getDriver());
-        Assert.assertTrue(profilePage.isLoaded(), "Profile page should be loaded.");
-    }
-}
-```
-
-Register the class in `src/test/resources/testng.xml`.
-
-## Test Data
-
-Login data is stored in:
-
-```text
-src/test/resources/testdata/login-data.json
-```
-
-`DataProviderUtil` reads the JSON file and exposes TestNG data providers:
-
-- `validLoginData`
-- `invalidLoginData`
-- `emptyCredentialsData`
-
-## Excel Reader Foundation
-
-Apache POI is used to read `.xlsx` files through `ExcelReader`.
-
-`ExcelReader` can read workbook data by sheet name, row index, column index, and header name. Header row is row `0`, and header matching is case-insensitive with surrounding spaces ignored. Cell values are returned as `String`.
-
-This is only the foundation for future Excel-driven execution. Scenario execution from Excel is not implemented yet.
-
-## SCENARIOS Reader
-
-The framework can read the `SCENARIOS` sheet from an Excel workbook. Only rows with `RUN` values of `Y`, `YES`, or `TRUE` are selected as active scenarios.
-
-`NO` is the scenario data key and must be unique across the `SCENARIOS` sheet. Active scenarios require a nonblank `NO`, and future data sheets will use `NO` as the matching key.
-
-`ACTION` must match an existing sheet name.
-
-Scenario sheets use the headers `Testcase`, `Run`, `Function`, `Object`, `Value`, `Application`, and `Description`.
-
-Scenario sheet execution is not implemented yet.
-
-## Scenario Sheet Parser
-
-The framework can now parse scenario sheets referenced by `SCENARIOS.ACTION`. Scenario sheets use a parent-child testcase format: a `Testcase` row starts a testcase block, and rows under it with `Function` are parsed as ordered step rows.
-
-Execution order follows Excel row order. `Application` is required on active testcase rows; step rows inherit the parent `Application` unless they provide an override. `Description` is optional.
-
-The framework does not execute Selenium steps from Excel yet.
-
-## Data Reference Resolver
-
-The framework can resolve data references in scenario sheet `Value` cells using dot notation:
-
-```text
-SHEET_NAME.COLUMN_NAME
-```
-
-Examples:
-
-- `LOGIN_DATA.USERNAME`
-- `LOGIN_DATA.PASSWORD`
-- `BOOKING_DATA.ROOM_NAME`
-- `BOOKING_DATA.EXPECTED_MESSAGE`
-
-`SCENARIOS.NO` is used as the data key. Every data sheet must include a `NO` column, and the matching row is selected by the active scenario number.
-
-If a `Value` cell is not a data reference, it is treated as literal text. Bracket notation is not supported.
-
-## Object Repository Resolver
-
-The framework can read the `OBJECT_REPOSITORY` sheet and resolve scenario step `Object` names into XPath values.
-
-Object lookup uses `Application + Object`, so the same object name can exist in different applications. For example, `BRS.btnLogin` and `HRIS.btnLogin` can resolve to different repository rows.
-
-Only XPath is supported for now. XPath values can contain one dynamic placeholder using `{COLUMN_NAME}`:
-
-```text
-//button[contains(text(),'{ROOM_NAME}')]
-```
-
-If the step `Value` is a data reference such as `BOOKING_DATA.ROOM_NAME`, the framework resolves it using `SCENARIOS.NO` first, then replaces `{ROOM_NAME}` with the resolved value. Literal step values can also fill a single placeholder.
-
-Excel-driven Selenium execution is connected through `KeywordEngine` and `ScenarioRunner`.
-
-## BaseFunction Keywords
-
-`BaseFunction` contains reusable Selenium keywords shared by all applications. It accepts resolved XPath values and resolved step values, but it does not read Excel by itself.
-
-Implemented keywords include `openUrl`, `click`, `input`, `clear`, `getText`, `verifyDisplayed`, `verifyText`, `verifyTextContains`, `verifyUrlContains`, `verifyTitle`, `verifyTitleContains`, `waitVisible`, `waitClickable`, `scrollToElement`, `safeClick`, `pressEnter`, `isDisplayed`, and `isNotDisplayed`.
-
-Excel-driven execution is connected through the basic `KeywordEngine` and `ScenarioRunner` flow.
-
-## Application-Specific Functions
-
-Application-specific keywords live in `SpecificFunction` classes under `src/main/java/com/automation/functions/{APPLICATION}/SpecificFunction.java`.
-
-Examples:
-
-- `com.automation.functions.BRS.SpecificFunction`
-- `com.automation.functions.HRIS.SpecificFunction`
-- `com.automation.functions.CRM.SpecificFunction`
-
-The `Application` value comes from Excel. Values such as `brs`, `Brs`, and `BRS` resolve to the uppercase package segment `BRS`.
-
-Keyword lookup order is `SpecificFunction` first, then `BaseFunction`. If the same keyword exists in both, the application-specific method wins.
-
-## Excel Keyword Execution Flow
-
-The framework can now connect `SCENARIOS`, scenario sheets, data references, the object repository, and keyword functions for a basic Excel-driven execution flow.
-
-Execution flow:
-
-1. `ScenarioReader` reads active scenarios.
-2. `StepReader` parses active testcase blocks and step rows.
-3. `DataReader` resolves `Value` cells using `SCENARIOS.NO` as the data key.
-4. `ObjectRepositoryReader` resolves object names into XPath values, including single dynamic placeholders.
-5. `FunctionResolver` executes the keyword through `SpecificFunction` first, then `BaseFunction`.
-
-`ScenarioRunner` executes steps in Excel row order and stops the current run on the first failed step. Retry handling and parallel Excel execution are not implemented yet.
-
-## Excel Execution Configuration
-
-Excel-driven execution paths are configured in:
-
-```text
-src/test/resources/excelConfig.properties
-```
-
-Supported keys:
-
-- `excel.scenarioFilePath`: path to the `.xlsx` scenario workbook.
-- `report.outputDirectory`: directory where the Excel execution report is written.
-- `report.fileName`: Excel execution report file name. `.html` is appended when omitted.
-- `screenshot.outputDirectory`: directory for Excel execution screenshots.
-
-Default values keep the framework runnable from the repository:
-
-```properties
-excel.scenarioFilePath=src/test/resources/testdata/Template Testing.xlsx
-report.outputDirectory=test-output/reports
-report.fileName=ExcelAutomationReport.html
-screenshot.outputDirectory=test-output/screenshots
-```
-
-Users can override these values with Maven system properties without editing Git-tracked config:
-
-```bash
-mvn test -Dexcel.scenarioFilePath="C:/Automation/scenarios/BookingRoomScenarios.xlsx" -Dreport.outputDirectory="C:/Automation/reports"
-```
-
-Before Excel execution, the framework validates that the scenario file exists, is a file, and ends with `.xlsx`. Report and screenshot directories are created automatically when possible.
-
-## Excel Execution Report
-
-Excel-driven runs generate a dedicated HTML ExtentReport at the configured report path. By default this is `test-output/reports/ExcelAutomationReport.html`. The report uses a Scenario -> Testcase -> Step hierarchy and is separate from the generic TestNG method-level report.
-
-Every testcase uses the same step table columns: `Step`, `Excel Row`, `Description`, `Function`, `Object`, `Application`, `Raw Value`, `Resolved Value`, `Raw XPath`, `Resolved XPath`, `Executed By`, `Status`, and `Evidence`.
-
-The report includes raw and resolved values, raw and resolved XPath, and whether a keyword was executed by `BaseFunction` or `SpecificFunction`. Sensitive resolved values are masked by default.
-
-Excel report config:
-
-```properties
-report.showSensitiveData=false
-report.screenshotOnFailure=true
-report.manualScreenshotEnabled=true
-```
-
-Manual screenshots can be added from Excel with:
-
-```text
-Function = screenshot
-```
-
-One `screenshot` keyword row creates one evidence screenshot when manual screenshots are enabled. Multiple manual screenshots are supported. Failure screenshots are captured automatically when `report.screenshotOnFailure=true`.
-
-Excel result export, PDF export, retry logic, and parallel Excel execution are not implemented yet.
-
-## Validation and Error Handling
-
-Phase 11 adds framework-level validation around the Excel-driven flow so setup issues fail early with clear messages. Validation errors use `FrameworkException`, which includes the sheet, row, scenario, testcase, keyword, object, or application context where it is useful.
-
-Current validation coverage:
-
-- `SCENARIOS` must exist with `NO`, `RUN`, `ACTION`, and `SCENARIOS` headers.
-- Active scenarios require a non-blank unique `NO`, valid `RUN`, non-blank `ACTION`, and an existing scenario sheet.
-- Scenario sheets must use `Testcase`, `Run`, `Function`, `Object`, `Value`, `Application`, and `Description`.
-- Testcase parent rows require `Application` when active; step rows inherit parent `Run` and `Application` unless overridden.
-- Data references must use `SHEET_NAME.COLUMN_NAME`; bracket notation is intentionally not supported.
-- Data sheets must include `NO`, and `SCENARIOS.NO` is the matching key for data rows.
-- `OBJECT_REPOSITORY` must include `Application`, `Object`, and `XPath`, with unique `Application + Object` keys.
-- XPath replacement supports one placeholder per object at this phase.
-- Keyword lookup checks application-specific `SpecificFunction` first, then `BaseFunction`, and fails clearly when no method exists.
-- `KeywordEngine` and `ScenarioRunner` add scenario, testcase, row, object, application, and function context to execution failures.
-
-Example validation messages:
-
-```text
-Header not found: Function in sheet Create New Booking.
-Scenario NO is required in sheet SCENARIOS row 2.
-Data reference must use SHEET_NAME.COLUMN_NAME format. Found: LOGIN_DATA[USERNAME].
-Object not found in OBJECT_REPOSITORY. Application = BRS, Object = btnMissing.
-Keyword 'approveBooking' not found in SpecificFunction for application 'BRS' or BaseFunction.
-```
-
-## Future Improvements
-
-- Add environment-specific config files for QA, staging, and production.
-- Add retry logic for known transient infrastructure failures.
-- Add API helpers for test data setup.
+## Current Limitations
+
+- The final template is a sample. Real application URLs, objects, and data must be updated before production use.
+- The default Excel config points to the stable test workbook, not the final user template.
+- Excel execution stops on the first failed step in the current scenario flow.
+- Retry logic is not implemented.
+- Parallel Excel scenario execution is not implemented.
+- Only XPath locators are supported in the object repository.
+- Dynamic XPath replacement supports one placeholder per XPath.
+- PDF export and Excel result export are not implemented.
+- Secret management is not implemented.
+
+## Recommended Next Improvements
+
+- Add environment profiles for QA, staging, and production.
+- Add retry rules for selected infrastructure failures.
 - Add CI configuration for GitHub Actions, Jenkins, or GitLab CI.
-- Add cross-browser matrix execution in Selenium Grid.
-- Add Allure as an alternative reporting profile.
-- Add encrypted secret handling for credentials.
+- Add encrypted or external secret handling for credentials.
+- Add more locator strategies beyond XPath.
+- Add result export back into Excel.
+- Add grouped scenario execution or tags.
+- Add parallel Excel scenario execution after runner isolation is complete.
+- Add richer application-specific keyword examples.

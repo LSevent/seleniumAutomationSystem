@@ -27,6 +27,7 @@
             <class name="com.automation.tests.ScenarioRunnerValidationTest"/>
             <class name="com.automation.tests.SensitiveDataMaskerTest"/>
             <class name="com.automation.tests.ExcelExecutionReportTest"/>
+            <class name="com.automation.tests.FinalTemplateValidationTest"/>
         </classes>
     </test>
 </suite>
