@@ -112,6 +112,23 @@ public class DataReaderTest {
     }
 
     @Test
+    public void shouldResolveDataSheetValuesByHeaderNameWhenColumnsAreReordered() throws IOException {
+        Path workbookPath = createWorkbook(
+                "reordered-data-columns.xlsx",
+                new SheetData("LOGIN_DATA", new String[]{" password ", " no ", " username "}, new Object[][]{
+                        {"brs123", 1, "brs_admin"}
+                })
+        );
+
+        try (ExcelReader excelReader = new ExcelReader(workbookPath.toString())) {
+            DataReader dataReader = new DataReader(excelReader);
+
+            Assert.assertEquals(dataReader.resolveValue("LOGIN_DATA.USERNAME", "1"), "brs_admin");
+            Assert.assertEquals(dataReader.resolveValue("LOGIN_DATA.PASSWORD", "1"), "brs123");
+        }
+    }
+
+    @Test
     public void blankAndNullValuesShouldResolveToEmptyString() {
         try (ExcelReader excelReader = new ExcelReader(TEMPLATE_FILE.toString())) {
             DataReader dataReader = new DataReader(excelReader);

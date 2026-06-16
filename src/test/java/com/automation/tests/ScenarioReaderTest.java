@@ -98,6 +98,35 @@ public class ScenarioReaderTest {
     }
 
     @Test
+    public void shouldReadScenariosByHeaderNameWhenColumnsAreReordered() throws IOException {
+        Path workbookPath = createWorkbook(
+                "reordered-scenarios.xlsx",
+                new String[]{" action ", " scenarios ", " no ", " run "},
+                new Object[][]{
+                        {"Create New Booking", "Create booking room A", 1, "Y"},
+                        {"Cancel Booking", "Cancel booking", 2, "N"}
+                },
+                "Create New Booking",
+                "Cancel Booking"
+        );
+
+        try (ExcelReader excelReader = new ExcelReader(workbookPath.toString())) {
+            ScenarioReader scenarioReader = new ScenarioReader(excelReader);
+
+            List<Scenario> scenarios = scenarioReader.getAllScenarios();
+            List<Scenario> activeScenarios = scenarioReader.getActiveScenarios();
+
+            Assert.assertEquals(scenarios.size(), 2);
+            Assert.assertEquals(scenarios.get(0).getNo(), "1");
+            Assert.assertTrue(scenarios.get(0).isRun());
+            Assert.assertEquals(scenarios.get(0).getAction(), "Create New Booking");
+            Assert.assertEquals(scenarios.get(0).getScenarioName(), "Create booking room A");
+            Assert.assertEquals(activeScenarios.size(), 1);
+            Assert.assertEquals(activeScenarios.get(0).getAction(), "Create New Booking");
+        }
+    }
+
+    @Test
     public void invalidRunValueShouldThrowClearError() throws IOException {
         Path workbookPath = createWorkbook(
                 "invalid-run.xlsx",

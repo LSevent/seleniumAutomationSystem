@@ -115,10 +115,11 @@ public class DataReader {
         if (!excelReader.isSheetExists(dataSheetName)) {
             throw new FrameworkException("Data sheet not found: " + dataSheetName + ".");
         }
-        findRequiredColumnIndex(dataSheetName, DATA_KEY_COLUMN);
+        int dataKeyColumnIndex = findRequiredColumnIndex(dataSheetName, DATA_KEY_COLUMN);
+        String actualDataKeyHeader = excelReader.getCellValue(dataSheetName, 0, dataKeyColumnIndex).trim();
 
         return excelReader.getAllRowsDataByHeader(dataSheetName).stream()
-                .filter(rowData -> scenarioNo.trim().equals(rowData.getOrDefault(DATA_KEY_COLUMN, "").trim()))
+                .filter(rowData -> scenarioNo.trim().equals(rowData.getOrDefault(actualDataKeyHeader, "").trim()))
                 .findFirst()
                 .orElseThrow(() -> new FrameworkException("Data row not found in sheet " + dataSheetName + " for NO = " + scenarioNo.trim() + "."));
     }

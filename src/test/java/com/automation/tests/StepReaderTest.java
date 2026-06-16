@@ -125,6 +125,36 @@ public class StepReaderTest {
     }
 
     @Test
+    public void shouldParseScenarioSheetByHeaderNameWhenColumnsAreReordered() throws IOException {
+        Path workbookPath = createWorkbook(
+                "reordered-step-columns.xlsx",
+                CREATE_BOOKING_SHEET,
+                new String[]{" function ", " object ", " value ", " testcase ", " run ", " application ", " description "},
+                new Object[][]{
+                        {"", "", "", "Login BRS", "Yes", "BRS", "Login to BRS"},
+                        {"input", "txtUsername", "LOGIN_DATA.USERNAME", "", "", "", "Input username"},
+                        {"click", "btnLogin", "", "", "", "", "Click login"}
+                }
+        );
+
+        try (ExcelReader excelReader = new ExcelReader(workbookPath.toString())) {
+            TestCaseBlock loginTestCase = new StepReader(excelReader).getTestCases(scenario(CREATE_BOOKING_SHEET)).get(0);
+            List<TestStep> steps = loginTestCase.getSteps();
+
+            Assert.assertEquals(loginTestCase.getTestcaseName(), "Login BRS");
+            Assert.assertEquals(loginTestCase.getApplication(), "BRS");
+            Assert.assertEquals(steps.size(), 2);
+            Assert.assertEquals(steps.get(0).getFunction(), "input");
+            Assert.assertEquals(steps.get(0).getObject(), "txtUsername");
+            Assert.assertEquals(steps.get(0).getValue(), "LOGIN_DATA.USERNAME");
+            Assert.assertEquals(steps.get(0).getApplication(), "BRS");
+            Assert.assertEquals(steps.get(0).getDescription(), "Input username");
+            Assert.assertEquals(steps.get(1).getFunction(), "click");
+            Assert.assertEquals(steps.get(1).getStepOrder(), 2);
+        }
+    }
+
+    @Test
     public void stepRowApplicationShouldOverrideParentApplication() throws IOException {
         Path workbookPath = createWorkbook(
                 "override-application.xlsx",

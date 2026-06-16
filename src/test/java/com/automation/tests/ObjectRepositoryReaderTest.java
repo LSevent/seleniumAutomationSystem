@@ -56,6 +56,25 @@ public class ObjectRepositoryReaderTest {
     }
 
     @Test
+    public void shouldReadObjectRepositoryByHeaderNameWhenColumnsAreReordered() throws IOException {
+        Path workbookPath = createWorkbook(
+                "reordered-object-repository-columns.xlsx",
+                new SheetData("OBJECT_REPOSITORY", new String[]{" object ", " xpath ", " application "}, new Object[][]{
+                        {"btnLogin", "//button[@id='login']", "BRS"}
+                })
+        );
+
+        try (ExcelReader excelReader = new ExcelReader(workbookPath.toString())) {
+            TestObject testObject = objectRepositoryReader(excelReader).getObject("BRS", "btnLogin");
+
+            Assert.assertEquals(testObject.getApplication(), "BRS");
+            Assert.assertEquals(testObject.getObjectName(), "btnLogin");
+            Assert.assertEquals(testObject.getXpath(), "//button[@id='login']");
+            Assert.assertEquals(testObject.getDescription(), "");
+        }
+    }
+
+    @Test
     public void sameObjectNameShouldResolveByApplication() {
         try (ExcelReader excelReader = new ExcelReader(TEMPLATE_FILE.toString())) {
             ObjectRepositoryReader objectRepositoryReader = objectRepositoryReader(excelReader);

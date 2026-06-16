@@ -150,6 +150,8 @@ It contains these sheets:
 NO | RUN | ACTION | SCENARIOS
 ```
 
+All Excel readers resolve columns by header name. Header matching trims surrounding spaces and ignores case, so column order does not matter as long as required headers are present.
+
 Example:
 
 ```text
