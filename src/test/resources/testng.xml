@@ -22,6 +22,7 @@
             <class name="com.automation.tests.FunctionResolverTest"/>
             <class name="com.automation.tests.FunctionResolverValidationTest"/>
             <class name="com.automation.tests.KeywordEngineTest"/>
+            <class name="com.automation.tests.KeywordEngineResolvedContextTest"/>
             <class name="com.automation.tests.KeywordEngineValidationTest"/>
             <class name="com.automation.tests.ExcelKeywordExecutionTest"/>
             <class name="com.automation.tests.ScenarioRunnerValidationTest"/>

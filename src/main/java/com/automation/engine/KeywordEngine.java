@@ -1,5 +1,6 @@
 package com.automation.engine;
 
+import com.automation.context.StepContextHolder;
 import com.automation.excel.DataReader;
 import com.automation.excel.ObjectRepositoryReader;
 import com.automation.exceptions.ErrorContext;
@@ -7,6 +8,7 @@ import com.automation.config.ExcelExecutionConfig;
 import com.automation.models.ExecutionResult;
 import com.automation.models.FunctionExecutionResult;
 import com.automation.models.ResolvedObject;
+import com.automation.models.ResolvedStepContext;
 import com.automation.models.Scenario;
 import com.automation.models.TestStep;
 import com.automation.reports.ExcelReportConfig;
@@ -84,6 +86,47 @@ public class KeywordEngine {
         this.screenshotService = screenshotService == null
                 ? new ScreenshotService(this.executionConfig.getScreenshotOutputDirectory())
                 : screenshotService;
+    }
+
+    public ExecutionResult execute(ResolvedStepContext step) {
+        if (step == null) {
+            throw new IllegalArgumentException("ResolvedStepContext must not be null.");
+        }
+
+        StepContextHolder.set(step);
+        try {
+            LOGGER.info(
+                    "Resolved step started. Scenario NO = {}, ACTION = {}, Testcase = {}, Row = {}, Function = {}, Object = {}",
+                    step.getScenarioNo(),
+                    step.getScenarioAction(),
+                    step.getTestcaseName(),
+                    step.getExcelRow(),
+                    step.getFunction(),
+                    step.getObjectName()
+            );
+
+            ExecutionResult result;
+            if (isBlank(step.getFunction())) {
+                result = ExecutionResult.failure(
+                        step,
+                        KeywordEngine.class.getName(),
+                        "ENGINE",
+                        failureMessage(
+                                "Function is required in sheet " + safe(step.getSheetName())
+                                        + " row " + step.getExcelRow() + ".",
+                                step,
+                                null
+                        )
+                );
+            } else if (isScreenshotKeyword(step.getFunction())) {
+                result = executeManualScreenshot(step);
+            } else {
+                result = executeResolvedFunction(step);
+            }
+            return logResolvedResult(result);
+        } finally {
+            StepContextHolder.clear();
+        }
     }
 
     public ExecutionResult executeStep(Scenario scenario, TestStep step) {
@@ -167,6 +210,98 @@ public class KeywordEngine {
 
     ObjectRepositoryReader getObjectRepositoryReader() {
         return objectRepositoryReader;
+    }
+
+    private ExecutionResult executeResolvedFunction(ResolvedStepContext step) {
+        try {
+            FunctionExecutionResult functionResult = functionResolver.execute(
+                    step.getApplication(),
+                    step.getFunction(),
+                    step.getResolvedXPath(),
+                    step.getResolvedValue()
+            );
+            String executedBy = isBlank(step.getExecutedBy())
+                    ? functionResult.getExecutedByClass()
+                    : step.getExecutedBy();
+            return ExecutionResult.success(
+                    step,
+                    executedBy,
+                    functionResult.getSourceType().name(),
+                    functionResult.getMessage()
+            );
+        } catch (RuntimeException | AssertionError exception) {
+            String message = failureMessage(
+                    "Failed to execute keyword '" + safe(step.getFunction()) + "' for step row "
+                            + step.getExcelRow() + ".",
+                    step,
+                    exception
+            );
+            return ExecutionResult.failure(step, safe(step.getExecutedBy()), "FUNCTION", message);
+        }
+    }
+
+    private ExecutionResult executeManualScreenshot(ResolvedStepContext step) {
+        String executedBy = isBlank(step.getExecutedBy())
+                ? KeywordEngine.class.getName()
+                : step.getExecutedBy();
+        if (!reportConfig.isManualScreenshotEnabled()) {
+            return ExecutionResult.skipped(
+                    step,
+                    executedBy,
+                    "REPORT",
+                    MANUAL_SCREENSHOT_DISABLED_MESSAGE,
+                    MANUAL_SCREENSHOT_DISABLED_MESSAGE
+            );
+        }
+
+        try {
+            String label = isBlank(step.getResolvedValue()) ? "ManualScreenshot" : step.getResolvedValue();
+            String screenshotPath = screenshotService.capture(driver, screenshotBaseName(step, label));
+            String evidence = screenshotPath == null
+                    ? "Screenshot not available: driver does not support screenshots."
+                    : screenshotPath;
+            return ExecutionResult.success(
+                    step,
+                    executedBy,
+                    "REPORT",
+                    evidence,
+                    "Manual screenshot captured."
+            );
+        } catch (RuntimeException exception) {
+            String message = failureMessage(
+                    "Failed to capture manual screenshot for step row " + step.getExcelRow() + ".",
+                    step,
+                    exception
+            );
+            return ExecutionResult.failure(step, executedBy, "REPORT", message);
+        }
+    }
+
+    private ExecutionResult logResolvedResult(ExecutionResult result) {
+        if (ExecutionResult.STATUS_SKIP.equals(result.getStatus())) {
+            LOGGER.info(
+                    "Resolved step skipped. Scenario NO = {}, ACTION = {}, Testcase = {}, Row = {}, Function = {}, Message = {}",
+                    result.getScenarioNo(),
+                    result.getScenarioAction(),
+                    result.getTestcaseName(),
+                    result.getExcelRowNumber(),
+                    result.getFunctionName(),
+                    result.getMessage()
+            );
+        } else if (result.isSuccess()) {
+            LOGGER.info(
+                    "Resolved step passed. Scenario NO = {}, ACTION = {}, Testcase = {}, Row = {}, Function = {}, Source = {}",
+                    result.getScenarioNo(),
+                    result.getScenarioAction(),
+                    result.getTestcaseName(),
+                    result.getExcelRowNumber(),
+                    result.getFunctionName(),
+                    result.getExecutionSource()
+            );
+        } else {
+            logFailure(result);
+        }
+        return result;
     }
 
     private boolean resolveValue(ExecutionContext context) {
@@ -385,6 +520,26 @@ public class KeywordEngine {
                 .render();
     }
 
+    private String resolvedStepContext(ResolvedStepContext step) {
+        return new ErrorContext()
+                .scenarioNo(step.getScenarioNo())
+                .scenarioAction(step.getScenarioAction())
+                .testcase(step.getTestcaseName())
+                .row(step.getExcelRow())
+                .function(step.getFunction())
+                .object(step.getObjectName())
+                .application(step.getApplication())
+                .render();
+    }
+
+    private String failureMessage(String summary, ResolvedStepContext step, Throwable cause) {
+        String message = summary + System.lineSeparator() + resolvedStepContext(step);
+        if (cause != null) {
+            message += System.lineSeparator() + "Cause: " + safe(cause.getMessage());
+        }
+        return message;
+    }
+
     private boolean isScreenshotKeyword(String functionName) {
         return functionName != null && "screenshot".equalsIgnoreCase(functionName.trim());
     }
@@ -397,6 +552,17 @@ public class KeywordEngine {
                 safe(step.getTestcaseName()),
                 "step" + step.getStepOrder(),
                 "row" + step.getExcelRowNumber(),
+                safe(label)
+        );
+    }
+
+    private String screenshotBaseName(ResolvedStepContext step, String label) {
+        return String.join(
+                "_",
+                safe(step.getScenarioNo()),
+                safe(step.getTestcaseName()),
+                "step" + step.getStepNumber(),
+                "row" + step.getExcelRow(),
                 safe(label)
         );
     }

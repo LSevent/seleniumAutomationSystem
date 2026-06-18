@@ -125,6 +125,44 @@ public class ExecutionResult {
         return fromStep(scenario, step, resolvedValue, rawXpath, resolvedXpath, executedByClass, executionSource, true, STATUS_SKIP, evidence, message);
     }
 
+    public static ExecutionResult success(
+            ResolvedStepContext step,
+            String executedByClass,
+            String executionSource,
+            String message
+    ) {
+        return fromResolvedStep(step, executedByClass, executionSource, true, STATUS_PASS, "", message);
+    }
+
+    public static ExecutionResult success(
+            ResolvedStepContext step,
+            String executedByClass,
+            String executionSource,
+            String evidence,
+            String message
+    ) {
+        return fromResolvedStep(step, executedByClass, executionSource, true, STATUS_PASS, evidence, message);
+    }
+
+    public static ExecutionResult failure(
+            ResolvedStepContext step,
+            String executedByClass,
+            String executionSource,
+            String message
+    ) {
+        return fromResolvedStep(step, executedByClass, executionSource, false, STATUS_FAIL, "", message);
+    }
+
+    public static ExecutionResult skipped(
+            ResolvedStepContext step,
+            String executedByClass,
+            String executionSource,
+            String evidence,
+            String message
+    ) {
+        return fromResolvedStep(step, executedByClass, executionSource, true, STATUS_SKIP, evidence, message);
+    }
+
     private static ExecutionResult fromStep(
             Scenario scenario,
             TestStep step,
@@ -159,6 +197,39 @@ public class ExecutionResult {
                 safe(message),
                 step == null ? 0 : step.getExcelRowNumber(),
                 step == null ? 0 : step.getStepOrder()
+        );
+    }
+
+    private static ExecutionResult fromResolvedStep(
+            ResolvedStepContext step,
+            String executedByClass,
+            String executionSource,
+            boolean success,
+            String status,
+            String evidence,
+            String message
+    ) {
+        return new ExecutionResult(
+                safe(step == null ? "" : step.getScenarioNo()),
+                safe(step == null ? "" : step.getScenarioName()),
+                safe(step == null ? "" : step.getScenarioAction()),
+                safe(step == null ? "" : step.getTestcaseName()),
+                safe(step == null ? "" : step.getDescription()),
+                safe(step == null ? "" : step.getFunction()),
+                safe(step == null ? "" : step.getObjectName()),
+                safe(step == null ? "" : step.getApplication()),
+                safe(step == null ? "" : step.getRawValue()),
+                safe(step == null ? "" : step.getResolvedValue()),
+                safe(step == null ? "" : step.getRawXPath()),
+                safe(step == null ? "" : step.getResolvedXPath()),
+                safe(executedByClass),
+                safe(executionSource),
+                success,
+                safe(status),
+                safe(evidence),
+                safe(message),
+                step == null ? 0 : step.getExcelRow(),
+                step == null ? 0 : step.getStepNumber()
         );
     }
 
