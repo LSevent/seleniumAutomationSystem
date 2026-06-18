@@ -1,10 +1,13 @@
 package com.automation.engine;
 
 import com.automation.base.BaseFunction;
+import com.automation.context.StepContextHolder;
+import com.automation.exceptions.ErrorContext;
 import com.automation.exceptions.FrameworkException;
 import com.automation.models.FunctionExecutionResult;
 import com.automation.models.FunctionSourceType;
 import com.automation.models.ResolvedFunction;
+import com.automation.models.ResolvedStepContext;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.openqa.selenium.WebDriver;
@@ -59,7 +62,11 @@ public class FunctionResolver {
     }
 
     public ResolvedFunction resolve(String application, String functionName) {
-        return resolveInternal(application, functionName).resolvedFunction();
+        return resolveInternal(
+                application,
+                functionName,
+                StepContextHolder.current().orElse(null)
+        ).resolvedFunction();
     }
 
     public WebDriver getDriver() {
@@ -72,19 +79,23 @@ public class FunctionResolver {
             String resolvedXpath,
             String resolvedValue
     ) {
-        MethodResolution resolution = resolveInternal(application, functionName);
-        validateArguments(functionName.trim(), resolvedXpath, resolvedValue);
+        ResolvedStepContext step = StepContextHolder.current().orElseGet(
+                () -> compatibilityContext(application, functionName, resolvedXpath, resolvedValue)
+        );
+        MethodResolution resolution = resolveInternal(application, functionName, step);
+        String keyword = functionName.trim();
+        validateArguments(keyword, step, resolution.method());
 
         LOGGER.info(
                 "Executing keyword '{}' using {}.",
-                functionName.trim(),
+                keyword,
                 resolution.resolvedFunction().getResolvedClassName()
         );
 
         try {
-            Object[] arguments = buildArguments(functionName.trim(), resolvedXpath, resolvedValue, resolution.method());
+            Object[] arguments = buildArguments(keyword, step, resolution.method());
             resolution.method().invoke(resolution.target(), arguments);
-            String message = "Executed keyword '" + functionName.trim() + "' using "
+            String message = "Executed keyword '" + keyword + "' using "
                     + resolution.resolvedFunction().getResolvedClassName() + ".";
             LOGGER.info(message);
             return new FunctionExecutionResult(
@@ -96,14 +107,18 @@ public class FunctionResolver {
                     message
             );
         } catch (IllegalAccessException exception) {
-            throw keywordExecutionFailure(functionName.trim(), resolution.resolvedFunction(), exception);
+            throw keywordExecutionFailure(keyword, resolution.resolvedFunction(), exception, step);
         } catch (InvocationTargetException exception) {
             Throwable cause = exception.getCause() == null ? exception : exception.getCause();
-            throw keywordExecutionFailure(functionName.trim(), resolution.resolvedFunction(), cause);
+            throw keywordExecutionFailure(keyword, resolution.resolvedFunction(), cause, step);
         }
     }
 
-    private MethodResolution resolveInternal(String application, String functionName) {
+    private MethodResolution resolveInternal(
+            String application,
+            String functionName,
+            ResolvedStepContext step
+    ) {
         validateFunctionName(functionName);
         String keyword = functionName.trim();
         String normalizedApplication = normalizeApplication(application, keyword);
@@ -113,37 +128,62 @@ public class FunctionResolver {
 
         Class<?> specificClass = loadSpecificFunctionClass(specificClassName, normalizedApplication);
         if (specificClass != null) {
-            Optional<Method> specificMethod = findKeywordMethod(specificClass, keyword, true);
-            if (specificMethod.isPresent()) {
-                Object target = createSpecificFunction(specificClass, normalizedApplication);
-                ResolvedFunction resolvedFunction = new ResolvedFunction(
-                        normalizedApplication,
-                        keyword,
-                        specificClass.getName(),
-                        FunctionSourceType.SPECIFIC,
-                        specificMethod.get().getName()
-                );
-                LOGGER.info("Selected SpecificFunction for keyword '{}': {}", keyword, specificClass.getName());
-                return new MethodResolution(resolvedFunction, specificMethod.get(), target);
+            Optional<Method> noArgSpecificMethod = findNoArgMethod(specificClass, keyword, true);
+            if (noArgSpecificMethod.isPresent()) {
+                return specificResolution(specificClass, normalizedApplication, keyword, noArgSpecificMethod.get());
             }
         }
 
-        Optional<Method> baseMethod = findKeywordMethod(BaseFunction.class, keyword, false);
-        if (baseMethod.isPresent()) {
-            ResolvedFunction resolvedFunction = new ResolvedFunction(
-                    normalizedApplication,
-                    keyword,
-                    BaseFunction.class.getName(),
-                    FunctionSourceType.BASE,
-                    baseMethod.get().getName()
-            );
-            LOGGER.info("Fallback to BaseFunction for keyword '{}'.", keyword);
-            return new MethodResolution(resolvedFunction, baseMethod.get(), baseFunction);
+        Optional<Method> noArgBaseMethod = findNoArgMethod(BaseFunction.class, keyword, false);
+        if (noArgBaseMethod.isPresent()) {
+            return baseResolution(normalizedApplication, keyword, noArgBaseMethod.get());
+        }
+
+        if (specificClass != null) {
+            Optional<Method> legacySpecificMethod = findLegacyMethod(specificClass, keyword, true);
+            if (legacySpecificMethod.isPresent()) {
+                return specificResolution(specificClass, normalizedApplication, keyword, legacySpecificMethod.get());
+            }
+        }
+
+        Optional<Method> legacyBaseMethod = findLegacyMethod(BaseFunction.class, keyword, false);
+        if (legacyBaseMethod.isPresent()) {
+            return baseResolution(normalizedApplication, keyword, legacyBaseMethod.get());
         }
 
         String missingKeywordMessage = "Keyword '" + keyword + "' not found in SpecificFunction for application '"
                 + normalizedApplication + "' or BaseFunction.";
-        throw new FrameworkException(missingKeywordMessage);
+        throw new FrameworkException(withStepContext(missingKeywordMessage, step));
+    }
+
+    private MethodResolution specificResolution(
+            Class<?> specificClass,
+            String application,
+            String keyword,
+            Method method
+    ) {
+        Object target = createSpecificFunction(specificClass, application);
+        ResolvedFunction resolvedFunction = new ResolvedFunction(
+                application,
+                keyword,
+                specificClass.getName(),
+                FunctionSourceType.SPECIFIC,
+                method.getName()
+        );
+        LOGGER.info("Selected SpecificFunction for keyword '{}': {}", keyword, specificClass.getName());
+        return new MethodResolution(resolvedFunction, method, target);
+    }
+
+    private MethodResolution baseResolution(String application, String keyword, Method method) {
+        ResolvedFunction resolvedFunction = new ResolvedFunction(
+                application,
+                keyword,
+                BaseFunction.class.getName(),
+                FunctionSourceType.BASE,
+                method.getName()
+        );
+        LOGGER.info("Fallback to BaseFunction for keyword '{}'.", keyword);
+        return new MethodResolution(resolvedFunction, method, baseFunction);
     }
 
     private Class<?> loadSpecificFunctionClass(String className, String application) {
@@ -171,76 +211,98 @@ public class FunctionResolver {
         }
     }
 
-    private Optional<Method> findKeywordMethod(Class<?> functionClass, String keyword, boolean declaredOnly) {
-        Method[] methods = declaredOnly ? functionClass.getDeclaredMethods() : functionClass.getMethods();
-        ArgumentStyle argumentStyle = KNOWN_ARGUMENT_STYLES.get(keyword);
-
-        if (argumentStyle != null) {
-            return findMethod(methods, keyword, argumentStyle.parameterCount());
-        }
-
-        return findMethod(methods, keyword, 2)
-                .or(() -> findMethod(methods, keyword, 1))
-                .or(() -> findMethod(methods, keyword, 0));
+    private Optional<Method> findNoArgMethod(Class<?> functionClass, String keyword, boolean declaredOnly) {
+        return findMethod(functionClass, keyword, declaredOnly, MethodSignature.NO_ARGS);
     }
 
-    private Optional<Method> findMethod(Method[] methods, String keyword, int parameterCount) {
+    private Optional<Method> findLegacyMethod(Class<?> functionClass, String keyword, boolean declaredOnly) {
+        ArgumentStyle argumentStyle = KNOWN_ARGUMENT_STYLES.get(keyword);
+
+        if (argumentStyle != null && argumentStyle.parameterCount() > 0) {
+            Optional<Method> knownStyleMethod = findMethod(
+                    functionClass,
+                    keyword,
+                    declaredOnly,
+                    MethodSignature.forStringCount(argumentStyle.parameterCount())
+            );
+            if (knownStyleMethod.isPresent()) {
+                return knownStyleMethod;
+            }
+        }
+
+        return findMethod(functionClass, keyword, declaredOnly, MethodSignature.TWO_STRINGS)
+                .or(() -> findMethod(functionClass, keyword, declaredOnly, MethodSignature.ONE_STRING))
+                .or(() -> findMethod(functionClass, keyword, declaredOnly, MethodSignature.CONTEXT_FALLBACK));
+    }
+
+    private Optional<Method> findMethod(
+            Class<?> functionClass,
+            String keyword,
+            boolean declaredOnly,
+            MethodSignature signature
+    ) {
+        Method[] methods = declaredOnly ? functionClass.getDeclaredMethods() : functionClass.getMethods();
         for (Method method : methods) {
             if (method.getName().equals(keyword)
                     && Modifier.isPublic(method.getModifiers())
-                    && method.getParameterCount() == parameterCount
-                    && hasOnlyStringParameters(method)) {
+                    && signature.matches(method)) {
                 return Optional.of(method);
             }
         }
         return Optional.empty();
     }
 
-    private boolean hasOnlyStringParameters(Method method) {
-        for (Class<?> parameterType : method.getParameterTypes()) {
-            if (!String.class.equals(parameterType)) {
-                return false;
-            }
+    private Object[] buildArguments(String keyword, ResolvedStepContext step, Method method) {
+        if (method.getParameterCount() == 0) {
+            return new Object[0];
         }
-        return true;
-    }
+        if (MethodSignature.CONTEXT_FALLBACK.matches(method)) {
+            return new Object[]{step.getResolvedXPath(), step.getResolvedValue(), step};
+        }
 
-    private Object[] buildArguments(String keyword, String resolvedXpath, String resolvedValue, Method method) {
         ArgumentStyle argumentStyle = KNOWN_ARGUMENT_STYLES.get(keyword);
-        if (argumentStyle != null) {
-            return switch (argumentStyle) {
-                case NO_ARGS -> new Object[0];
-                case XPATH_ONLY -> new Object[]{resolvedXpath.trim()};
-                case VALUE_ONLY -> new Object[]{resolvedValue.trim()};
-                case XPATH_AND_VALUE -> new Object[]{resolvedXpath.trim(), resolvedValue.trim()};
-            };
+        if (method.getParameterCount() == 1) {
+            if (argumentStyle == ArgumentStyle.XPATH_ONLY) {
+                return new Object[]{safe(step.getResolvedXPath())};
+            }
+            if (argumentStyle == ArgumentStyle.VALUE_ONLY) {
+                return new Object[]{safe(step.getResolvedValue())};
+            }
+            return new Object[]{firstNonBlank(step.getResolvedXPath(), step.getResolvedValue())};
         }
-
-        return switch (method.getParameterCount()) {
-            case 0 -> new Object[0];
-            case 1 -> new Object[]{firstNonBlank(resolvedXpath, resolvedValue)};
-            case 2 -> new Object[]{resolvedXpath, resolvedValue};
-            default -> throw new IllegalArgumentException("Unsupported method signature for keyword '" + keyword + "'.");
-        };
+        if (method.getParameterCount() == 2) {
+            return new Object[]{safe(step.getResolvedXPath()), safe(step.getResolvedValue())};
+        }
+        throw new IllegalArgumentException("Unsupported method signature for keyword '" + keyword + "'.");
     }
 
-    private void validateArguments(String keyword, String resolvedXpath, String resolvedValue) {
+    private void validateArguments(String keyword, ResolvedStepContext step, Method method) {
+        if (method.getParameterCount() == 0) {
+            return;
+        }
+
         ArgumentStyle argumentStyle = KNOWN_ARGUMENT_STYLES.get(keyword);
         if (argumentStyle == null) {
             return;
         }
 
-        if (argumentStyle.requiresXpath() && isBlank(resolvedXpath)) {
-            throw new FrameworkException("XPath is required for keyword '" + keyword + "'.");
+        if (argumentStyle.requiresXpath() && isBlank(step.getResolvedXPath())) {
+            throw new FrameworkException(withStepContext("XPath is required for keyword '" + keyword + "'.", step));
         }
-        if (argumentStyle.requiresValue() && isBlank(resolvedValue)) {
-            throw new FrameworkException(requiredValueMessage(keyword));
+        if (argumentStyle.requiresValue() && isBlank(step.getResolvedValue())) {
+            throw new FrameworkException(withStepContext(requiredValueMessage(keyword), step));
         }
     }
 
-    private RuntimeException keywordExecutionFailure(String keyword, ResolvedFunction resolvedFunction, Throwable cause) {
+    private RuntimeException keywordExecutionFailure(
+            String keyword,
+            ResolvedFunction resolvedFunction,
+            Throwable cause,
+            ResolvedStepContext step
+    ) {
         String message = "Failed to execute keyword '" + keyword + "' using "
                 + simpleClassName(resolvedFunction.getResolvedClassName()) + ". Cause: " + cause.getMessage();
+        message = withStepContext(message, step);
         LOGGER.error(message, cause);
         if (cause instanceof AssertionError) {
             throw new AssertionError(message, cause);
@@ -296,6 +358,60 @@ public class FunctionResolver {
         return className.substring(className.lastIndexOf('.') + 1);
     }
 
+    private String withStepContext(String message, ResolvedStepContext step) {
+        if (step == null || !hasExecutionIdentity(step)) {
+            return message;
+        }
+        String context = new ErrorContext()
+                .scenarioNo(step.getScenarioNo())
+                .scenarioAction(step.getScenarioAction())
+                .testcase(step.getTestcaseName())
+                .row(step.getExcelRow())
+                .function(step.getFunction())
+                .object(step.getObjectName())
+                .application(step.getApplication())
+                .render();
+        return context.isBlank() ? message : message + System.lineSeparator() + context;
+    }
+
+    private boolean hasExecutionIdentity(ResolvedStepContext step) {
+        return !isBlank(step.getScenarioNo())
+                || !isBlank(step.getScenarioAction())
+                || !isBlank(step.getTestcaseName())
+                || step.getExcelRow() > 0;
+    }
+
+    private ResolvedStepContext compatibilityContext(
+            String application,
+            String functionName,
+            String resolvedXpath,
+            String resolvedValue
+    ) {
+        return new ResolvedStepContext(
+                "",
+                "",
+                "",
+                "",
+                "",
+                0,
+                0,
+                0,
+                safe(functionName),
+                "",
+                safe(application),
+                "",
+                safe(resolvedValue),
+                safe(resolvedValue),
+                safe(resolvedXpath),
+                safe(resolvedXpath),
+                ""
+        );
+    }
+
+    private String safe(String value) {
+        return value == null ? "" : value.trim();
+    }
+
     private enum ArgumentStyle {
         NO_ARGS(false, false, 0),
         XPATH_ONLY(true, false, 1),
@@ -322,6 +438,33 @@ public class FunctionResolver {
 
         private int parameterCount() {
             return parameterCount;
+        }
+    }
+
+    private enum MethodSignature {
+        NO_ARGS(new Class<?>[0]),
+        ONE_STRING(String.class),
+        TWO_STRINGS(String.class, String.class),
+        CONTEXT_FALLBACK(String.class, String.class, ResolvedStepContext.class);
+
+        private final Class<?>[] parameterTypes;
+
+        MethodSignature(Class<?>... parameterTypes) {
+            this.parameterTypes = parameterTypes;
+        }
+
+        private boolean matches(Method method) {
+            return java.util.Arrays.equals(parameterTypes, method.getParameterTypes());
+        }
+
+        private static MethodSignature forStringCount(int parameterCount) {
+            return switch (parameterCount) {
+                case 1 -> ONE_STRING;
+                case 2 -> TWO_STRINGS;
+                default -> throw new IllegalArgumentException(
+                        "Unsupported legacy String parameter count: " + parameterCount + "."
+                );
+            };
         }
     }
 
