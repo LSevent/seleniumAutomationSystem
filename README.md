@@ -85,6 +85,10 @@ Before browser keyword execution starts, the framework builds a resolved executi
 
 Pre-run validation checks data references, object and XPath availability, and simple keyword requirements such as the value required by `openUrl` and the XPath/value required by `input`. This catches Excel mistakes before Selenium steps begin. Inactive scenarios and inactive testcases are not included in the resolved plan and do not block execution.
 
+## Step Execution Context
+
+BaseFunction keywords now read the current `ResolvedStepContext` from `StepContextHolder`. This allows common keywords such as `openUrl()`, `click()`, `input()`, `verifyDisplayed()`, and `verifyText()` to execute using the resolved Excel step instead of receiving xpath/value arguments directly.
+
 ## Configuration
 
 Browser and normal UI-test configuration lives in:

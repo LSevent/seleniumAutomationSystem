@@ -62,10 +62,12 @@ public class FunctionResolver {
     }
 
     public ResolvedFunction resolve(String application, String functionName) {
+        Optional<ResolvedStepContext> currentStep = StepContextHolder.current();
         return resolveInternal(
                 application,
                 functionName,
-                StepContextHolder.current().orElse(null)
+                currentStep.orElse(null),
+                currentStep.isPresent()
         ).resolvedFunction();
     }
 
@@ -79,10 +81,16 @@ public class FunctionResolver {
             String resolvedXpath,
             String resolvedValue
     ) {
-        ResolvedStepContext step = StepContextHolder.current().orElseGet(
+        Optional<ResolvedStepContext> currentStep = StepContextHolder.current();
+        ResolvedStepContext step = currentStep.orElseGet(
                 () -> compatibilityContext(application, functionName, resolvedXpath, resolvedValue)
         );
-        MethodResolution resolution = resolveInternal(application, functionName, step);
+        MethodResolution resolution = resolveInternal(
+                application,
+                functionName,
+                step,
+                currentStep.isPresent()
+        );
         String keyword = functionName.trim();
         validateArguments(keyword, step, resolution.method());
 
@@ -117,7 +125,8 @@ public class FunctionResolver {
     private MethodResolution resolveInternal(
             String application,
             String functionName,
-            ResolvedStepContext step
+            ResolvedStepContext step,
+            boolean preferNoArg
     ) {
         validateFunctionName(functionName);
         String keyword = functionName.trim();
@@ -127,16 +136,18 @@ public class FunctionResolver {
         LOGGER.info("Resolving keyword '{}' for application '{}'.", keyword, normalizedApplication);
 
         Class<?> specificClass = loadSpecificFunctionClass(specificClassName, normalizedApplication);
-        if (specificClass != null) {
-            Optional<Method> noArgSpecificMethod = findNoArgMethod(specificClass, keyword, true);
-            if (noArgSpecificMethod.isPresent()) {
-                return specificResolution(specificClass, normalizedApplication, keyword, noArgSpecificMethod.get());
+        if (preferNoArg) {
+            if (specificClass != null) {
+                Optional<Method> noArgSpecificMethod = findNoArgMethod(specificClass, keyword, true);
+                if (noArgSpecificMethod.isPresent()) {
+                    return specificResolution(specificClass, normalizedApplication, keyword, noArgSpecificMethod.get());
+                }
             }
-        }
 
-        Optional<Method> noArgBaseMethod = findNoArgMethod(BaseFunction.class, keyword, false);
-        if (noArgBaseMethod.isPresent()) {
-            return baseResolution(normalizedApplication, keyword, noArgBaseMethod.get());
+            Optional<Method> noArgBaseMethod = findNoArgMethod(BaseFunction.class, keyword, false);
+            if (noArgBaseMethod.isPresent()) {
+                return baseResolution(normalizedApplication, keyword, noArgBaseMethod.get());
+            }
         }
 
         if (specificClass != null) {
@@ -149,6 +160,20 @@ public class FunctionResolver {
         Optional<Method> legacyBaseMethod = findLegacyMethod(BaseFunction.class, keyword, false);
         if (legacyBaseMethod.isPresent()) {
             return baseResolution(normalizedApplication, keyword, legacyBaseMethod.get());
+        }
+
+        if (!preferNoArg) {
+            if (specificClass != null) {
+                Optional<Method> noArgSpecificMethod = findNoArgMethod(specificClass, keyword, true);
+                if (noArgSpecificMethod.isPresent()) {
+                    return specificResolution(specificClass, normalizedApplication, keyword, noArgSpecificMethod.get());
+                }
+            }
+
+            Optional<Method> noArgBaseMethod = findNoArgMethod(BaseFunction.class, keyword, false);
+            if (noArgBaseMethod.isPresent()) {
+                return baseResolution(normalizedApplication, keyword, noArgBaseMethod.get());
+            }
         }
 
         String missingKeywordMessage = "Keyword '" + keyword + "' not found in SpecificFunction for application '"

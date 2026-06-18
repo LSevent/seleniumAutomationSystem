@@ -93,15 +93,21 @@ public class FunctionResolverNoArgTest {
     @Test
     public void parameterFallbackShouldUseResolvedXpathFromCurrentContext() {
         FakeWebDriver driver = driver();
-        String resolvedXpath = "//button[@id='resolved-login']";
-        driver.addElement(resolvedXpath, "Login");
-        ResolvedStepContext step = step("BRS", "click", "btnLogin", resolvedXpath, "");
+        String resolvedXpath = "//button[@id='resolved-room']";
+        driver.addElement(resolvedXpath, "Meeting Room A");
+        ResolvedStepContext step = step(
+                "BRS",
+                "selectRoomByName",
+                "btnRoom",
+                resolvedXpath,
+                "Meeting Room A"
+        );
         StepContextHolder.set(step);
 
         FunctionExecutionResult result = new FunctionResolver(driver.driver()).execute(
                 step.getApplication(),
                 step.getFunction(),
-                "//button[@id='wrong-login']",
+                "//button[@id='wrong-room']",
                 "wrong-value"
         );
 

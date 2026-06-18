@@ -19,6 +19,7 @@
             <class name="com.automation.tests.ObjectRepositoryReaderTest"/>
             <class name="com.automation.tests.ObjectRepositoryValidationTest"/>
             <class name="com.automation.tests.BaseFunctionTest"/>
+            <class name="com.automation.tests.BaseFunctionContextTest"/>
             <class name="com.automation.tests.FunctionResolverTest"/>
             <class name="com.automation.tests.FunctionResolverNoArgTest"/>
             <class name="com.automation.tests.FunctionResolverValidationTest"/>
