@@ -1,0 +1,302 @@
+package com.automation.validation;
+
+import com.automation.exceptions.ErrorContext;
+import com.automation.exceptions.FrameworkException;
+import com.automation.models.ResolvedScenarioContext;
+import com.automation.models.ResolvedStepContext;
+import com.automation.models.ResolvedTestcaseContext;
+import com.automation.utils.XPathResolver;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+
+public class PreRunValidator {
+
+    private static final String DATA_REFERENCE_FORMAT = "SHEET_NAME.COLUMN_NAME";
+
+    private final XPathResolver xpathResolver = new XPathResolver();
+
+    public void validate(List<ResolvedScenarioContext> executionPlan) {
+        if (executionPlan == null) {
+            throw new IllegalArgumentException("Execution plan must not be null.");
+        }
+
+        List<ValidationError> errors = new ArrayList<>();
+        for (ResolvedScenarioContext scenario : executionPlan) {
+            validateScenario(scenario, errors);
+        }
+
+        if (!errors.isEmpty()) {
+            throw new FrameworkException(formatErrors(errors));
+        }
+    }
+
+    private void validateScenario(ResolvedScenarioContext scenario, List<ValidationError> errors) {
+        if (scenario == null) {
+            errors.add(new ValidationError("Resolved scenario context is not available.", "", "", "", 0, "", "", ""));
+            return;
+        }
+        if (scenario.getTestcases().isEmpty()) {
+            errors.add(new ValidationError(
+                    "Active scenario has no active testcase.",
+                    scenario.getScenarioNo(),
+                    scenario.getScenarioAction(),
+                    scenario.getScenarioAction(),
+                    0,
+                    "",
+                    "",
+                    ""
+            ));
+            return;
+        }
+
+        for (ResolvedTestcaseContext testcase : scenario.getTestcases()) {
+            validateTestcase(scenario, testcase, errors);
+        }
+    }
+
+    private void validateTestcase(
+            ResolvedScenarioContext scenario,
+            ResolvedTestcaseContext testcase,
+            List<ValidationError> errors
+    ) {
+        if (testcase.getSteps().isEmpty()) {
+            errors.add(new ValidationError(
+                    "Active testcase has no steps.",
+                    scenario.getScenarioNo(),
+                    scenario.getScenarioAction(),
+                    scenario.getScenarioAction(),
+                    testcase.getTestcaseName(),
+                    testcase.getParentExcelRow(),
+                    "",
+                    "",
+                    testcase.getApplication()
+            ));
+            return;
+        }
+
+        for (ResolvedStepContext step : testcase.getSteps()) {
+            validateStep(step, errors);
+        }
+    }
+
+    private void validateStep(ResolvedStepContext step, List<ValidationError> errors) {
+        if (step == null) {
+            errors.add(new ValidationError("Resolved step context is not available.", "", "", "", 0, "", "", ""));
+            return;
+        }
+
+        String function = safe(step.getFunction());
+        if (function.isBlank()) {
+            addStepError(errors, "Function is required for active step.", step);
+        }
+        if (isBlank(step.getApplication())) {
+            addStepError(errors, "Application is required for active step.", step);
+        }
+
+        String dataReferenceError = dataReferenceError(step.getRawValue());
+        if (!dataReferenceError.isBlank()) {
+            addStepError(errors, dataReferenceError, step);
+        }
+
+        validateDynamicXpath(step, errors);
+        if (function.isBlank()) {
+            return;
+        }
+
+        String normalizedFunction = function.toLowerCase(Locale.ROOT);
+        switch (normalizedFunction) {
+            case "screenshot" -> {
+                // Screenshot intentionally has no Object/XPath/Value requirement.
+            }
+            case "openurl" -> requireValue(step, function, errors);
+            case "click", "verifydisplayed" -> requireObjectAndXpath(step, function, errors);
+            case "input", "verifytext" -> {
+                requireObjectAndXpath(step, function, errors);
+                requireValue(step, function, errors);
+            }
+            default -> {
+                // Phase 13B intentionally validates only the simple keyword rules above.
+            }
+        }
+    }
+
+    private void requireObjectAndXpath(
+            ResolvedStepContext step,
+            String function,
+            List<ValidationError> errors
+    ) {
+        if (isBlank(step.getObjectName())) {
+            addStepError(errors, "Object is required for keyword '" + function + "'.", step);
+            return;
+        }
+        if (isBlank(step.getRawXPath())) {
+            addStepError(errors, "Object was not resolved from OBJECT_REPOSITORY.", step);
+        }
+        if (isBlank(step.getResolvedXPath())) {
+            addStepError(errors, "XPath is required for keyword '" + function + "'.", step);
+        }
+    }
+
+    private void requireValue(
+            ResolvedStepContext step,
+            String function,
+            List<ValidationError> errors
+    ) {
+        if (isBlank(step.getResolvedValue())) {
+            addStepError(errors, "Value is required for keyword '" + function + "'.", step);
+        }
+    }
+
+    private void validateDynamicXpath(ResolvedStepContext step, List<ValidationError> errors) {
+        List<String> placeholders = xpathResolver.extractPlaceholders(step.getRawXPath());
+        if (placeholders.size() > 1) {
+            addStepError(errors, "Multiple XPath placeholders are not supported.", step);
+            return;
+        }
+        if (placeholders.isEmpty()) {
+            if (xpathResolver.hasPlaceholder(step.getResolvedXPath())) {
+                addStepError(errors, "Dynamic XPath placeholder was not resolved.", step);
+            }
+            return;
+        }
+
+        String placeholderName = placeholders.get(0);
+        String placeholder = "{" + placeholderName + "}";
+        if (placeholderName.isBlank()) {
+            addStepError(errors, "XPath placeholder cannot be blank.", step);
+            return;
+        }
+
+        String dataColumn = dataReferenceColumn(step.getRawValue());
+        if (!dataColumn.isBlank() && !placeholderName.equalsIgnoreCase(dataColumn)) {
+            addStepError(errors, "XPath placeholder " + placeholder + " does not match data column '" + dataColumn + "'.", step);
+        }
+        if (isBlank(step.getResolvedValue())
+                || isBlank(step.getResolvedXPath())
+                || xpathResolver.hasPlaceholder(step.getResolvedXPath())) {
+            addStepError(errors, "XPath placeholder " + placeholder + " was not resolved.", step);
+        }
+    }
+
+    private String dataReferenceError(String rawValue) {
+        String value = safe(rawValue);
+        if (value.isBlank()) {
+            return "";
+        }
+        if (value.contains("[") || value.contains("]")) {
+            return invalidReferenceMessage(value);
+        }
+
+        long dotCount = value.chars().filter(character -> character == '.').count();
+        if (dotCount == 0) {
+            return "";
+        }
+        if (dotCount != 1) {
+            return invalidReferenceMessage(value);
+        }
+
+        String[] parts = value.split("\\.", -1);
+        return parts[0].trim().isBlank() || parts[1].trim().isBlank()
+                ? invalidReferenceMessage(value)
+                : "";
+    }
+
+    private String dataReferenceColumn(String rawValue) {
+        String value = safe(rawValue);
+        if (!dataReferenceError(value).isBlank()) {
+            return "";
+        }
+        String[] parts = value.split("\\.", -1);
+        return parts.length == 2 ? parts[1].trim() : "";
+    }
+
+    private String invalidReferenceMessage(String rawValue) {
+        return "Invalid data reference format: " + rawValue + ". Expected format: " + DATA_REFERENCE_FORMAT + ".";
+    }
+
+    private void addStepError(List<ValidationError> errors, String message, ResolvedStepContext step) {
+        errors.add(new ValidationError(
+                message,
+                step.getScenarioNo(),
+                step.getScenarioAction(),
+                step.getSheetName(),
+                step.getTestcaseName(),
+                step.getExcelRow(),
+                step.getFunction(),
+                step.getObjectName(),
+                step.getApplication()
+        ));
+    }
+
+    private String formatErrors(List<ValidationError> errors) {
+        String lineSeparator = System.lineSeparator();
+        StringBuilder message = new StringBuilder("Pre-run validation failed with ")
+                .append(errors.size())
+                .append(" error(s).")
+                .append(lineSeparator);
+
+        for (int index = 0; index < errors.size(); index++) {
+            ValidationError error = errors.get(index);
+            message.append(lineSeparator)
+                    .append(index + 1)
+                    .append(". ")
+                    .append(error.message());
+
+            String context = error.context();
+            if (!context.isBlank()) {
+                message.append(lineSeparator)
+                        .append("   ")
+                        .append(context.replace(lineSeparator, lineSeparator + "   "));
+            }
+        }
+        return message.toString();
+    }
+
+    private boolean isBlank(String value) {
+        return value == null || value.isBlank();
+    }
+
+    private String safe(String value) {
+        return value == null ? "" : value.trim();
+    }
+
+    private record ValidationError(
+            String message,
+            String scenarioNo,
+            String scenarioAction,
+            String sheetName,
+            String testcaseName,
+            int row,
+            String function,
+            String objectName,
+            String application
+    ) {
+        private ValidationError(
+                String message,
+                String scenarioNo,
+                String scenarioAction,
+                String sheetName,
+                int row,
+                String function,
+                String objectName,
+                String application
+        ) {
+            this(message, scenarioNo, scenarioAction, sheetName, "", row, function, objectName, application);
+        }
+
+        private String context() {
+            return new ErrorContext()
+                    .scenarioNo(scenarioNo)
+                    .scenarioAction(scenarioAction)
+                    .sheet(sheetName)
+                    .testcase(testcaseName)
+                    .row(row)
+                    .function(function)
+                    .object(objectName)
+                    .application(application)
+                    .render();
+        }
+    }
+}

@@ -161,6 +161,14 @@ public class KeywordEngine {
         return results;
     }
 
+    DataReader getDataReader() {
+        return dataReader;
+    }
+
+    ObjectRepositoryReader getObjectRepositoryReader() {
+        return objectRepositoryReader;
+    }
+
     private boolean resolveValue(ExecutionContext context) {
         TestStep step = context.getTestStep();
         String rawValue = safe(step.getValue());

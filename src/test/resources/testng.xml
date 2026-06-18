@@ -30,6 +30,8 @@
             <class name="com.automation.tests.FinalTemplateValidationTest"/>
             <class name="com.automation.tests.ResolvedStepContextTest"/>
             <class name="com.automation.tests.StepContextHolderTest"/>
+            <class name="com.automation.tests.ExecutionPlanBuilderTest"/>
+            <class name="com.automation.tests.PreRunValidatorTest"/>
         </classes>
     </test>
 </suite>

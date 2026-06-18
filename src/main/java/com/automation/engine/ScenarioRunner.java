@@ -1,5 +1,7 @@
 package com.automation.engine;
 
+import com.automation.excel.DataReader;
+import com.automation.excel.ObjectRepositoryReader;
 import com.automation.excel.ScenarioReader;
 import com.automation.excel.StepReader;
 import com.automation.exceptions.FrameworkException;
@@ -8,11 +10,13 @@ import com.automation.models.Scenario;
 import com.automation.models.TestCaseBlock;
 import com.automation.models.TestStep;
 import com.automation.reports.ExcelExecutionReporter;
+import com.automation.validation.PreRunValidator;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Supplier;
 
 public class ScenarioRunner {
 
@@ -20,8 +24,11 @@ public class ScenarioRunner {
 
     private final ScenarioReader scenarioReader;
     private final StepReader stepReader;
-    private final KeywordEngine keywordEngine;
+    private KeywordEngine keywordEngine;
+    private final Supplier<KeywordEngine> keywordEngineSupplier;
     private final ExcelExecutionReporter reporter;
+    private final ExecutionPlanBuilder executionPlanBuilder;
+    private final PreRunValidator preRunValidator;
 
     public ScenarioRunner(
             ScenarioReader scenarioReader,
@@ -49,12 +56,56 @@ public class ScenarioRunner {
         this.scenarioReader = scenarioReader;
         this.stepReader = stepReader;
         this.keywordEngine = keywordEngine;
+        this.keywordEngineSupplier = () -> keywordEngine;
         this.reporter = reporter;
+        this.executionPlanBuilder = new ExecutionPlanBuilder(
+                scenarioReader,
+                stepReader,
+                keywordEngine.getDataReader(),
+                keywordEngine.getObjectRepositoryReader()
+        );
+        this.preRunValidator = new PreRunValidator();
+    }
+
+    public ScenarioRunner(
+            ScenarioReader scenarioReader,
+            StepReader stepReader,
+            DataReader dataReader,
+            ObjectRepositoryReader objectRepositoryReader,
+            Supplier<KeywordEngine> keywordEngineSupplier
+    ) {
+        if (scenarioReader == null) {
+            throw new IllegalArgumentException("ScenarioReader must not be null.");
+        }
+        if (stepReader == null) {
+            throw new IllegalArgumentException("StepReader must not be null.");
+        }
+        if (dataReader == null) {
+            throw new IllegalArgumentException("DataReader must not be null.");
+        }
+        if (objectRepositoryReader == null) {
+            throw new IllegalArgumentException("ObjectRepositoryReader must not be null.");
+        }
+        if (keywordEngineSupplier == null) {
+            throw new IllegalArgumentException("KeywordEngine supplier must not be null.");
+        }
+        this.scenarioReader = scenarioReader;
+        this.stepReader = stepReader;
+        this.keywordEngineSupplier = keywordEngineSupplier;
+        this.reporter = null;
+        this.executionPlanBuilder = new ExecutionPlanBuilder(
+                scenarioReader,
+                stepReader,
+                dataReader,
+                objectRepositoryReader
+        );
+        this.preRunValidator = new PreRunValidator();
     }
 
     public List<ExecutionResult> runActiveScenarios() {
         List<ExecutionResult> results = new ArrayList<>();
         try {
+            preRunValidator.validate(executionPlanBuilder.build());
             for (Scenario scenario : scenarioReader.getActiveScenarios()) {
                 List<ExecutionResult> scenarioResults = runScenario(scenario);
                 results.addAll(scenarioResults);
@@ -99,7 +150,7 @@ public class ScenarioRunner {
             boolean testcaseSuccess = true;
             String testcaseMessage = "";
             for (TestStep step : testCaseBlock.getSteps()) {
-                ExecutionResult result = keywordEngine.executeStep(scenario, step);
+                ExecutionResult result = keywordEngine().executeStep(scenario, step);
                 results.add(result);
                 logStepReport(result);
                 if (!result.isSuccess()) {
@@ -171,5 +222,15 @@ public class ScenarioRunner {
         if (reporter != null) {
             reporter.flush();
         }
+    }
+
+    private KeywordEngine keywordEngine() {
+        if (keywordEngine == null) {
+            keywordEngine = keywordEngineSupplier.get();
+            if (keywordEngine == null) {
+                throw new IllegalStateException("KeywordEngine supplier returned null.");
+            }
+        }
+        return keywordEngine;
     }
 }

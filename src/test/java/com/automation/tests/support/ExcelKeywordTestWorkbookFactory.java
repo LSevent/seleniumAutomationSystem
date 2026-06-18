@@ -124,7 +124,7 @@ public final class ExcelKeywordTestWorkbookFactory {
                             {"Open Local Page", "Yes", "", "", "", "BRS", "Open local test page"},
                             {"", "", "openUrl", "", "CONFIG.BASE_URL", "", "Open local HTML"},
                             {testcaseName, "Yes", "", "", "", "BRS", "Failing testcase"},
-                            {"", "", "click", "btnMissing", "", "", "Click missing button"}
+                            {"", "", "unknownKeyword", "", "", "", "Unsupported keyword"}
                     }
             );
             createSheet(

@@ -66,12 +66,30 @@ public class ObjectRepositoryReader {
             throw new FrameworkException("Object name is required to resolve object.");
         }
 
-        return getAllObjects().stream()
-                .filter(testObject -> normalize(testObject.getApplication()).equals(normalizedApplication))
-                .filter(testObject -> normalize(testObject.getObjectName()).equals(normalizedObjectName))
-                .findFirst()
-                .orElseThrow(() -> new FrameworkException("Object not found in OBJECT_REPOSITORY. Application = "
-                        + application.trim() + ", Object = " + objectName.trim() + "."));
+        validateRequiredHeaders();
+        TestObject matchedObject = null;
+        int lastRowNumber = excelReader.getLastRowNumber(OBJECT_REPOSITORY_SHEET);
+        for (int rowIndex = 1; rowIndex <= lastRowNumber; rowIndex++) {
+            ObjectRow objectRow = readRow(rowIndex);
+            if (!normalize(objectRow.application()).equals(normalizedApplication)
+                    || !normalize(objectRow.objectName()).equals(normalizedObjectName)) {
+                continue;
+            }
+
+            int excelRowNumber = toExcelRowNumber(rowIndex);
+            validateObjectRow(objectRow, excelRowNumber);
+            if (matchedObject != null) {
+                throw new FrameworkException("Duplicate object found in OBJECT_REPOSITORY. Application = "
+                        + matchedObject.getApplication() + ", Object = " + matchedObject.getObjectName() + ".");
+            }
+            matchedObject = toTestObject(objectRow, excelRowNumber);
+        }
+
+        if (matchedObject == null) {
+            throw new FrameworkException("Object not found in OBJECT_REPOSITORY. Application = "
+                    + application.trim() + ", Object = " + objectName.trim() + ".");
+        }
+        return matchedObject;
     }
 
     public ResolvedObject resolveObject(TestStep step, Scenario scenario) {
@@ -231,7 +249,22 @@ public class ObjectRepositoryReader {
             throw new FrameworkException("XPath placeholder " + placeholder + " requires a value for object " + objectName + ".");
         }
 
-        return xpathResolver.replacePlaceholder(rawXpath, placeholderName, resolvedValue);
+        if (dataReader.isDataReference(rawValue)) {
+            DataReference dataReference = dataReader.parseReference(rawValue);
+            if (!placeholderName.equalsIgnoreCase(dataReference.getColumnName())) {
+                throw new FrameworkException("XPath placeholder " + placeholder + " does not match data column '"
+                        + dataReference.getColumnName() + "' for object " + objectName + ".");
+            }
+        }
+        if (resolvedValue == null || resolvedValue.isBlank()) {
+            throw new FrameworkException("XPath placeholder " + placeholder + " could not be resolved for object " + objectName + ".");
+        }
+
+        String resolvedXpath = xpathResolver.replacePlaceholder(rawXpath, placeholderName, resolvedValue);
+        if (xpathResolver.hasPlaceholder(resolvedXpath)) {
+            throw new FrameworkException("XPath placeholder " + placeholder + " could not be resolved for object " + objectName + ".");
+        }
+        return resolvedXpath;
     }
 
     private static int toExcelRowNumber(int rowIndex) {
