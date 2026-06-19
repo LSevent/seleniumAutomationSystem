@@ -1,7 +1,6 @@
 package com.automation.functions.HRIS;
 
 import com.automation.base.BaseFunction;
-import com.automation.context.StepContextHolder;
 import com.automation.models.ResolvedStepContext;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -16,7 +15,7 @@ public class SpecificFunction extends BaseFunction {
     }
 
     public void waitForApplicationReady() {
-        ResolvedStepContext step = StepContextHolder.get();
+        ResolvedStepContext step = currentStep();
         LOGGER.info(
                 "Executing HRIS application readiness placeholder. Scenario: {}, Testcase: {}, Row: {}",
                 step.getScenarioNo(),
@@ -26,14 +25,10 @@ public class SpecificFunction extends BaseFunction {
     }
 
     public void verifyEmployeeVisible() {
-        ResolvedStepContext step = StepContextHolder.get();
-        executeVerifyEmployeeVisible(step.getResolvedXPath(), step.getResolvedValue(), step);
-    }
-
-    private void executeVerifyEmployeeVisible(String xpath, String value, ResolvedStepContext step) {
-        validateRequired(xpath, "verifyEmployeeVisible", "XPath", step);
-        validateRequired(value, "verifyEmployeeVisible", "Value", step);
+        ResolvedStepContext step = currentStep();
+        requireXPath(step, "verifyEmployeeVisible");
+        String value = requireValue(step, "verifyEmployeeVisible", "Value");
         LOGGER.info("Executing HRIS-specific employee visibility placeholder for value: {}", value);
-        executeVerifyTextContains(xpath, value, step);
+        verifyTextContains();
     }
 }

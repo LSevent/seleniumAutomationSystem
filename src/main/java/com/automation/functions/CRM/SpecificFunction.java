@@ -1,7 +1,6 @@
 package com.automation.functions.CRM;
 
 import com.automation.base.BaseFunction;
-import com.automation.context.StepContextHolder;
 import com.automation.models.ResolvedStepContext;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -16,7 +15,7 @@ public class SpecificFunction extends BaseFunction {
     }
 
     public void waitForApplicationReady() {
-        ResolvedStepContext step = StepContextHolder.get();
+        ResolvedStepContext step = currentStep();
         LOGGER.info(
                 "Executing CRM application readiness placeholder. Scenario: {}, Testcase: {}, Row: {}",
                 step.getScenarioNo(),
