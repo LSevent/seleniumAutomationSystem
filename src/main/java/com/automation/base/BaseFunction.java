@@ -5,7 +5,6 @@ import com.automation.drivers.DriverFactory;
 import com.automation.exceptions.ErrorContext;
 import com.automation.exceptions.FrameworkException;
 import com.automation.models.ResolvedStepContext;
-import com.automation.reports.SensitiveDataMasker;
 import com.automation.utils.JavaScriptUtil;
 import com.automation.utils.WaitUtil;
 import org.apache.logging.log4j.LogManager;
@@ -23,7 +22,6 @@ import org.openqa.selenium.WebElement;
 public class BaseFunction {
 
     private static final Logger LOGGER = LogManager.getLogger(BaseFunction.class);
-    private static final SensitiveDataMasker SENSITIVE_DATA_MASKER = new SensitiveDataMasker();
 
     private final WebDriver driver;
 
@@ -41,17 +39,13 @@ public class BaseFunction {
     public void openUrl() {
         ResolvedStepContext step = currentStep();
         String url = requireValue(step, "openUrl", "URL");
-        logExecuting("openUrl", step, "", null);
         driver.get(url.trim());
-        logCompleted("openUrl", step);
     }
 
     public void click() {
         ResolvedStepContext step = currentStep();
         String xpath = requireXPath(step, "click");
-        logExecuting("click", step, xpath, null);
         waitForClickableElement(xpath, "click").click();
-        logCompleted("click", step);
     }
 
     public void input() {
@@ -59,7 +53,6 @@ public class BaseFunction {
         String xpath = requireXPath(step, "input");
         String value = requireValue(step, "input", "Value");
         String safeValue = value;
-        logExecuting("input", step, xpath, maskValueIfNeeded(xpath, safeValue, step));
         WebElement element = waitForVisibleElement(xpath, "input");
         try {
             element.clear();
@@ -67,42 +60,34 @@ public class BaseFunction {
             LOGGER.debug("Could not clear element before input. XPath: {}", xpath, exception);
         }
         element.sendKeys(safeValue);
-        logCompleted("input", step);
     }
 
     public void clear() {
         ResolvedStepContext step = currentStep();
         String xpath = requireXPath(step, "clear");
-        logExecuting("clear", step, xpath, null);
         waitForVisibleElement(xpath, "clear").clear();
-        logCompleted("clear", step);
     }
 
     public String getText() {
         ResolvedStepContext step = currentStep();
         String xpath = requireXPath(step, "getText");
-        logExecuting("getText", step, xpath, null);
         String text = waitForVisibleElement(xpath, "getText").getText();
-        logCompleted("getText", step);
         return text;
     }
 
     public void verifyDisplayed() {
         ResolvedStepContext step = currentStep();
         String xpath = requireXPath(step, "verifyDisplayed");
-        logExecuting("verifyDisplayed", step, xpath, null);
         WebElement element = waitForVisibleElement(xpath, "verifyDisplayed");
         if (!element.isDisplayed()) {
             throw new AssertionError(withStepContext("Element is not displayed. XPath: " + xpath, step));
         }
-        logCompleted("verifyDisplayed", step);
     }
 
     public void verifyText() {
         ResolvedStepContext step = currentStep();
         String xpath = requireXPath(step, "verifyText");
         String expectedText = requireValue(step, "verifyText", "Expected text");
-        logExecuting("verifyText", step, xpath, null);
         String actual = getText();
         if (!expectedText.equals(actual)) {
             throw new AssertionError(withStepContext(
@@ -110,7 +95,6 @@ public class BaseFunction {
                     step
             ));
         }
-        logCompleted("verifyText", step);
     }
 
     public void verifyTextContains() {
@@ -118,7 +102,6 @@ public class BaseFunction {
         String xpath = requireXPath(step, "verifyTextContains");
         String expectedText = requireValue(step, "verifyTextContains", "Expected text");
         String expected = expectedText;
-        logExecuting("verifyTextContains", step, xpath, null);
         String actual = getText();
         if (!actual.contains(expected)) {
             throw new AssertionError(withStepContext(
@@ -126,7 +109,6 @@ public class BaseFunction {
                     step
             ));
         }
-        logCompleted("verifyTextContains", step);
     }
 
     public void verifyUrlContains() {
@@ -180,15 +162,12 @@ public class BaseFunction {
     public void scrollToElement() {
         ResolvedStepContext step = currentStep();
         String xpath = requireXPath(step, "scrollToElement");
-        logExecuting("scrollToElement", step, xpath, null);
         JavaScriptUtil.scrollToElement(driver, waitForVisibleElement(xpath, "scrollToElement"));
-        logCompleted("scrollToElement", step);
     }
 
     public void safeClick() {
         ResolvedStepContext step = currentStep();
         String xpath = requireXPath(step, "safeClick");
-        logExecuting("safeClick", step, xpath, null);
         try {
             click();
         } catch (ElementClickInterceptedException | StaleElementReferenceException | TimeoutException exception) {
@@ -196,15 +175,12 @@ public class BaseFunction {
         } catch (WebDriverException exception) {
             clickUsingJavaScript(xpath, exception);
         }
-        logCompleted("safeClick", step);
     }
 
     public void pressEnter() {
         ResolvedStepContext step = currentStep();
         String xpath = requireXPath(step, "pressEnter");
-        logExecuting("pressEnter", step, xpath, null);
         waitForVisibleElement(xpath, "pressEnter").sendKeys(Keys.ENTER);
-        logCompleted("pressEnter", step);
     }
 
     public boolean isDisplayed() {
@@ -291,68 +267,4 @@ public class BaseFunction {
                 .render();
     }
 
-    private void logExecuting(
-            String keyword,
-            ResolvedStepContext step,
-            String xpath,
-            String valueForLog
-    ) {
-        if (step == null) {
-            if (valueForLog != null) {
-                LOGGER.info("Executing keyword {} on XPath: {} with value: {}", keyword, xpath, valueForLog);
-            } else if (xpath != null && !xpath.isBlank()) {
-                LOGGER.info("Executing keyword {} on XPath: {}", keyword, xpath);
-            } else {
-                LOGGER.info("Executing keyword {}.", keyword);
-            }
-            return;
-        }
-
-        String details = logContext(step);
-        if (xpath != null && !xpath.isBlank()) {
-            details += ", XPath: " + xpath;
-        }
-        if (valueForLog != null) {
-            details += ", Value: " + valueForLog;
-        }
-        LOGGER.info("Executing {}. {}", keyword, details);
-    }
-
-    private void logCompleted(String keyword, ResolvedStepContext step) {
-        if (step == null) {
-            LOGGER.info("Completed keyword {}.", keyword);
-            return;
-        }
-        LOGGER.info("Completed {}. {}", keyword, logContext(step));
-    }
-
-    private String logContext(ResolvedStepContext step) {
-        return "Scenario: " + safe(step.getScenarioNo())
-                + ", Scenario Action: " + safe(step.getScenarioAction())
-                + ", Testcase: " + safe(step.getTestcaseName())
-                + ", Row: " + step.getExcelRow()
-                + ", Function: " + safe(step.getFunction())
-                + ", Object: " + safe(step.getObjectName())
-                + ", Application: " + safe(step.getApplication());
-    }
-
-    private String maskValueIfNeeded(String xpath, String value, ResolvedStepContext step) {
-        if (step != null && SENSITIVE_DATA_MASKER.isSensitive(
-                step.getRawValue(),
-                step.getObjectName(),
-                xpath,
-                step.getDescription(),
-                step.getFunction()
-        )) {
-            return SensitiveDataMasker.MASK;
-        }
-        if (xpath != null && xpath.toLowerCase().contains("password")) {
-            return SensitiveDataMasker.MASK;
-        }
-        return value == null ? "" : value;
-    }
-
-    private String safe(String value) {
-        return value == null ? "" : value.trim();
-    }
 }

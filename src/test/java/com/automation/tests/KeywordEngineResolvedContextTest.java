@@ -15,12 +15,21 @@ import com.automation.models.ResolvedStepContext;
 import com.automation.reports.ExcelReportConfig;
 import com.automation.services.ScreenshotService;
 import com.automation.tests.support.FakeWebDriver;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.core.LogEvent;
+import org.apache.logging.log4j.core.Logger;
+import org.apache.logging.log4j.core.appender.AbstractAppender;
+import org.apache.logging.log4j.core.config.Property;
+import org.apache.logging.log4j.core.layout.PatternLayout;
 import org.openqa.selenium.WebDriver;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 @Test(singleThreaded = true)
 public class KeywordEngineResolvedContextTest {
@@ -101,6 +110,39 @@ public class KeywordEngineResolvedContextTest {
         Assert.assertEquals(result.getEvidence(), "");
         Assert.assertEquals(result.getExcelRowNumber(), 17);
         Assert.assertEquals(result.getStepOrder(), 3);
+    }
+
+    @Test
+    public void lifecycleLoggingShouldBeCentralizedAndMaskSensitiveValue() {
+        String secret = "super-secret-password";
+        ResolvedStepContext step = step(
+                "input",
+                "txtPassword",
+                "LOGIN_DATA.PASSWORD",
+                secret,
+                ""
+        );
+        MessageAppender appender = new MessageAppender();
+        Logger logger = (Logger) LogManager.getLogger(KeywordEngine.class);
+        appender.start();
+        logger.addAppender(appender);
+
+        try {
+            ExecutionResult result = engine(new ObservingResolver(new FakeWebDriver(), false)).execute(step);
+            Assert.assertTrue(result.isSuccess(), result.getMessage());
+        } finally {
+            logger.removeAppender(appender);
+            appender.stop();
+        }
+
+        String messages = String.join(System.lineSeparator(), appender.messages());
+        Assert.assertTrue(messages.contains("Executing keyword."));
+        Assert.assertTrue(messages.contains("Function = input"));
+        Assert.assertTrue(messages.contains("Object = txtPassword"));
+        Assert.assertTrue(messages.contains("XPath = //input[@id='resolvedUsername']"));
+        Assert.assertTrue(messages.contains("Value = ****"));
+        Assert.assertTrue(messages.contains("Completed keyword."));
+        Assert.assertFalse(messages.contains(secret));
     }
 
     @Test
@@ -239,6 +281,30 @@ public class KeywordEngineResolvedContextTest {
         public String capture(WebDriver driver, String screenshotName) {
             observedContext = StepContextHolder.get();
             return "target/screenshots/resolved-context.png";
+        }
+    }
+
+    private static class MessageAppender extends AbstractAppender {
+
+        private final List<String> messages = Collections.synchronizedList(new ArrayList<>());
+
+        private MessageAppender() {
+            super(
+                    "KeywordEngineResolvedContextTestAppender",
+                    null,
+                    PatternLayout.createDefaultLayout(),
+                    false,
+                    Property.EMPTY_ARRAY
+            );
+        }
+
+        @Override
+        public void append(LogEvent event) {
+            messages.add(event.getMessage().getFormattedMessage());
+        }
+
+        private List<String> messages() {
+            return List.copyOf(messages);
         }
     }
 }

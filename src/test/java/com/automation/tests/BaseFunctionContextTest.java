@@ -5,19 +5,9 @@ import com.automation.context.StepContextHolder;
 import com.automation.exceptions.FrameworkException;
 import com.automation.models.ResolvedStepContext;
 import com.automation.tests.support.FakeWebDriver;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.core.LogEvent;
-import org.apache.logging.log4j.core.Logger;
-import org.apache.logging.log4j.core.appender.AbstractAppender;
-import org.apache.logging.log4j.core.config.Property;
-import org.apache.logging.log4j.core.layout.PatternLayout;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 
 @Test(singleThreaded = true)
 public class BaseFunctionContextTest {
@@ -176,35 +166,6 @@ public class BaseFunctionContextTest {
         assertContextualValidation(exception, "Expected text is required for keyword 'verifyText'.", "lblMessage");
     }
 
-    @Test
-    public void inputLoggingShouldMaskSensitiveResolvedValue() {
-        FakeWebDriver driver = driver();
-        String secret = "super-secret-password";
-        StepContextHolder.set(step(
-                "input",
-                "txtPassword",
-                "LOGIN_DATA.PASSWORD",
-                secret,
-                "//input[@id='raw-password']",
-                "//input[@id='resolved-password']"
-        ));
-        MessageAppender appender = new MessageAppender();
-        Logger logger = (Logger) LogManager.getLogger(BaseFunction.class);
-        appender.start();
-        logger.addAppender(appender);
-
-        try {
-            new BaseFunction(driver.driver()).input();
-        } finally {
-            logger.removeAppender(appender);
-            appender.stop();
-        }
-
-        String messages = String.join(System.lineSeparator(), appender.messages());
-        Assert.assertTrue(messages.contains("Value: ****"));
-        Assert.assertFalse(messages.contains(secret));
-    }
-
     private void assertContextualValidation(
             FrameworkException exception,
             String summary,
@@ -260,27 +221,4 @@ public class BaseFunctionContextTest {
         );
     }
 
-    private static class MessageAppender extends AbstractAppender {
-
-        private final List<String> messages = Collections.synchronizedList(new ArrayList<>());
-
-        private MessageAppender() {
-            super(
-                    "BaseFunctionContextTestAppender",
-                    null,
-                    PatternLayout.createDefaultLayout(),
-                    false,
-                    Property.EMPTY_ARRAY
-            );
-        }
-
-        @Override
-        public void append(LogEvent event) {
-            messages.add(event.getMessage().getFormattedMessage());
-        }
-
-        private List<String> messages() {
-            return List.copyOf(messages);
-        }
-    }
 }

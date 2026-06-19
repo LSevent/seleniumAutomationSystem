@@ -13,6 +13,7 @@ import com.automation.models.Scenario;
 import com.automation.models.TestCaseBlock;
 import com.automation.models.TestStep;
 import com.automation.reports.ExcelReportConfig;
+import com.automation.reports.SensitiveDataMasker;
 import com.automation.services.ScreenshotService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -24,6 +25,7 @@ import java.util.List;
 public class KeywordEngine {
 
     private static final Logger LOGGER = LogManager.getLogger(KeywordEngine.class);
+    private static final SensitiveDataMasker SENSITIVE_DATA_MASKER = new SensitiveDataMasker();
     private static final String MANUAL_SCREENSHOT_DISABLED_MESSAGE = "Manual screenshot skipped because report.manualScreenshotEnabled=false.";
 
     private final DataReader dataReader;
@@ -96,15 +98,7 @@ public class KeywordEngine {
 
         StepContextHolder.set(step);
         try {
-            LOGGER.info(
-                    "Resolved step started. Scenario NO = {}, ACTION = {}, Testcase = {}, Row = {}, Function = {}, Object = {}",
-                    step.getScenarioNo(),
-                    step.getScenarioAction(),
-                    step.getTestcaseName(),
-                    step.getExcelRow(),
-                    step.getFunction(),
-                    step.getObjectName()
-            );
+            logResolvedStepStarted(step);
 
             ExecutionResult result;
             if (isBlank(step.getFunction())) {
@@ -279,28 +273,73 @@ public class KeywordEngine {
     private ExecutionResult logResolvedResult(ExecutionResult result) {
         if (ExecutionResult.STATUS_SKIP.equals(result.getStatus())) {
             LOGGER.info(
-                    "Resolved step skipped. Scenario NO = {}, ACTION = {}, Testcase = {}, Row = {}, Function = {}, Message = {}",
+                    "Keyword skipped. Scenario NO = {}, ACTION = {}, Testcase = {}, Row = {}, Function = {}, "
+                            + "Object = {}, Application = {}, Status = {}, Message = {}",
                     result.getScenarioNo(),
                     result.getScenarioAction(),
                     result.getTestcaseName(),
                     result.getExcelRowNumber(),
                     result.getFunctionName(),
+                    result.getObjectName(),
+                    result.getApplication(),
+                    result.getStatus(),
                     result.getMessage()
             );
         } else if (result.isSuccess()) {
             LOGGER.info(
-                    "Resolved step passed. Scenario NO = {}, ACTION = {}, Testcase = {}, Row = {}, Function = {}, Source = {}",
+                    "Completed keyword. Scenario NO = {}, ACTION = {}, Testcase = {}, Row = {}, Function = {}, "
+                            + "Object = {}, Application = {}, Status = {}, Source = {}",
                     result.getScenarioNo(),
                     result.getScenarioAction(),
                     result.getTestcaseName(),
                     result.getExcelRowNumber(),
                     result.getFunctionName(),
+                    result.getObjectName(),
+                    result.getApplication(),
+                    result.getStatus(),
                     result.getExecutionSource()
             );
         } else {
-            logFailure(result);
+            LOGGER.error(
+                    "Keyword failed. Scenario NO = {}, ACTION = {}, Testcase = {}, Row = {}, Function = {}, "
+                            + "Object = {}, Application = {}, Status = {}, Message = {}",
+                    result.getScenarioNo(),
+                    result.getScenarioAction(),
+                    result.getTestcaseName(),
+                    result.getExcelRowNumber(),
+                    result.getFunctionName(),
+                    result.getObjectName(),
+                    result.getApplication(),
+                    result.getStatus(),
+                    result.getMessage()
+            );
         }
         return result;
+    }
+
+    private void logResolvedStepStarted(ResolvedStepContext step) {
+        String valueForLog = SENSITIVE_DATA_MASKER.maskIfNeeded(
+                step.getResolvedValue(),
+                false,
+                step.getRawValue(),
+                step.getObjectName(),
+                step.getResolvedXPath(),
+                step.getDescription(),
+                step.getFunction()
+        );
+        LOGGER.info(
+                "Executing keyword. Scenario NO = {}, ACTION = {}, Testcase = {}, Row = {}, Function = {}, "
+                        + "Object = {}, Application = {}, XPath = {}, Value = {}",
+                step.getScenarioNo(),
+                step.getScenarioAction(),
+                step.getTestcaseName(),
+                step.getExcelRow(),
+                step.getFunction(),
+                step.getObjectName(),
+                step.getApplication(),
+                step.getResolvedXPath(),
+                valueForLog
+        );
     }
 
     private boolean resolveValue(ExecutionContext context) {

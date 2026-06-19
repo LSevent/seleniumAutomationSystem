@@ -91,7 +91,7 @@ Public keyword methods are context-based, no-argument entry points. They read th
 
 SpecificFunction keywords can also use no-argument context-based execution for application-specific behavior. `BaseFunction` remains the home for common reusable keywords, while `SpecificFunction` is selected first within each resolution tier when an application needs specialized behavior.
 
-Internal helpers are limited to shared context access, validation, logging, waiting, sensitive-value masking, and reusable custom-function support; they are not Excel-facing keyword entry points.
+`KeywordEngine` centrally logs keyword start, completion, skip, and failure events using the resolved step context, with sensitive values masked. Internal function helpers are limited to shared context access, validation, waiting, and reusable custom-function support; they are not Excel-facing keyword entry points.
 
 Excel execution now builds and validates a resolved execution plan before runtime startup. Runtime execution uses each `ResolvedStepContext` as its source of truth; `KeywordEngine` sets `StepContextHolder` for the step and clears it afterward, and report rows are populated from the same resolved step data.
 
