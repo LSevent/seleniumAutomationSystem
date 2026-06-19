@@ -230,12 +230,12 @@ public class KeywordEngine {
                     functionResult.getMessage()
             );
         } catch (RuntimeException | AssertionError exception) {
-            String message = failureMessage(
-                    "Failed to execute keyword '" + safe(step.getFunction()) + "' for step row "
-                            + step.getExcelRow() + ".",
-                    step,
-                    exception
-            );
+            String message = "Failed to execute keyword '" + safe(step.getFunction()) + "' for step row "
+                    + step.getExcelRow() + ".";
+            if (!containsStepContext(exception.getMessage())) {
+                message += System.lineSeparator() + resolvedStepContext(step);
+            }
+            message += System.lineSeparator() + "Cause: " + safe(exception.getMessage());
             return ExecutionResult.failure(step, safe(step.getExecutedBy()), "FUNCTION", message);
         }
     }
@@ -569,5 +569,10 @@ public class KeywordEngine {
 
     private String safe(String value) {
         return value == null ? "" : value.trim();
+    }
+
+    private boolean containsStepContext(String message) {
+        return message != null
+                && (message.contains("Scenario NO:") || message.contains("Scenario ACTION:"));
     }
 }

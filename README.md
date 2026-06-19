@@ -89,6 +89,8 @@ Pre-run validation checks data references, object and XPath availability, and si
 
 BaseFunction keywords now read the current `ResolvedStepContext` from `StepContextHolder`. This allows common keywords such as `openUrl()`, `click()`, `input()`, `verifyDisplayed()`, and `verifyText()` to execute using the resolved Excel step instead of receiving xpath/value arguments directly.
 
+Excel execution now builds and validates a resolved execution plan before runtime startup. Runtime execution uses each `ResolvedStepContext` as its source of truth; `KeywordEngine` sets `StepContextHolder` for the step and clears it afterward, and report rows are populated from the same resolved step data.
+
 ## Configuration
 
 Browser and normal UI-test configuration lives in:

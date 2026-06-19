@@ -25,9 +25,13 @@
             <class name="com.automation.tests.FunctionResolverValidationTest"/>
             <class name="com.automation.tests.KeywordEngineTest"/>
             <class name="com.automation.tests.KeywordEngineResolvedContextTest"/>
+            <class name="com.automation.tests.KeywordEngineReportMappingTest"/>
             <class name="com.automation.tests.KeywordEngineValidationTest"/>
             <class name="com.automation.tests.ExcelKeywordExecutionTest"/>
             <class name="com.automation.tests.ScenarioRunnerValidationTest"/>
+            <class name="com.automation.tests.ScenarioRunnerResolvedPlanExecutionTest"/>
+            <class name="com.automation.tests.ScreenshotResolvedPlanRegressionTest"/>
+            <class name="com.automation.tests.StepContextLeakRegressionTest"/>
             <class name="com.automation.tests.SensitiveDataMaskerTest"/>
             <class name="com.automation.tests.ExcelExecutionReportTest"/>
             <class name="com.automation.tests.FinalTemplateValidationTest"/>

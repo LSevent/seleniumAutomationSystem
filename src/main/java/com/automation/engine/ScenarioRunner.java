@@ -6,6 +6,9 @@ import com.automation.excel.ScenarioReader;
 import com.automation.excel.StepReader;
 import com.automation.exceptions.FrameworkException;
 import com.automation.models.ExecutionResult;
+import com.automation.models.ResolvedScenarioContext;
+import com.automation.models.ResolvedStepContext;
+import com.automation.models.ResolvedTestcaseContext;
 import com.automation.models.Scenario;
 import com.automation.models.TestCaseBlock;
 import com.automation.models.TestStep;
@@ -105,9 +108,10 @@ public class ScenarioRunner {
     public List<ExecutionResult> runActiveScenarios() {
         List<ExecutionResult> results = new ArrayList<>();
         try {
-            preRunValidator.validate(executionPlanBuilder.build());
-            for (Scenario scenario : scenarioReader.getActiveScenarios()) {
-                List<ExecutionResult> scenarioResults = runScenario(scenario);
+            List<ResolvedScenarioContext> executionPlan = executionPlanBuilder.build();
+            preRunValidator.validate(executionPlan);
+            for (ResolvedScenarioContext scenario : executionPlan) {
+                List<ExecutionResult> scenarioResults = runResolvedScenario(scenario);
                 results.addAll(scenarioResults);
                 if (scenarioResults.stream().anyMatch(result -> !result.isSuccess())) {
                     break;
@@ -117,6 +121,84 @@ public class ScenarioRunner {
         } finally {
             flushReporter();
         }
+    }
+
+    private List<ExecutionResult> runResolvedScenario(ResolvedScenarioContext resolvedScenario) {
+        Scenario scenario = scenarioFrom(resolvedScenario);
+        LOGGER.info("Resolved scenario started. NO = {}, ACTION = {}", scenario.getNo(), scenario.getAction());
+        startScenarioReport(scenario);
+
+        List<ExecutionResult> results = new ArrayList<>();
+        for (ResolvedTestcaseContext resolvedTestcase : resolvedScenario.getTestcases()) {
+            TestCaseBlock testcase = testcaseFrom(resolvedScenario, resolvedTestcase);
+            LOGGER.info(
+                    "Resolved testcase started. Scenario NO = {}, ACTION = {}, Testcase = {}",
+                    scenario.getNo(),
+                    scenario.getAction(),
+                    testcase.getTestcaseName()
+            );
+            startTestcaseReport(testcase);
+
+            for (ResolvedStepContext step : resolvedTestcase.getSteps()) {
+                ExecutionResult result = keywordEngine().execute(step);
+                results.add(result);
+                logStepReport(result);
+                if (!result.isSuccess()) {
+                    String scenarioMessage = "Scenario failed. NO = " + scenario.getNo()
+                            + ", ACTION = " + scenario.getAction()
+                            + ", Testcase = " + testcase.getTestcaseName()
+                            + ". " + result.getMessage();
+                    LOGGER.error(
+                            "Resolved scenario failed. NO = {}, ACTION = {}, Testcase = {}. Message = {}",
+                            scenario.getNo(),
+                            scenario.getAction(),
+                            testcase.getTestcaseName(),
+                            result.getMessage()
+                    );
+                    finishTestcaseReport(testcase, false, result.getMessage());
+                    finishScenarioReport(scenario, false, scenarioMessage);
+                    return results;
+                }
+            }
+
+            finishTestcaseReport(testcase, true, "");
+            LOGGER.info(
+                    "Resolved testcase finished. Scenario NO = {}, ACTION = {}, Testcase = {}",
+                    scenario.getNo(),
+                    scenario.getAction(),
+                    testcase.getTestcaseName()
+            );
+        }
+
+        LOGGER.info("Resolved scenario finished. NO = {}, ACTION = {}", scenario.getNo(), scenario.getAction());
+        finishScenarioReport(scenario, true, "");
+        return results;
+    }
+
+    private Scenario scenarioFrom(ResolvedScenarioContext scenario) {
+        return new Scenario(
+                scenario.getScenarioNo(),
+                true,
+                scenario.getScenarioAction(),
+                scenario.getScenarioName(),
+                0
+        );
+    }
+
+    private TestCaseBlock testcaseFrom(
+            ResolvedScenarioContext scenario,
+            ResolvedTestcaseContext testcase
+    ) {
+        return new TestCaseBlock(
+                scenario.getScenarioNo(),
+                scenario.getScenarioName(),
+                scenario.getScenarioAction(),
+                testcase.getTestcaseName(),
+                true,
+                testcase.getApplication(),
+                "",
+                testcase.getParentExcelRow()
+        );
     }
 
     public List<ExecutionResult> runScenario(Scenario scenario) {
