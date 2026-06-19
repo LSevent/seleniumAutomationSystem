@@ -22,6 +22,7 @@
             <class name="com.automation.tests.BaseFunctionContextTest"/>
             <class name="com.automation.tests.FunctionResolverTest"/>
             <class name="com.automation.tests.FunctionResolverNoArgTest"/>
+            <class name="com.automation.tests.SpecificFunctionContextTest"/>
             <class name="com.automation.tests.FunctionResolverValidationTest"/>
             <class name="com.automation.tests.KeywordEngineTest"/>
             <class name="com.automation.tests.KeywordEngineResolvedContextTest"/>

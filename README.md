@@ -89,6 +89,8 @@ Pre-run validation checks data references, object and XPath availability, and si
 
 BaseFunction keywords now read the current `ResolvedStepContext` from `StepContextHolder`. This allows common keywords such as `openUrl()`, `click()`, `input()`, `verifyDisplayed()`, and `verifyText()` to execute using the resolved Excel step instead of receiving xpath/value arguments directly.
 
+SpecificFunction keywords can also use no-argument context-based execution for application-specific behavior. `BaseFunction` remains the home for common reusable keywords, while `SpecificFunction` is selected first within each resolution tier when an application needs specialized behavior.
+
 Excel execution now builds and validates a resolved execution plan before runtime startup. Runtime execution uses each `ResolvedStepContext` as its source of truth; `KeywordEngine` sets `StepContextHolder` for the step and clears it afterward, and report rows are populated from the same resolved step data.
 
 ## Configuration
@@ -270,6 +272,8 @@ The `screenshot` keyword is special. It is handled by `KeywordEngine`, not by `B
 
 `BaseFunction` contains reusable Selenium actions that are shared by all applications.
 
+`SpecificFunction` contains application-specific behavior. Its keyword methods can use the same no-argument context style as `BaseFunction`: the current `ResolvedStepContext` is read from `StepContextHolder`, including the resolved XPath and value prepared by the execution plan.
+
 Application-specific keywords live in:
 
 ```text
@@ -286,11 +290,13 @@ Application values from Excel are normalized to uppercase package segments. For 
 
 Keyword lookup order:
 
-1. `SpecificFunction` for the current `Application`
-2. `BaseFunction`
-3. Clear failure when the keyword is not found
+1. No-argument method in `SpecificFunction` for the current `Application`
+2. No-argument method in `BaseFunction`
+3. Compatible parameter-based method in `SpecificFunction`
+4. Compatible parameter-based method in `BaseFunction`
+5. Clear failure when the keyword is not found
 
-If the same method exists in both `SpecificFunction` and `BaseFunction`, the application-specific method wins.
+If the same no-argument method exists in both `SpecificFunction` and `BaseFunction`, the application-specific method wins. Parameter-based signatures remain available as a compatibility fallback.
 
 ## Screenshots
 

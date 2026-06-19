@@ -91,7 +91,7 @@ public class FunctionResolverNoArgTest {
     }
 
     @Test
-    public void parameterFallbackShouldUseResolvedXpathFromCurrentContext() {
+    public void productionSpecificNoArgShouldUseResolvedXpathFromCurrentContext() {
         FakeWebDriver driver = driver();
         String resolvedXpath = "//button[@id='resolved-room']";
         driver.addElement(resolvedXpath, "Meeting Room A");

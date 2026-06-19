@@ -384,7 +384,7 @@ public class FunctionResolver {
     }
 
     private String withStepContext(String message, ResolvedStepContext step) {
-        if (step == null || !hasExecutionIdentity(step)) {
+        if (step == null || !hasExecutionIdentity(step) || containsStepContext(message)) {
             return message;
         }
         String context = new ErrorContext()
@@ -397,6 +397,11 @@ public class FunctionResolver {
                 .application(step.getApplication())
                 .render();
         return context.isBlank() ? message : message + System.lineSeparator() + context;
+    }
+
+    private boolean containsStepContext(String message) {
+        return message != null
+                && (message.contains("Scenario NO:") || message.contains("Scenario ACTION:"));
     }
 
     private boolean hasExecutionIdentity(ResolvedStepContext step) {

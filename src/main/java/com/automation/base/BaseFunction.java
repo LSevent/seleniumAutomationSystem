@@ -276,7 +276,7 @@ public class BaseFunction {
         validateRequired(value, keyword, fieldName, currentContext());
     }
 
-    private void validateRequired(
+    protected void validateRequired(
             String value,
             String keyword,
             String fieldName,
@@ -288,7 +288,7 @@ public class BaseFunction {
         }
     }
 
-    private ResolvedStepContext currentContext() {
+    protected ResolvedStepContext currentContext() {
         return StepContextHolder.current().orElse(null);
     }
 
@@ -306,6 +306,7 @@ public class BaseFunction {
                 .scenarioAction(step.getScenarioAction())
                 .testcase(step.getTestcaseName())
                 .row(step.getExcelRow())
+                .function(step.getFunction())
                 .object(step.getObjectName())
                 .application(step.getApplication())
                 .render();
