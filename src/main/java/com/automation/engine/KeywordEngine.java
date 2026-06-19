@@ -223,7 +223,7 @@ public class KeywordEngine {
                     functionResult.getMessage()
             );
         } catch (RuntimeException | AssertionError exception) {
-            String message = "Failed to execute keyword '" + safe(step.getFunction()) + "' for step row "
+            String message = "Keyword '" + safe(step.getFunction()) + "' failed at step row "
                     + step.getExcelRow() + ".";
             if (!containsStepContext(exception.getMessage())) {
                 message += System.lineSeparator() + resolvedStepContext(step);
@@ -274,7 +274,7 @@ public class KeywordEngine {
         if (ExecutionResult.STATUS_SKIP.equals(result.getStatus())) {
             LOGGER.info(
                     "Keyword skipped. Scenario NO = {}, ACTION = {}, Testcase = {}, Row = {}, Function = {}, "
-                            + "Object = {}, Application = {}, Status = {}, Message = {}",
+                            + "Object = {}, Application = {}, XPath = {}, Status = {}, Source = {}, Message = {}",
                     result.getScenarioNo(),
                     result.getScenarioAction(),
                     result.getTestcaseName(),
@@ -282,13 +282,15 @@ public class KeywordEngine {
                     result.getFunctionName(),
                     result.getObjectName(),
                     result.getApplication(),
+                    result.getResolvedXpath(),
                     result.getStatus(),
+                    result.getExecutionSource(),
                     result.getMessage()
             );
         } else if (result.isSuccess()) {
             LOGGER.info(
                     "Completed keyword. Scenario NO = {}, ACTION = {}, Testcase = {}, Row = {}, Function = {}, "
-                            + "Object = {}, Application = {}, Status = {}, Source = {}",
+                            + "Object = {}, Application = {}, XPath = {}, Status = {}, Source = {}",
                     result.getScenarioNo(),
                     result.getScenarioAction(),
                     result.getTestcaseName(),
@@ -296,13 +298,14 @@ public class KeywordEngine {
                     result.getFunctionName(),
                     result.getObjectName(),
                     result.getApplication(),
+                    result.getResolvedXpath(),
                     result.getStatus(),
                     result.getExecutionSource()
             );
         } else {
             LOGGER.error(
                     "Keyword failed. Scenario NO = {}, ACTION = {}, Testcase = {}, Row = {}, Function = {}, "
-                            + "Object = {}, Application = {}, Status = {}, Message = {}",
+                            + "Object = {}, Application = {}, XPath = {}, Status = {}, Source = {}, Message = {}",
                     result.getScenarioNo(),
                     result.getScenarioAction(),
                     result.getTestcaseName(),
@@ -310,7 +313,9 @@ public class KeywordEngine {
                     result.getFunctionName(),
                     result.getObjectName(),
                     result.getApplication(),
+                    result.getResolvedXpath(),
                     result.getStatus(),
+                    result.getExecutionSource(),
                     result.getMessage()
             );
         }
@@ -387,10 +392,6 @@ public class KeywordEngine {
             context.setExecutedByClass(ObjectRepositoryReader.class.getName());
             context.setMessage("Failed to resolve object for step row " + step.getExcelRowNumber() + "."
                     + System.lineSeparator()
-                    + "Application: " + safe(step.getApplication()) + "."
-                    + System.lineSeparator()
-                    + "Object: " + safe(step.getObject()) + "."
-                    + System.lineSeparator()
                     + stepContext(context)
                     + System.lineSeparator()
                     + "Cause: " + exception.getMessage());
@@ -419,12 +420,8 @@ public class KeywordEngine {
                     functionResult.getMessage()
             );
         } catch (RuntimeException | AssertionError exception) {
-            context.setMessage("Failed to execute keyword '" + safe(step.getFunction()) + "' for step row "
+            context.setMessage("Keyword '" + safe(step.getFunction()) + "' failed at step row "
                     + step.getExcelRowNumber() + "."
-                    + System.lineSeparator()
-                    + "Application: " + safe(step.getApplication()) + "."
-                    + System.lineSeparator()
-                    + "Object: " + safe(step.getObject()) + "."
                     + System.lineSeparator()
                     + stepContext(context)
                     + System.lineSeparator()
@@ -579,8 +576,12 @@ public class KeywordEngine {
         return new ErrorContext()
                 .scenarioNo(scenario == null ? "" : scenario.getNo())
                 .scenarioAction(scenario == null ? "" : scenario.getAction())
+                .sheet(step == null ? "" : step.getScenarioAction())
                 .testcase(step == null ? "" : step.getTestcaseName())
+                .row(step == null ? 0 : step.getExcelRowNumber())
                 .function(step == null ? "" : step.getFunction())
+                .object(step == null ? "" : step.getObject())
+                .application(step == null ? "" : step.getApplication())
                 .render();
     }
 
@@ -588,6 +589,7 @@ public class KeywordEngine {
         return new ErrorContext()
                 .scenarioNo(step.getScenarioNo())
                 .scenarioAction(step.getScenarioAction())
+                .sheet(step.getSheetName())
                 .testcase(step.getTestcaseName())
                 .row(step.getExcelRow())
                 .function(step.getFunction())

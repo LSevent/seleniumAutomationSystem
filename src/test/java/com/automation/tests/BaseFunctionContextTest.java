@@ -174,6 +174,7 @@ public class BaseFunctionContextTest {
         Assert.assertTrue(exception.getMessage().startsWith(summary));
         Assert.assertTrue(exception.getMessage().contains("Scenario NO: 1."));
         Assert.assertTrue(exception.getMessage().contains("Scenario ACTION: Local Keyword Test."));
+        Assert.assertTrue(exception.getMessage().contains("Sheet: Local Keyword Test."));
         Assert.assertTrue(exception.getMessage().contains("Testcase: Login BRS."));
         Assert.assertTrue(exception.getMessage().contains("Row: 7."));
         if (!objectName.isBlank()) {

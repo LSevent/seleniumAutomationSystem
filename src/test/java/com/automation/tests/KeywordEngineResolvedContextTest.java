@@ -142,6 +142,8 @@ public class KeywordEngineResolvedContextTest {
         Assert.assertTrue(messages.contains("XPath = //input[@id='resolvedUsername']"));
         Assert.assertTrue(messages.contains("Value = ****"));
         Assert.assertTrue(messages.contains("Completed keyword."));
+        Assert.assertTrue(messages.contains("Status = PASS"));
+        Assert.assertTrue(messages.contains("Source = BASE"));
         Assert.assertFalse(messages.contains(secret));
     }
 
@@ -166,6 +168,7 @@ public class KeywordEngineResolvedContextTest {
         Assert.assertFalse(result.isSuccess());
         Assert.assertTrue(result.getMessage().contains("Scenario NO: SC-13C."));
         Assert.assertTrue(result.getMessage().contains("Scenario ACTION: Login Flow."));
+        Assert.assertTrue(result.getMessage().contains("Sheet: Login Flow."));
         Assert.assertTrue(result.getMessage().contains("Testcase: Valid Login."));
         Assert.assertTrue(result.getMessage().contains("Row: 17."));
         Assert.assertTrue(result.getMessage().contains("Function: click."));

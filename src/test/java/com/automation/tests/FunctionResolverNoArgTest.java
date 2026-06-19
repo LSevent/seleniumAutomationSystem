@@ -182,6 +182,7 @@ public class FunctionResolverNoArgTest {
         ));
         Assert.assertTrue(exception.getMessage().contains("Scenario NO: 1."));
         Assert.assertTrue(exception.getMessage().contains("Scenario ACTION: Local Keyword Test."));
+        Assert.assertTrue(exception.getMessage().contains("Sheet: Local Keyword Test."));
         Assert.assertTrue(exception.getMessage().contains("Testcase: Login BRS."));
         Assert.assertTrue(exception.getMessage().contains("Row: 10."));
         Assert.assertTrue(exception.getMessage().contains("Function: approveBooking."));

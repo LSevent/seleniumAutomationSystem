@@ -259,6 +259,7 @@ public class BaseFunction {
         return new ErrorContext()
                 .scenarioNo(step.getScenarioNo())
                 .scenarioAction(step.getScenarioAction())
+                .sheet(step.getSheetName())
                 .testcase(step.getTestcaseName())
                 .row(step.getExcelRow())
                 .function(step.getFunction())

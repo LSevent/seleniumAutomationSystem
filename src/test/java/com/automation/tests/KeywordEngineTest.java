@@ -174,7 +174,7 @@ public class KeywordEngineTest {
             ExecutionResult result = keywordEngine.executeStep(scenario, step);
 
             Assert.assertFalse(result.isSuccess());
-            Assert.assertTrue(result.getMessage().contains("Failed to execute keyword 'click' for step row 6."));
+            Assert.assertTrue(result.getMessage().contains("Keyword 'click' failed at step row 6."));
             Assert.assertTrue(result.getMessage().contains("Application: BRS."));
             Assert.assertTrue(result.getMessage().contains("Scenario ACTION: Local Keyword Test."));
             Assert.assertTrue(result.getMessage().contains("Cause: XPath is required for keyword 'click'."));

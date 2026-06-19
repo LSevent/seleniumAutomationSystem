@@ -53,17 +53,10 @@ public class FunctionResolver {
         MethodResolution resolution = resolveInternal(application, functionName, step);
         String keyword = functionName.trim();
 
-        LOGGER.info(
-                "Executing keyword '{}' using {}.",
-                keyword,
-                resolution.resolvedFunction().getResolvedClassName()
-        );
-
         try {
             resolution.method().invoke(resolution.target());
             String message = "Executed keyword '" + keyword + "' using "
                     + resolution.resolvedFunction().getResolvedClassName() + ".";
-            LOGGER.info(message);
             return new FunctionExecutionResult(
                     resolution.resolvedFunction().getApplication(),
                     resolution.resolvedFunction().getFunctionName(),
@@ -136,7 +129,7 @@ public class FunctionResolver {
                 FunctionSourceType.BASE,
                 method.getName()
         );
-        LOGGER.info("Fallback to BaseFunction for keyword '{}'.", keyword);
+        LOGGER.info("Selected BaseFunction for keyword '{}'.", keyword);
         return new MethodResolution(resolvedFunction, method, baseFunction);
     }
 
@@ -145,7 +138,7 @@ public class FunctionResolver {
             return Class.forName(className);
         } catch (ClassNotFoundException exception) {
             LOGGER.warn(
-                    "SpecificFunction not found for application '{}'. Expected class: {}. Trying BaseFunction fallback.",
+                    "SpecificFunction not found for application '{}'. Expected class: {}. Checking BaseFunction.",
                     application,
                     className
             );
@@ -228,6 +221,7 @@ public class FunctionResolver {
         String context = new ErrorContext()
                 .scenarioNo(step.getScenarioNo())
                 .scenarioAction(step.getScenarioAction())
+                .sheet(step.getSheetName())
                 .testcase(step.getTestcaseName())
                 .row(step.getExcelRow())
                 .function(step.getFunction())

@@ -86,6 +86,7 @@ public class SpecificFunctionContextTest {
         Assert.assertTrue(message.contains("Value is required for keyword 'selectRoomByName'."));
         Assert.assertTrue(message.contains("Scenario NO: 1."));
         Assert.assertTrue(message.contains("Scenario ACTION: Local Keyword Test."));
+        Assert.assertTrue(message.contains("Sheet: Local Keyword Test."));
         Assert.assertTrue(message.contains("Testcase: Login BRS."));
         Assert.assertTrue(message.contains("Row: 10."));
         Assert.assertTrue(message.contains("Function: selectRoomByName."));
