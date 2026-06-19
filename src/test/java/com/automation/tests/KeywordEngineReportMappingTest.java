@@ -96,12 +96,7 @@ public class KeywordEngineReportMappingTest {
         }
 
         @Override
-        public FunctionExecutionResult execute(
-                String application,
-                String functionName,
-                String resolvedXpath,
-                String resolvedValue
-        ) {
+        public FunctionExecutionResult execute(String application, String functionName) {
             Assert.assertTrue(StepContextHolder.current().isPresent());
             return new FunctionExecutionResult(
                     application,

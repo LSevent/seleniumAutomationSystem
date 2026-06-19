@@ -209,15 +209,10 @@ public class KeywordEngineResolvedContextTest {
         }
 
         @Override
-        public FunctionExecutionResult execute(
-                String application,
-                String functionName,
-                String resolvedXpath,
-                String resolvedValue
-        ) {
+        public FunctionExecutionResult execute(String application, String functionName) {
             observedContext = StepContextHolder.get();
-            observedXpath = resolvedXpath;
-            observedValue = resolvedValue;
+            observedXpath = observedContext.getResolvedXPath();
+            observedValue = observedContext.getResolvedValue();
             if (fail) {
                 throw new FrameworkException("Synthetic keyword failure.");
             }

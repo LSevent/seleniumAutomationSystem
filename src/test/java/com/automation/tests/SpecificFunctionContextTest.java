@@ -29,9 +29,7 @@ public class SpecificFunctionContextTest {
 
         FunctionExecutionResult result = new FunctionResolver(driver.driver()).execute(
                 step.getApplication(),
-                step.getFunction(),
-                step.getObjectName(),
-                "wrong-value"
+                step.getFunction()
         );
 
         Assert.assertEquals(result.getSourceType(), FunctionSourceType.SPECIFIC);
@@ -56,9 +54,7 @@ public class SpecificFunctionContextTest {
 
         FunctionExecutionResult result = new FunctionResolver(driver.driver()).execute(
                 step.getApplication(),
-                step.getFunction(),
-                "employeeCard",
-                "wrong-value"
+                step.getFunction()
         );
 
         Assert.assertEquals(result.getSourceType(), FunctionSourceType.SPECIFIC);
@@ -82,9 +78,7 @@ public class SpecificFunctionContextTest {
                 FrameworkException.class,
                 () -> new FunctionResolver(driver.driver()).execute(
                         step.getApplication(),
-                        step.getFunction(),
-                        "wrong-xpath",
-                        "wrong-value"
+                        step.getFunction()
                 )
         );
 
@@ -101,21 +95,11 @@ public class SpecificFunctionContextTest {
     }
 
     @Test
-    public void legacySpecificSignatureShouldRemainAvailableWithoutStepContext() {
-        FakeWebDriver driver = new FakeWebDriver();
-        String xpath = "//button[@id='legacy-room']";
-        driver.addElement(xpath, "Meeting Room A");
-
-        FunctionExecutionResult result = new FunctionResolver(driver.driver()).execute(
-                "BRS",
-                "selectRoomByName",
-                xpath,
-                "Meeting Room A"
-        );
-
-        Assert.assertEquals(result.getSourceType(), FunctionSourceType.SPECIFIC);
-        Assert.assertTrue(driver.element(xpath).isClicked());
-        Assert.assertTrue(StepContextHolder.current().isEmpty());
+    public void productionSpecificKeywordsShouldExposeOnlyNoArgEntryPoints() {
+        assertNoArgKeyword(com.automation.functions.BRS.SpecificFunction.class, "click");
+        assertNoArgKeyword(com.automation.functions.BRS.SpecificFunction.class, "selectRoomByName");
+        assertNoArgKeyword(com.automation.functions.BRS.SpecificFunction.class, "verifyBookingCreated");
+        assertNoArgKeyword(com.automation.functions.HRIS.SpecificFunction.class, "verifyEmployeeVisible");
     }
 
     private ResolvedStepContext step(
@@ -148,5 +132,13 @@ public class SpecificFunctionContextTest {
 
     private int countOccurrences(String value, String token) {
         return value.split(java.util.regex.Pattern.quote(token), -1).length - 1;
+    }
+
+    private void assertNoArgKeyword(Class<?> functionClass, String keyword) {
+        java.lang.reflect.Method[] methods = java.util.Arrays.stream(functionClass.getDeclaredMethods())
+                .filter(method -> method.getName().equals(keyword))
+                .toArray(java.lang.reflect.Method[]::new);
+        Assert.assertEquals(methods.length, 1, "Expected one public keyword entry point for " + keyword);
+        Assert.assertEquals(methods[0].getParameterCount(), 0);
     }
 }

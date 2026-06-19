@@ -10,6 +10,7 @@ import com.automation.models.FunctionExecutionResult;
 import com.automation.models.ResolvedObject;
 import com.automation.models.ResolvedStepContext;
 import com.automation.models.Scenario;
+import com.automation.models.TestCaseBlock;
 import com.automation.models.TestStep;
 import com.automation.reports.ExcelReportConfig;
 import com.automation.services.ScreenshotService;
@@ -216,9 +217,7 @@ public class KeywordEngine {
         try {
             FunctionExecutionResult functionResult = functionResolver.execute(
                     step.getApplication(),
-                    step.getFunction(),
-                    step.getResolvedXPath(),
-                    step.getResolvedValue()
+                    step.getFunction()
             );
             String executedBy = isBlank(step.getExecutedBy())
                     ? functionResult.getExecutedByClass()
@@ -362,12 +361,11 @@ public class KeywordEngine {
 
     private ExecutionResult executeFunction(ExecutionContext context) {
         TestStep step = context.getTestStep();
+        StepContextHolder.set(resolvedStep(context));
         try {
             FunctionExecutionResult functionResult = functionResolver.execute(
                     step.getApplication(),
-                    step.getFunction(),
-                    context.getResolvedXpath(),
-                    context.getResolvedValue()
+                    step.getFunction()
             );
             context.setExecutedByClass(functionResult.getExecutedByClass());
             context.setExecutedBySource(functionResult.getSourceType().name());
@@ -393,7 +391,34 @@ public class KeywordEngine {
                     + System.lineSeparator()
                     + "Cause: " + exception.getMessage());
             return failureFromContext(context);
+        } finally {
+            StepContextHolder.clear();
         }
+    }
+
+    private ResolvedStepContext resolvedStep(ExecutionContext context) {
+        Scenario scenario = context.getScenario();
+        TestCaseBlock testcase = context.getTestCaseBlock();
+        TestStep step = context.getTestStep();
+        return new ResolvedStepContext(
+                scenario == null ? safe(step.getScenarioNo()) : safe(scenario.getNo()),
+                scenario == null ? safe(step.getScenarioAction()) : safe(scenario.getAction()),
+                scenario == null ? safe(step.getScenarioName()) : safe(scenario.getScenarioName()),
+                scenario == null ? safe(step.getScenarioAction()) : safe(scenario.getAction()),
+                safe(step.getTestcaseName()),
+                testcase == null ? 0 : testcase.getExcelRowNumber(),
+                step.getExcelRowNumber(),
+                context.getCurrentStepNumber(),
+                safe(step.getFunction()),
+                safe(step.getObject()),
+                safe(step.getApplication()),
+                safe(step.getDescription()),
+                safe(step.getValue()),
+                context.getResolvedValue(),
+                context.getRawXpath(),
+                context.getResolvedXpath(),
+                context.getExecutedByClass()
+        );
     }
 
     private ExecutionResult executeManualScreenshot(ExecutionContext context) {

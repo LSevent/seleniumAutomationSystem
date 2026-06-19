@@ -108,12 +108,7 @@ public class StepContextLeakRegressionTest {
         }
 
         @Override
-        public FunctionExecutionResult execute(
-                String application,
-                String functionName,
-                String resolvedXpath,
-                String resolvedValue
-        ) {
+        public FunctionExecutionResult execute(String application, String functionName) {
             observedContext = StepContextHolder.get();
             if (fail) {
                 throw new FrameworkException("Synthetic resolved-plan failure.");

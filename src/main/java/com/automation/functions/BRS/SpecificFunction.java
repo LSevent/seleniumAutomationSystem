@@ -16,48 +16,40 @@ public class SpecificFunction extends BaseFunction {
     }
 
     public void waitForApplicationReady() {
-        LOGGER.info("Executing BRS application readiness placeholder.");
+        ResolvedStepContext step = StepContextHolder.get();
+        LOGGER.info(
+                "Executing BRS application readiness placeholder. Scenario: {}, Testcase: {}, Row: {}",
+                step.getScenarioNo(),
+                step.getTestcaseName(),
+                step.getExcelRow()
+        );
     }
 
     @Override
     public void click() {
         ResolvedStepContext step = StepContextHolder.get();
         LOGGER.info("Executing BRS-specific click using resolved step context.");
-        super.click(step.getResolvedXPath(), step);
-    }
-
-    @Override
-    public void click(String xpath) {
-        LOGGER.info("Executing BRS-specific click override.");
-        super.click(xpath);
+        executeClick(step.getResolvedXPath(), step);
     }
 
     public void selectRoomByName() {
         ResolvedStepContext step = StepContextHolder.get();
-        selectRoomByName(step.getResolvedXPath(), step.getResolvedValue(), step);
+        executeSelectRoomByName(step.getResolvedXPath(), step.getResolvedValue(), step);
     }
 
-    public void selectRoomByName(String xpath, String value) {
-        selectRoomByName(xpath, value, currentContext());
-    }
-
-    private void selectRoomByName(String xpath, String value, ResolvedStepContext step) {
+    private void executeSelectRoomByName(String xpath, String value, ResolvedStepContext step) {
         validateRequired(xpath, "selectRoomByName", "XPath", step);
         validateRequired(value, "selectRoomByName", "Value", step);
         LOGGER.info("Executing BRS-specific room selection placeholder for value: {}", value);
-        safeClick(xpath);
+        executeSafeClick(xpath, step);
     }
 
     public void verifyBookingCreated() {
         ResolvedStepContext step = StepContextHolder.get();
-        verifyBookingCreated(step.getResolvedXPath(), step.getResolvedValue(), step);
+        executeVerifyBookingCreated(step.getResolvedXPath(), step.getResolvedValue(), step);
     }
 
-    public void verifyBookingCreated(String xpath, String expectedMessage) {
-        verifyBookingCreated(xpath, expectedMessage, currentContext());
-    }
-
-    private void verifyBookingCreated(
+    private void executeVerifyBookingCreated(
             String xpath,
             String expectedMessage,
             ResolvedStepContext step
@@ -65,6 +57,6 @@ public class SpecificFunction extends BaseFunction {
         validateRequired(xpath, "verifyBookingCreated", "XPath", step);
         validateRequired(expectedMessage, "verifyBookingCreated", "Value", step);
         LOGGER.info("Executing BRS-specific booking verification placeholder.");
-        verifyTextContains(xpath, expectedMessage);
+        executeVerifyTextContains(xpath, expectedMessage, step);
     }
 }

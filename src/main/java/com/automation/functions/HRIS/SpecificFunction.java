@@ -16,22 +16,24 @@ public class SpecificFunction extends BaseFunction {
     }
 
     public void waitForApplicationReady() {
-        LOGGER.info("Executing HRIS application readiness placeholder.");
+        ResolvedStepContext step = StepContextHolder.get();
+        LOGGER.info(
+                "Executing HRIS application readiness placeholder. Scenario: {}, Testcase: {}, Row: {}",
+                step.getScenarioNo(),
+                step.getTestcaseName(),
+                step.getExcelRow()
+        );
     }
 
     public void verifyEmployeeVisible() {
         ResolvedStepContext step = StepContextHolder.get();
-        verifyEmployeeVisible(step.getResolvedXPath(), step.getResolvedValue(), step);
+        executeVerifyEmployeeVisible(step.getResolvedXPath(), step.getResolvedValue(), step);
     }
 
-    public void verifyEmployeeVisible(String xpath, String value) {
-        verifyEmployeeVisible(xpath, value, currentContext());
-    }
-
-    private void verifyEmployeeVisible(String xpath, String value, ResolvedStepContext step) {
+    private void executeVerifyEmployeeVisible(String xpath, String value, ResolvedStepContext step) {
         validateRequired(xpath, "verifyEmployeeVisible", "XPath", step);
         validateRequired(value, "verifyEmployeeVisible", "Value", step);
         LOGGER.info("Executing HRIS-specific employee visibility placeholder for value: {}", value);
-        verifyTextContains(xpath, value);
+        executeVerifyTextContains(xpath, value, step);
     }
 }

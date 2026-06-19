@@ -1,16 +1,24 @@
 package com.automation.tests;
 
+import com.automation.context.StepContextHolder;
 import com.automation.engine.FunctionResolver;
 import com.automation.models.FunctionExecutionResult;
 import com.automation.models.FunctionSourceType;
+import com.automation.models.ResolvedStepContext;
 import com.automation.tests.support.FakeWebDriver;
 import org.testng.Assert;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
 public class FunctionResolverValidationTest {
 
     private static final String BUTTON_XPATH = "//button[@id='login']";
     private static final String MESSAGE_XPATH = "//div[@id='message']";
+
+    @AfterMethod(alwaysRun = true)
+    public void cleanUp() {
+        StepContextHolder.clear();
+    }
 
     @Test
     public void blankFunctionShouldFailClearly() {
@@ -30,10 +38,12 @@ public class FunctionResolverValidationTest {
 
         IllegalArgumentException exception = Assert.expectThrows(
                 IllegalArgumentException.class,
-                () -> resolver.execute("BRS", "approveBooking", BUTTON_XPATH, "")
+                () -> execute(resolver, "BRS", "approveBooking", BUTTON_XPATH, "")
         );
 
-        Assert.assertEquals(exception.getMessage(), "Keyword 'approveBooking' not found in SpecificFunction for application 'BRS' or BaseFunction.");
+        Assert.assertTrue(exception.getMessage().contains(
+                "Keyword 'approveBooking' not found in SpecificFunction for application 'BRS' or BaseFunction."
+        ));
     }
 
     @Test
@@ -42,10 +52,10 @@ public class FunctionResolverValidationTest {
 
         IllegalArgumentException exception = Assert.expectThrows(
                 IllegalArgumentException.class,
-                () -> resolver.execute("BRS", "click", "", "")
+                () -> execute(resolver, "BRS", "click", "", "")
         );
 
-        Assert.assertEquals(exception.getMessage(), "XPath is required for keyword 'click'.");
+        Assert.assertTrue(exception.getMessage().contains("XPath is required for keyword 'click'."));
     }
 
     @Test
@@ -54,10 +64,10 @@ public class FunctionResolverValidationTest {
 
         IllegalArgumentException exception = Assert.expectThrows(
                 IllegalArgumentException.class,
-                () -> resolver.execute("BRS", "input", "//input[@id='username']", "")
+                () -> execute(resolver, "BRS", "input", "//input[@id='username']", "")
         );
 
-        Assert.assertEquals(exception.getMessage(), "Value is required for keyword 'input'.");
+        Assert.assertTrue(exception.getMessage().contains("Value is required for keyword 'input'."));
     }
 
     @Test
@@ -66,10 +76,10 @@ public class FunctionResolverValidationTest {
 
         IllegalArgumentException exception = Assert.expectThrows(
                 IllegalArgumentException.class,
-                () -> resolver.execute("BRS", "openUrl", "", "")
+                () -> execute(resolver, "BRS", "openUrl", "", "")
         );
 
-        Assert.assertEquals(exception.getMessage(), "URL is required for keyword 'openUrl'.");
+        Assert.assertTrue(exception.getMessage().contains("URL is required for keyword 'openUrl'."));
     }
 
     @Test
@@ -78,17 +88,19 @@ public class FunctionResolverValidationTest {
 
         IllegalArgumentException exception = Assert.expectThrows(
                 IllegalArgumentException.class,
-                () -> resolver.execute("BRS", "verifyText", MESSAGE_XPATH, "")
+                () -> execute(resolver, "BRS", "verifyText", MESSAGE_XPATH, "")
         );
 
-        Assert.assertEquals(exception.getMessage(), "Expected text is required for keyword 'verifyText'.");
+        Assert.assertTrue(exception.getMessage().contains(
+                "Expected text is required for keyword 'verifyText'."
+        ));
     }
 
     @Test
     public void unknownApplicationShouldFallbackToBaseFunctionWhenKeywordExists() {
         FunctionResolver resolver = new FunctionResolver(driver().driver());
 
-        FunctionExecutionResult result = resolver.execute("UNKNOWN", "verifyText", MESSAGE_XPATH, "Ready");
+        FunctionExecutionResult result = execute(resolver, "UNKNOWN", "verifyText", MESSAGE_XPATH, "Ready");
 
         Assert.assertEquals(result.getSourceType(), FunctionSourceType.BASE);
         Assert.assertEquals(result.getExecutedByClass(), "com.automation.base.BaseFunction");
@@ -100,10 +112,12 @@ public class FunctionResolverValidationTest {
 
         IllegalArgumentException exception = Assert.expectThrows(
                 IllegalArgumentException.class,
-                () -> resolver.execute("UNKNOWN", "approveBooking", BUTTON_XPATH, "")
+                () -> execute(resolver, "UNKNOWN", "approveBooking", BUTTON_XPATH, "")
         );
 
-        Assert.assertEquals(exception.getMessage(), "Keyword 'approveBooking' not found in SpecificFunction for application 'UNKNOWN' or BaseFunction.");
+        Assert.assertTrue(exception.getMessage().contains(
+                "Keyword 'approveBooking' not found in SpecificFunction for application 'UNKNOWN' or BaseFunction."
+        ));
     }
 
     @Test
@@ -112,7 +126,7 @@ public class FunctionResolverValidationTest {
 
         AssertionError error = Assert.expectThrows(
                 AssertionError.class,
-                () -> resolver.execute("UNKNOWN", "click", "//button[@id='missing']", "")
+                () -> execute(resolver, "UNKNOWN", "click", "//button[@id='missing']", "")
         );
 
         Assert.assertTrue(error.getMessage().contains("Failed to execute keyword 'click' using BaseFunction. Cause:"));
@@ -125,5 +139,38 @@ public class FunctionResolverValidationTest {
         fakeWebDriver.addElement(MESSAGE_XPATH, "Ready");
         fakeWebDriver.addElement("//input[@id='username']", "");
         return fakeWebDriver;
+    }
+
+    private FunctionExecutionResult execute(
+            FunctionResolver resolver,
+            String application,
+            String function,
+            String resolvedXpath,
+            String resolvedValue
+    ) {
+        StepContextHolder.set(new ResolvedStepContext(
+                "1",
+                "Resolver Validation",
+                "Resolver Validation",
+                "Resolver Validation",
+                "Validation keywords",
+                2,
+                3,
+                1,
+                function,
+                resolvedXpath == null || resolvedXpath.isBlank() ? "" : "testObject",
+                application,
+                "Resolver validation step",
+                resolvedValue,
+                resolvedValue,
+                resolvedXpath,
+                resolvedXpath,
+                ""
+        ));
+        try {
+            return resolver.execute(application, function);
+        } finally {
+            StepContextHolder.clear();
+        }
     }
 }

@@ -1,6 +1,8 @@
 package com.automation.tests;
 
 import com.automation.base.BaseFunction;
+import com.automation.context.StepContextHolder;
+import com.automation.models.ResolvedStepContext;
 import org.openqa.selenium.By;
 import org.openqa.selenium.Dimension;
 import org.openqa.selenium.ElementClickInterceptedException;
@@ -14,6 +16,7 @@ import org.openqa.selenium.SearchContext;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.testng.Assert;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
 import java.util.ArrayList;
@@ -28,18 +31,30 @@ public class BaseFunctionTest {
     private static final String BUTTON_XPATH = "//button[@id='loginButton']";
     private static final String MESSAGE_XPATH = "//div[@id='message']";
 
+    @AfterMethod(alwaysRun = true)
+    public void cleanUp() {
+        StepContextHolder.clear();
+    }
+
     @Test
     public void shouldExecuteCommonKeywordsWithFakeDriver() {
         FakeWebDriver driver = testDriver();
         BaseFunction baseFunction = new BaseFunction(driver);
 
-        baseFunction.openUrl("file:///base-function-test.html");
-        baseFunction.input(USERNAME_XPATH, "brs_admin");
-        baseFunction.clear(USERNAME_XPATH);
-        baseFunction.input(USERNAME_XPATH, "brs_user");
-        baseFunction.click(BUTTON_XPATH);
-        baseFunction.scrollToElement(MESSAGE_XPATH);
-        baseFunction.pressEnter(USERNAME_XPATH);
+        useContext("openUrl", "", "file:///base-function-test.html");
+        baseFunction.openUrl();
+        useContext("input", USERNAME_XPATH, "brs_admin");
+        baseFunction.input();
+        useContext("clear", USERNAME_XPATH, "");
+        baseFunction.clear();
+        useContext("input", USERNAME_XPATH, "brs_user");
+        baseFunction.input();
+        useContext("click", BUTTON_XPATH, "");
+        baseFunction.click();
+        useContext("scrollToElement", MESSAGE_XPATH, "");
+        baseFunction.scrollToElement();
+        useContext("pressEnter", USERNAME_XPATH, "");
+        baseFunction.pressEnter();
 
         Assert.assertEquals(driver.getCurrentUrl(), "file:///base-function-test.html");
         Assert.assertEquals(driver.element(USERNAME_XPATH).getAttribute("value"), "brs_user" + Keys.ENTER);
@@ -52,20 +67,32 @@ public class BaseFunctionTest {
         FakeWebDriver driver = testDriver();
         BaseFunction baseFunction = new BaseFunction(driver);
 
-        baseFunction.openUrl("file:///base-function-test.html");
+        useContext("openUrl", "", "file:///base-function-test.html");
+        baseFunction.openUrl();
 
-        Assert.assertEquals(baseFunction.getText(MESSAGE_XPATH), "Booking created successfully");
-        Assert.assertTrue(baseFunction.isDisplayed(MESSAGE_XPATH));
-        Assert.assertFalse(baseFunction.isNotDisplayed(MESSAGE_XPATH));
-        Assert.assertSame(baseFunction.waitVisible(MESSAGE_XPATH), driver.element(MESSAGE_XPATH));
-        Assert.assertSame(baseFunction.waitClickable(BUTTON_XPATH), driver.element(BUTTON_XPATH));
+        useContext("getText", MESSAGE_XPATH, "");
+        Assert.assertEquals(baseFunction.getText(), "Booking created successfully");
+        useContext("isDisplayed", MESSAGE_XPATH, "");
+        Assert.assertTrue(baseFunction.isDisplayed());
+        useContext("isNotDisplayed", MESSAGE_XPATH, "");
+        Assert.assertFalse(baseFunction.isNotDisplayed());
+        useContext("waitVisible", MESSAGE_XPATH, "");
+        Assert.assertSame(baseFunction.waitVisible(), driver.element(MESSAGE_XPATH));
+        useContext("waitClickable", BUTTON_XPATH, "");
+        Assert.assertSame(baseFunction.waitClickable(), driver.element(BUTTON_XPATH));
 
-        baseFunction.verifyDisplayed(MESSAGE_XPATH);
-        baseFunction.verifyText(MESSAGE_XPATH, "Booking created successfully");
-        baseFunction.verifyTextContains(MESSAGE_XPATH, "created");
-        baseFunction.verifyUrlContains("base-function-test");
-        baseFunction.verifyTitle("Base Function Test");
-        baseFunction.verifyTitleContains("Function");
+        useContext("verifyDisplayed", MESSAGE_XPATH, "");
+        baseFunction.verifyDisplayed();
+        useContext("verifyText", MESSAGE_XPATH, "Booking created successfully");
+        baseFunction.verifyText();
+        useContext("verifyTextContains", MESSAGE_XPATH, "created");
+        baseFunction.verifyTextContains();
+        useContext("verifyUrlContains", "", "base-function-test");
+        baseFunction.verifyUrlContains();
+        useContext("verifyTitle", "", "Base Function Test");
+        baseFunction.verifyTitle();
+        useContext("verifyTitleContains", "", "Function");
+        baseFunction.verifyTitleContains();
     }
 
     @Test
@@ -75,7 +102,8 @@ public class BaseFunctionTest {
         button.failNextClick = true;
         BaseFunction baseFunction = new BaseFunction(driver);
 
-        baseFunction.safeClick(BUTTON_XPATH);
+        useContext("safeClick", BUTTON_XPATH, "");
+        baseFunction.safeClick();
 
         Assert.assertTrue(button.clicked);
         Assert.assertTrue(button.javascriptClicked);
@@ -84,34 +112,39 @@ public class BaseFunctionTest {
     @Test
     public void blankXPathShouldThrowClearValidationError() {
         BaseFunction baseFunction = new BaseFunction(testDriver());
+        useContext("click", " ", "");
 
         IllegalArgumentException exception = Assert.expectThrows(
                 IllegalArgumentException.class,
-                () -> baseFunction.click(" ")
+                baseFunction::click
         );
 
-        Assert.assertEquals(exception.getMessage(), "XPath is required for keyword 'click'.");
+        Assert.assertTrue(exception.getMessage().startsWith("XPath is required for keyword 'click'."));
     }
 
     @Test
     public void blankExpectedValueShouldThrowClearValidationError() {
         BaseFunction baseFunction = new BaseFunction(testDriver());
+        useContext("verifyUrlContains", "", "");
 
         IllegalArgumentException exception = Assert.expectThrows(
                 IllegalArgumentException.class,
-                () -> baseFunction.verifyUrlContains("")
+                baseFunction::verifyUrlContains
         );
 
-        Assert.assertEquals(exception.getMessage(), "Expected value is required for keyword 'verifyUrlContains'.");
+        Assert.assertTrue(exception.getMessage().startsWith(
+                "Expected value is required for keyword 'verifyUrlContains'."
+        ));
     }
 
     @Test
     public void missingElementShouldThrowClearError() {
         BaseFunction baseFunction = new BaseFunction(testDriver());
+        useContext("click", "//button[@id='missing']", "");
 
         AssertionError error = Assert.expectThrows(
                 AssertionError.class,
-                () -> baseFunction.click("//button[@id='missing']")
+                baseFunction::click
         );
 
         Assert.assertTrue(error.getMessage().contains("Element not found for keyword click. XPath: //button[@id='missing']"));
@@ -120,13 +153,38 @@ public class BaseFunctionTest {
     @Test
     public void verifyTextShouldThrowClearAssertionError() {
         BaseFunction baseFunction = new BaseFunction(testDriver());
+        useContext("verifyText", MESSAGE_XPATH, "Booking failed");
 
         AssertionError error = Assert.expectThrows(
                 AssertionError.class,
-                () -> baseFunction.verifyText(MESSAGE_XPATH, "Booking failed")
+                baseFunction::verifyText
         );
 
-        Assert.assertEquals(error.getMessage(), "Expected text 'Booking failed' but found 'Booking created successfully'. XPath: //div[@id='message']");
+        Assert.assertTrue(error.getMessage().startsWith(
+                "Expected text 'Booking failed' but found 'Booking created successfully'. XPath: //div[@id='message']"
+        ));
+    }
+
+    private void useContext(String function, String resolvedXpath, String resolvedValue) {
+        StepContextHolder.set(new ResolvedStepContext(
+                "1",
+                "Base Function Test",
+                "Base Function Test",
+                "Base Function Test",
+                "Common keywords",
+                2,
+                3,
+                1,
+                function,
+                resolvedXpath == null || resolvedXpath.isBlank() ? "" : "testObject",
+                "BRS",
+                "BaseFunction keyword test",
+                resolvedValue,
+                resolvedValue,
+                resolvedXpath,
+                resolvedXpath,
+                ""
+        ));
     }
 
     private FakeWebDriver testDriver() {
