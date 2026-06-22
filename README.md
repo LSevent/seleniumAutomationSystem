@@ -89,6 +89,8 @@ Pre-run validation checks data references, object and XPath availability, and si
 
 Public keyword methods are context-based, no-argument entry points. They read the current `ResolvedStepContext` from `StepContextHolder`, so common keywords such as `openUrl()`, `click()`, `input()`, `verifyDisplayed()`, and `verifyText()` use the resolved Excel step instead of receiving XPath or value arguments directly.
 
+`BaseFunction` and `SpecificFunction` share holder-backed helpers such as `requiredXPath(...)` and `requiredValue(...)`, allowing simple keywords to validate and use resolved step data without manually retrieving the context.
+
 SpecificFunction keywords also use no-argument context-based execution for application-specific behavior. `BaseFunction` remains the home for common reusable keywords, while `FunctionResolver` checks `SpecificFunction` before `BaseFunction`.
 
 `KeywordEngine` centrally logs keyword start, completion, skip, and failure events using the resolved step context, with sensitive values masked. Internal function helpers are limited to shared context access, validation, waiting, and reusable custom-function support; they are not Excel-facing keyword entry points.

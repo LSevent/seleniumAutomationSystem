@@ -1,7 +1,6 @@
 package com.automation.functions.HRIS;
 
 import com.automation.base.BaseFunction;
-import com.automation.models.ResolvedStepContext;
 import org.openqa.selenium.WebDriver;
 
 public class SpecificFunction extends BaseFunction {
@@ -15,9 +14,8 @@ public class SpecificFunction extends BaseFunction {
     }
 
     public void verifyEmployeeVisible() {
-        ResolvedStepContext step = currentStep();
-        requireXPath(step, "verifyEmployeeVisible");
-        requireValue(step, "verifyEmployeeVisible", "Value");
+        requiredXPath("verifyEmployeeVisible");
+        requiredValue("verifyEmployeeVisible", "Value");
         verifyTextContains();
     }
 }

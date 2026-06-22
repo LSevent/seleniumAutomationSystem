@@ -92,6 +92,23 @@ public class BaseFunctionContextTest {
     }
 
     @Test
+    public void sharedContextHelpersShouldReadFromStepContextHolder() {
+        FakeWebDriver driver = driver();
+        StepContextHolder.set(step(
+                "customKeyword",
+                "customObject",
+                "RAW_VALUE",
+                "resolved value",
+                "//raw",
+                "//resolved"
+        ));
+        ContextHelperProbe function = new ContextHelperProbe(driver.driver());
+
+        Assert.assertEquals(function.xpath("customKeyword"), "//resolved");
+        Assert.assertEquals(function.value("customKeyword", "Value"), "resolved value");
+    }
+
+    @Test
     public void clickShouldFailClearlyWhenContextIsMissing() {
         FrameworkException exception = Assert.expectThrows(
                 FrameworkException.class,
@@ -220,6 +237,21 @@ public class BaseFunctionContextTest {
                 resolvedXpath,
                 ""
         );
+    }
+
+    private static final class ContextHelperProbe extends BaseFunction {
+
+        private ContextHelperProbe(org.openqa.selenium.WebDriver driver) {
+            super(driver);
+        }
+
+        private String xpath(String keyword) {
+            return requiredXPath(keyword);
+        }
+
+        private String value(String keyword, String label) {
+            return requiredValue(keyword, label);
+        }
     }
 
 }
