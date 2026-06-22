@@ -207,11 +207,11 @@ public class BaseFunction {
     }
 
     protected String objectName() {
-        return currentStep().object();
+        return currentStep().objectName();
     }
 
     protected String application() {
-        return currentStep().app();
+        return currentStep().application();
     }
 
     private String withStepContext(String message, ResolvedStepContext step) {

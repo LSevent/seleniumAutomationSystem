@@ -436,25 +436,25 @@ public class KeywordEngine {
         Scenario scenario = context.getScenario();
         TestCaseBlock testcase = context.getTestCaseBlock();
         TestStep step = context.getTestStep();
-        return new ResolvedStepContext(
-                scenario == null ? safe(step.getScenarioNo()) : safe(scenario.getNo()),
-                scenario == null ? safe(step.getScenarioAction()) : safe(scenario.getAction()),
-                scenario == null ? safe(step.getScenarioName()) : safe(scenario.getScenarioName()),
-                scenario == null ? safe(step.getScenarioAction()) : safe(scenario.getAction()),
-                safe(step.getTestcaseName()),
-                testcase == null ? 0 : testcase.getExcelRowNumber(),
-                step.getExcelRowNumber(),
-                context.getCurrentStepNumber(),
-                safe(step.getFunction()),
-                safe(step.getObject()),
-                safe(step.getApplication()),
-                safe(step.getDescription()),
-                safe(step.getValue()),
-                context.getResolvedValue(),
-                context.getRawXpath(),
-                context.getResolvedXpath(),
-                context.getExecutedByClass()
-        );
+        return ResolvedStepContext.builder()
+                .scenarioNo(scenario == null ? safe(step.getScenarioNo()) : safe(scenario.getNo()))
+                .scenarioAction(scenario == null ? safe(step.getScenarioAction()) : safe(scenario.getAction()))
+                .scenarioName(scenario == null ? safe(step.getScenarioName()) : safe(scenario.getScenarioName()))
+                .sheetName(scenario == null ? safe(step.getScenarioAction()) : safe(scenario.getAction()))
+                .testcaseName(safe(step.getTestcaseName()))
+                .testcaseParentRow(testcase == null ? 0 : testcase.getExcelRowNumber())
+                .excelRow(step.getExcelRowNumber())
+                .stepNumber(context.getCurrentStepNumber())
+                .function(safe(step.getFunction()))
+                .objectName(safe(step.getObject()))
+                .application(safe(step.getApplication()))
+                .description(safe(step.getDescription()))
+                .rawValue(safe(step.getValue()))
+                .resolvedValue(context.getResolvedValue())
+                .rawXPath(context.getRawXpath())
+                .resolvedXPath(context.getResolvedXpath())
+                .executedBy(context.getExecutedByClass())
+                .build();
     }
 
     private ExecutionResult executeManualScreenshot(ExecutionContext context) {

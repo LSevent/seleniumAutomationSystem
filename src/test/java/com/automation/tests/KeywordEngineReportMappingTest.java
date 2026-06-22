@@ -36,25 +36,25 @@ public class KeywordEngineReportMappingTest {
 
     @Test
     public void executionResultShouldPreserveResolvedStepReportFields() {
-        ResolvedStepContext step = new ResolvedStepContext(
-                "13",
-                "Resolved Report Flow",
-                "Resolved report mapping",
-                "Resolved Report Flow",
-                "Mapping Testcase",
-                20,
-                23,
-                4,
-                "mappingKeyword",
-                "btnMapped",
-                "BRS",
-                "Preserve every resolved field",
-                "DATA.RAW_VALUE",
-                "resolved value",
-                "//button[@data-state='{STATE}']",
-                "//button[@data-state='ready']",
-                ""
-        );
+        ResolvedStepContext step = ResolvedStepContext.builder()
+                .scenarioNo("13")
+                .scenarioAction("Resolved Report Flow")
+                .scenarioName("Resolved report mapping")
+                .sheetName("Resolved Report Flow")
+                .testcaseName("Mapping Testcase")
+                .testcaseParentRow(20)
+                .excelRow(23)
+                .stepNumber(4)
+                .function("mappingKeyword")
+                .objectName("btnMapped")
+                .application("BRS")
+                .description("Preserve every resolved field")
+                .rawValue("DATA.RAW_VALUE")
+                .resolvedValue("resolved value")
+                .rawXPath("//button[@data-state='{STATE}']")
+                .resolvedXPath("//button[@data-state='ready']")
+                .executedBy("")
+                .build();
 
         ExecutionResult result = engine().execute(step);
 

@@ -76,25 +76,25 @@ public class SpecificFunctionContextTest {
             String resolvedXpath,
             String resolvedValue
     ) {
-        return new ResolvedStepContext(
-                "1",
-                "Local Keyword Test",
-                "SpecificFunction context tests",
-                "Local Keyword Test",
-                "Login BRS",
-                4,
-                10,
-                1,
-                function,
-                objectName,
-                application,
-                "Application-specific keyword",
-                resolvedValue,
-                resolvedValue,
-                resolvedXpath,
-                resolvedXpath,
-                ""
-        );
+        return ResolvedStepContext.builder()
+                .scenarioNo("1")
+                .scenarioAction("Local Keyword Test")
+                .scenarioName("SpecificFunction context tests")
+                .sheetName("Local Keyword Test")
+                .testcaseName("Login BRS")
+                .testcaseParentRow(4)
+                .excelRow(10)
+                .stepNumber(1)
+                .function(function)
+                .objectName(objectName)
+                .application(application)
+                .description("Application-specific keyword")
+                .rawValue(resolvedValue)
+                .resolvedValue(resolvedValue)
+                .rawXPath(resolvedXpath)
+                .resolvedXPath(resolvedXpath)
+                .executedBy("")
+                .build();
     }
 
     private void assertNoArgKeyword(Class<?> functionClass, String keyword) {

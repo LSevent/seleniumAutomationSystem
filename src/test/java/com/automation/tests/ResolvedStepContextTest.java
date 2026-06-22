@@ -8,25 +8,25 @@ public class ResolvedStepContextTest {
 
     @Test
     public void shouldExposeAllResolvedStepFields() {
-        ResolvedStepContext context = new ResolvedStepContext(
-                "SC-001",
-                "BOOKING",
-                "Create a booking",
-                "BOOKING",
-                "Create booking successfully",
-                3,
-                5,
-                2,
-                "input",
-                "txtBookingTitle",
-                "BRS",
-                "Input booking title",
-                "BOOKING_DATA.TITLE",
-                "Weekly meeting",
-                "//input[@data-id='${BOOKING_DATA.FIELD_ID}']",
-                "//input[@data-id='booking-title']",
-                "com.automation.base.BaseFunction"
-        );
+        ResolvedStepContext context = ResolvedStepContext.builder()
+                .scenarioNo("SC-001")
+                .scenarioAction("BOOKING")
+                .scenarioName("Create a booking")
+                .sheetName("BOOKING")
+                .testcaseName("Create booking successfully")
+                .testcaseParentRow(3)
+                .excelRow(5)
+                .stepNumber(2)
+                .function("input")
+                .objectName("txtBookingTitle")
+                .application("BRS")
+                .description("Input booking title")
+                .rawValue("BOOKING_DATA.TITLE")
+                .resolvedValue("Weekly meeting")
+                .rawXPath("//input[@data-id='${BOOKING_DATA.FIELD_ID}']")
+                .resolvedXPath("//input[@data-id='booking-title']")
+                .executedBy("com.automation.base.BaseFunction")
+                .build();
 
         Assert.assertEquals(context.getScenarioNo(), "SC-001");
         Assert.assertEquals(context.getScenarioAction(), "BOOKING");

@@ -41,6 +41,8 @@ public class ResolvedStepContextBuilderTest {
         Assert.assertEquals(step.rawValue(), RAW_SECRET);
         Assert.assertEquals(step.object(), "btnLogin");
         Assert.assertEquals(step.app(), "BRS");
+        Assert.assertEquals(step.objectName(), "btnLogin");
+        Assert.assertEquals(step.application(), "BRS");
         Assert.assertTrue(step.hasXPath());
         Assert.assertTrue(step.hasValue());
         Assert.assertTrue(step.hasObject());

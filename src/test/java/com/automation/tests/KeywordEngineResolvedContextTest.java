@@ -220,25 +220,25 @@ public class KeywordEngineResolvedContextTest {
             String resolvedValue,
             String executedBy
     ) {
-        return new ResolvedStepContext(
-                "SC-13C",
-                "Login Flow",
-                "Resolved context execution",
-                "Login Flow",
-                "Valid Login",
-                14,
-                17,
-                3,
-                function,
-                objectName,
-                "BRS",
-                "Execute an already-resolved step",
-                rawValue,
-                resolvedValue,
-                "//input[@id='rawUsername']",
-                "//input[@id='resolvedUsername']",
-                executedBy
-        );
+        return ResolvedStepContext.builder()
+                .scenarioNo("SC-13C")
+                .scenarioAction("Login Flow")
+                .scenarioName("Resolved context execution")
+                .sheetName("Login Flow")
+                .testcaseName("Valid Login")
+                .testcaseParentRow(14)
+                .excelRow(17)
+                .stepNumber(3)
+                .function(function)
+                .objectName(objectName)
+                .application("BRS")
+                .description("Execute an already-resolved step")
+                .rawValue(rawValue)
+                .resolvedValue(resolvedValue)
+                .rawXPath("//input[@id='rawUsername']")
+                .resolvedXPath("//input[@id='resolvedUsername']")
+                .executedBy(executedBy)
+                .build();
     }
 
     private static class ObservingResolver extends FunctionResolver {

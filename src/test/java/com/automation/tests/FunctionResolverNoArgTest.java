@@ -223,24 +223,24 @@ public class FunctionResolverNoArgTest {
             String resolvedXpath,
             String resolvedValue
     ) {
-        return new ResolvedStepContext(
-                "1",
-                "Local Keyword Test",
-                "No-arg resolver tests",
-                "Local Keyword Test",
-                "Login BRS",
-                4,
-                10,
-                1,
-                function,
-                objectName,
-                application,
-                "Resolver test step",
-                resolvedValue,
-                resolvedValue,
-                resolvedXpath,
-                resolvedXpath,
-                ""
-        );
+        return ResolvedStepContext.builder()
+                .scenarioNo("1")
+                .scenarioAction("Local Keyword Test")
+                .scenarioName("No-arg resolver tests")
+                .sheetName("Local Keyword Test")
+                .testcaseName("Login BRS")
+                .testcaseParentRow(4)
+                .excelRow(10)
+                .stepNumber(1)
+                .function(function)
+                .objectName(objectName)
+                .application(application)
+                .description("Resolver test step")
+                .rawValue(resolvedValue)
+                .resolvedValue(resolvedValue)
+                .rawXPath(resolvedXpath)
+                .resolvedXPath(resolvedXpath)
+                .executedBy("")
+                .build();
     }
 }

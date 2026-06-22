@@ -143,25 +143,25 @@ public class BaseFunctionContextTest {
             String rawXpath,
             String resolvedXpath
     ) {
-        return new ResolvedStepContext(
-                "1",
-                "Local Keyword Test",
-                "Context-based BaseFunction keywords",
-                "Local Keyword Test",
-                "Login BRS",
-                4,
-                7,
-                1,
-                function,
-                objectName,
-                "BRS",
-                "BaseFunction context test",
-                rawValue,
-                resolvedValue,
-                rawXpath,
-                resolvedXpath,
-                ""
-        );
+        return ResolvedStepContext.builder()
+                .scenarioNo("1")
+                .scenarioAction("Local Keyword Test")
+                .scenarioName("Context-based BaseFunction keywords")
+                .sheetName("Local Keyword Test")
+                .testcaseName("Login BRS")
+                .testcaseParentRow(4)
+                .excelRow(7)
+                .stepNumber(1)
+                .function(function)
+                .objectName(objectName)
+                .application("BRS")
+                .description("BaseFunction context test")
+                .rawValue(rawValue)
+                .resolvedValue(resolvedValue)
+                .rawXPath(rawXpath)
+                .resolvedXPath(resolvedXpath)
+                .executedBy("")
+                .build();
     }
 
     private static final class ContextHelperProbe extends BaseFunction {

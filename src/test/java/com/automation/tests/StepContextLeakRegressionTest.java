@@ -76,25 +76,25 @@ public class StepContextLeakRegressionTest {
     }
 
     private ResolvedStepContext step(int row, String function, String objectName) {
-        return new ResolvedStepContext(
-                "1",
-                "Local Keyword Test",
-                "Context leak regression",
-                "Local Keyword Test",
-                "Leak Testcase",
-                4,
-                row,
-                row - 6,
-                function,
-                objectName,
-                "BRS",
-                "Context cleanup step",
-                "raw",
-                "resolved",
-                "//button[@id='raw']",
-                "//button[@id='resolved']",
-                ""
-        );
+        return ResolvedStepContext.builder()
+                .scenarioNo("1")
+                .scenarioAction("Local Keyword Test")
+                .scenarioName("Context leak regression")
+                .sheetName("Local Keyword Test")
+                .testcaseName("Leak Testcase")
+                .testcaseParentRow(4)
+                .excelRow(row)
+                .stepNumber(row - 6)
+                .function(function)
+                .objectName(objectName)
+                .application("BRS")
+                .description("Context cleanup step")
+                .rawValue("raw")
+                .resolvedValue("resolved")
+                .rawXPath("//button[@id='raw']")
+                .resolvedXPath("//button[@id='resolved']")
+                .executedBy("")
+                .build();
     }
 
     private static class ObservingResolver extends FunctionResolver {

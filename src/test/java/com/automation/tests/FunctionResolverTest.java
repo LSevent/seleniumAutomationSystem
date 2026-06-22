@@ -246,25 +246,25 @@ public class FunctionResolverTest {
             String resolvedXpath,
             String resolvedValue
     ) {
-        return new ResolvedStepContext(
-                "1",
-                "Function Resolver Test",
-                "Function Resolver Test",
-                "Function Resolver Test",
-                "Resolver keywords",
-                2,
-                3,
-                1,
-                function,
-                resolvedXpath == null || resolvedXpath.isBlank() ? "" : "testObject",
-                application,
-                "Resolver keyword test",
-                resolvedValue,
-                resolvedValue,
-                resolvedXpath,
-                resolvedXpath,
-                ""
-        );
+        return ResolvedStepContext.builder()
+                .scenarioNo("1")
+                .scenarioAction("Function Resolver Test")
+                .scenarioName("Function Resolver Test")
+                .sheetName("Function Resolver Test")
+                .testcaseName("Resolver keywords")
+                .testcaseParentRow(2)
+                .excelRow(3)
+                .stepNumber(1)
+                .function(function)
+                .objectName(resolvedXpath == null || resolvedXpath.isBlank() ? "" : "testObject")
+                .application(application)
+                .description("Resolver keyword test")
+                .rawValue(resolvedValue)
+                .resolvedValue(resolvedValue)
+                .rawXPath(resolvedXpath)
+                .resolvedXPath(resolvedXpath)
+                .executedBy("")
+                .build();
     }
 
     private FakeDriver testDriver() {

@@ -98,25 +98,25 @@ public class FunctionResolverValidationTest {
             String resolvedXpath,
             String resolvedValue
     ) {
-        StepContextHolder.set(new ResolvedStepContext(
-                "1",
-                "Resolver Validation",
-                "Resolver Validation",
-                "Resolver Validation",
-                "Validation keywords",
-                2,
-                3,
-                1,
-                function,
-                resolvedXpath == null || resolvedXpath.isBlank() ? "" : "testObject",
-                application,
-                "Resolver validation step",
-                resolvedValue,
-                resolvedValue,
-                resolvedXpath,
-                resolvedXpath,
-                ""
-        ));
+        StepContextHolder.set(ResolvedStepContext.builder()
+                .scenarioNo("1")
+                .scenarioAction("Resolver Validation")
+                .scenarioName("Resolver Validation")
+                .sheetName("Resolver Validation")
+                .testcaseName("Validation keywords")
+                .testcaseParentRow(2)
+                .excelRow(3)
+                .stepNumber(1)
+                .function(function)
+                .objectName(resolvedXpath == null || resolvedXpath.isBlank() ? "" : "testObject")
+                .application(application)
+                .description("Resolver validation step")
+                .rawValue(resolvedValue)
+                .resolvedValue(resolvedValue)
+                .rawXPath(resolvedXpath)
+                .resolvedXPath(resolvedXpath)
+                .executedBy("")
+                .build());
         try {
             return resolver.execute(application, function);
         } finally {

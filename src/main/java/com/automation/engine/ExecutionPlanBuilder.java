@@ -106,25 +106,25 @@ public class ExecutionPlanBuilder {
             }
         }
 
-        return new ResolvedStepContext(
-                scenario.getNo(),
-                scenario.getAction(),
-                scenario.getScenarioName(),
-                scenario.getAction(),
-                testcase.getTestcaseName(),
-                testcase.getExcelRowNumber(),
-                step.getExcelRowNumber(),
-                step.getStepOrder(),
-                safe(step.getFunction()),
-                safe(step.getObject()),
-                safe(step.getApplication()),
-                safe(step.getDescription()),
-                rawValue,
-                resolvedValue,
-                rawXPath,
-                resolvedXPath,
-                ""
-        );
+        return ResolvedStepContext.builder()
+                .scenarioNo(scenario.getNo())
+                .scenarioAction(scenario.getAction())
+                .scenarioName(scenario.getScenarioName())
+                .sheetName(scenario.getAction())
+                .testcaseName(testcase.getTestcaseName())
+                .testcaseParentRow(testcase.getExcelRowNumber())
+                .excelRow(step.getExcelRowNumber())
+                .stepNumber(step.getStepOrder())
+                .function(safe(step.getFunction()))
+                .objectName(safe(step.getObject()))
+                .application(safe(step.getApplication()))
+                .description(safe(step.getDescription()))
+                .rawValue(rawValue)
+                .resolvedValue(resolvedValue)
+                .rawXPath(rawXPath)
+                .resolvedXPath(resolvedXPath)
+                .executedBy("")
+                .build();
     }
 
     private FrameworkException resolutionFailure(

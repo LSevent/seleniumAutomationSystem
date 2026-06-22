@@ -236,25 +236,25 @@ public class PreRunValidatorTest {
             String resolvedXPath,
             String application
     ) {
-        return new ResolvedStepContext(
-                "1",
-                "Local Keyword Test",
-                "Local test",
-                "Local Keyword Test",
-                "Login BRS",
-                2,
-                3,
-                1,
-                function,
-                object,
-                application,
-                "Validation step",
-                rawValue,
-                resolvedValue,
-                rawXPath,
-                resolvedXPath,
-                ""
-        );
+        return ResolvedStepContext.builder()
+                .scenarioNo("1")
+                .scenarioAction("Local Keyword Test")
+                .scenarioName("Local test")
+                .sheetName("Local Keyword Test")
+                .testcaseName("Login BRS")
+                .testcaseParentRow(2)
+                .excelRow(3)
+                .stepNumber(1)
+                .function(function)
+                .objectName(object)
+                .application(application)
+                .description("Validation step")
+                .rawValue(rawValue)
+                .resolvedValue(resolvedValue)
+                .rawXPath(rawXPath)
+                .resolvedXPath(resolvedXPath)
+                .executedBy("")
+                .build();
     }
 
     private void assertContainsContext(

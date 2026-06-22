@@ -24,42 +24,24 @@ public final class ResolvedStepContext {
         return new Builder();
     }
 
-    public ResolvedStepContext(
-            String scenarioNo,
-            String scenarioAction,
-            String scenarioName,
-            String sheetName,
-            String testcaseName,
-            int testcaseParentRow,
-            int excelRow,
-            int stepNumber,
-            String function,
-            String objectName,
-            String application,
-            String description,
-            String rawValue,
-            String resolvedValue,
-            String rawXPath,
-            String resolvedXPath,
-            String executedBy
-    ) {
-        this.scenarioNo = scenarioNo;
-        this.scenarioAction = scenarioAction;
-        this.scenarioName = scenarioName;
-        this.sheetName = sheetName;
-        this.testcaseName = testcaseName;
-        this.testcaseParentRow = testcaseParentRow;
-        this.excelRow = excelRow;
-        this.stepNumber = stepNumber;
-        this.function = function;
-        this.objectName = objectName;
-        this.application = application;
-        this.description = description;
-        this.rawValue = rawValue;
-        this.resolvedValue = resolvedValue;
-        this.rawXPath = rawXPath;
-        this.resolvedXPath = resolvedXPath;
-        this.executedBy = executedBy;
+    private ResolvedStepContext(Builder builder) {
+        this.scenarioNo = builder.scenarioNo;
+        this.scenarioAction = builder.scenarioAction;
+        this.scenarioName = builder.scenarioName;
+        this.sheetName = builder.sheetName;
+        this.testcaseName = builder.testcaseName;
+        this.testcaseParentRow = builder.testcaseParentRow;
+        this.excelRow = builder.excelRow;
+        this.stepNumber = builder.stepNumber;
+        this.function = builder.function;
+        this.objectName = builder.objectName;
+        this.application = builder.application;
+        this.description = builder.description;
+        this.rawValue = builder.rawValue;
+        this.resolvedValue = builder.resolvedValue;
+        this.rawXPath = builder.rawXPath;
+        this.resolvedXPath = builder.resolvedXPath;
+        this.executedBy = builder.executedBy;
     }
 
     public String getScenarioNo() {
@@ -146,7 +128,15 @@ public final class ResolvedStepContext {
         return objectName;
     }
 
+    public String objectName() {
+        return objectName;
+    }
+
     public String app() {
+        return application;
+    }
+
+    public String application() {
         return application;
     }
 
@@ -296,25 +286,7 @@ public final class ResolvedStepContext {
         }
 
         public ResolvedStepContext build() {
-            return new ResolvedStepContext(
-                    scenarioNo,
-                    scenarioAction,
-                    scenarioName,
-                    sheetName,
-                    testcaseName,
-                    testcaseParentRow,
-                    excelRow,
-                    stepNumber,
-                    function,
-                    objectName,
-                    application,
-                    description,
-                    rawValue,
-                    resolvedValue,
-                    rawXPath,
-                    resolvedXPath,
-                    executedBy
-            );
+            return new ResolvedStepContext(this);
         }
     }
 }

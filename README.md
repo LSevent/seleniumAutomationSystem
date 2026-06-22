@@ -91,7 +91,7 @@ Public keyword methods are context-based, no-argument entry points. They read th
 
 `PreRunValidator` validates required XPath and Value data before runtime. `BaseFunction` and `SpecificFunction` then read the already-validated resolved data through holder-backed helpers such as `xpath()` and `value()`, keeping runtime keyword methods focused on browser actions.
 
-`ResolvedStepContext` is an immutable model for one resolved Excel step and provides convenience accessors such as `xpath()` and `value()`. During execution, `StepContextHolder` stores that single context in a `ThreadLocal`; `KeywordEngine` owns the set/clear lifecycle. Its `toString()` omits raw and resolved values so sensitive step data is not exposed accidentally.
+`ResolvedStepContext` is an immutable model for one resolved Excel step and should be created through `builder()`. Its long constructor is intentionally private to prevent parameter-order mistakes, while convenience accessors such as `xpath()` and `value()` keep consumers concise. During execution, `StepContextHolder` stores that single context in a `ThreadLocal`; `KeywordEngine` owns the set/clear lifecycle. Its `toString()` omits raw and resolved values so sensitive step data is not exposed accidentally.
 
 SpecificFunction keywords also use no-argument context-based execution for application-specific behavior. `BaseFunction` remains the home for common reusable keywords, while `FunctionResolver` checks `SpecificFunction` before `BaseFunction`.
 

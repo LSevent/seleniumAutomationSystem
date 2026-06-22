@@ -86,24 +86,24 @@ public class StepContextHolderTest {
     }
 
     private ResolvedStepContext context(String scenarioNo, int stepNumber) {
-        return new ResolvedStepContext(
-                scenarioNo,
-                "BOOKING",
-                "Create a booking",
-                "BOOKING",
-                "Create booking successfully",
-                3,
-                4,
-                stepNumber,
-                "click",
-                "btnSubmit",
-                "BRS",
-                "Submit booking",
-                "",
-                "",
-                "//button[@id='submit']",
-                "//button[@id='submit']",
-                "com.automation.base.BaseFunction"
-        );
+        return ResolvedStepContext.builder()
+                .scenarioNo(scenarioNo)
+                .scenarioAction("BOOKING")
+                .scenarioName("Create a booking")
+                .sheetName("BOOKING")
+                .testcaseName("Create booking successfully")
+                .testcaseParentRow(3)
+                .excelRow(4)
+                .stepNumber(stepNumber)
+                .function("click")
+                .objectName("btnSubmit")
+                .application("BRS")
+                .description("Submit booking")
+                .rawValue("")
+                .resolvedValue("")
+                .rawXPath("//button[@id='submit']")
+                .resolvedXPath("//button[@id='submit']")
+                .executedBy("com.automation.base.BaseFunction")
+                .build();
     }
 }

@@ -138,25 +138,25 @@ public class BaseFunctionTest {
     }
 
     private void useContext(String function, String resolvedXpath, String resolvedValue) {
-        StepContextHolder.set(new ResolvedStepContext(
-                "1",
-                "Base Function Test",
-                "Base Function Test",
-                "Base Function Test",
-                "Common keywords",
-                2,
-                3,
-                1,
-                function,
-                resolvedXpath == null || resolvedXpath.isBlank() ? "" : "testObject",
-                "BRS",
-                "BaseFunction keyword test",
-                resolvedValue,
-                resolvedValue,
-                resolvedXpath,
-                resolvedXpath,
-                ""
-        ));
+        StepContextHolder.set(ResolvedStepContext.builder()
+                .scenarioNo("1")
+                .scenarioAction("Base Function Test")
+                .scenarioName("Base Function Test")
+                .sheetName("Base Function Test")
+                .testcaseName("Common keywords")
+                .testcaseParentRow(2)
+                .excelRow(3)
+                .stepNumber(1)
+                .function(function)
+                .objectName(resolvedXpath == null || resolvedXpath.isBlank() ? "" : "testObject")
+                .application("BRS")
+                .description("BaseFunction keyword test")
+                .rawValue(resolvedValue)
+                .resolvedValue(resolvedValue)
+                .rawXPath(resolvedXpath)
+                .resolvedXPath(resolvedXpath)
+                .executedBy("")
+                .build());
     }
 
     private FakeWebDriver testDriver() {
