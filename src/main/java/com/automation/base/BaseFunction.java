@@ -195,23 +195,23 @@ public class BaseFunction {
     }
 
     protected String xpath() {
-        return currentStep().getResolvedXPath();
+        return currentStep().xpath();
     }
 
     protected String value() {
-        return currentStep().getResolvedValue();
+        return currentStep().value();
     }
 
     protected String rawValue() {
-        return currentStep().getRawValue();
+        return currentStep().rawValue();
     }
 
     protected String objectName() {
-        return currentStep().getObjectName();
+        return currentStep().object();
     }
 
     protected String application() {
-        return currentStep().getApplication();
+        return currentStep().app();
     }
 
     private String withStepContext(String message, ResolvedStepContext step) {
