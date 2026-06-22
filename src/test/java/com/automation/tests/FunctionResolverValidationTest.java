@@ -47,56 +47,6 @@ public class FunctionResolverValidationTest {
     }
 
     @Test
-    public void missingXpathShouldFailClearly() {
-        FunctionResolver resolver = new FunctionResolver(driver().driver());
-
-        IllegalArgumentException exception = Assert.expectThrows(
-                IllegalArgumentException.class,
-                () -> execute(resolver, "BRS", "click", "", "")
-        );
-
-        Assert.assertTrue(exception.getMessage().contains("XPath is required for keyword 'click'."));
-    }
-
-    @Test
-    public void missingInputValueShouldFailClearly() {
-        FunctionResolver resolver = new FunctionResolver(driver().driver());
-
-        IllegalArgumentException exception = Assert.expectThrows(
-                IllegalArgumentException.class,
-                () -> execute(resolver, "BRS", "input", "//input[@id='username']", "")
-        );
-
-        Assert.assertTrue(exception.getMessage().contains("Value is required for keyword 'input'."));
-    }
-
-    @Test
-    public void missingOpenUrlValueShouldFailClearly() {
-        FunctionResolver resolver = new FunctionResolver(driver().driver());
-
-        IllegalArgumentException exception = Assert.expectThrows(
-                IllegalArgumentException.class,
-                () -> execute(resolver, "BRS", "openUrl", "", "")
-        );
-
-        Assert.assertTrue(exception.getMessage().contains("URL is required for keyword 'openUrl'."));
-    }
-
-    @Test
-    public void missingVerifyTextValueShouldFailClearly() {
-        FunctionResolver resolver = new FunctionResolver(driver().driver());
-
-        IllegalArgumentException exception = Assert.expectThrows(
-                IllegalArgumentException.class,
-                () -> execute(resolver, "BRS", "verifyText", MESSAGE_XPATH, "")
-        );
-
-        Assert.assertTrue(exception.getMessage().contains(
-                "Expected text is required for keyword 'verifyText'."
-        ));
-    }
-
-    @Test
     public void unknownApplicationShouldFallbackToBaseFunctionWhenKeywordExists() {
         FunctionResolver resolver = new FunctionResolver(driver().driver());
 

@@ -27,6 +27,79 @@ public class PreRunValidatorTest {
     }
 
     @Test
+    public void allXpathDependentKeywordsShouldBeValidatedBeforeRuntime() {
+        List<String> keywords = List.of(
+                "click",
+                "verifyDisplayed",
+                "clear",
+                "getText",
+                "waitVisible",
+                "waitClickable",
+                "scrollToElement",
+                "safeClick",
+                "pressEnter",
+                "isDisplayed",
+                "isNotDisplayed",
+                "input",
+                "verifyText",
+                "verifyTextContains",
+                "selectRoomByName",
+                "verifyBookingCreated",
+                "verifyEmployeeVisible"
+        );
+
+        for (String keyword : keywords) {
+            FrameworkException exception = validationFailure(step(
+                    keyword, "targetObject", "literal value", "resolved value", "", "", "BRS"
+            ));
+
+            assertContainsContext(
+                    exception,
+                    "XPath is required for keyword '" + keyword + "'.",
+                    keyword,
+                    "targetObject",
+                    "BRS"
+            );
+        }
+    }
+
+    @Test
+    public void allValueDependentKeywordsShouldBeValidatedBeforeRuntime() {
+        List<String> keywords = List.of(
+                "openUrl",
+                "verifyUrlContains",
+                "verifyTitle",
+                "verifyTitleContains",
+                "input",
+                "verifyText",
+                "verifyTextContains",
+                "selectRoomByName",
+                "verifyBookingCreated",
+                "verifyEmployeeVisible"
+        );
+
+        for (String keyword : keywords) {
+            boolean xpathRequired = !keyword.equals("openUrl")
+                    && !keyword.equals("verifyUrlContains")
+                    && !keyword.equals("verifyTitle")
+                    && !keyword.equals("verifyTitleContains");
+            String objectName = xpathRequired ? "targetObject" : "";
+            String resolvedXPath = xpathRequired ? "//div[@id='target']" : "";
+            FrameworkException exception = validationFailure(step(
+                    keyword, objectName, "", "", resolvedXPath, resolvedXPath, "BRS"
+            ));
+
+            assertContainsContext(
+                    exception,
+                    "Value is required for keyword '" + keyword + "'.",
+                    keyword,
+                    objectName,
+                    "BRS"
+            );
+        }
+    }
+
+    @Test
     public void missingObjectShouldFailClearly() {
         FrameworkException exception = validationFailure(step("click", "", "", "", "", "", "BRS"));
 

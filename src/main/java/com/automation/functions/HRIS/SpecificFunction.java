@@ -14,8 +14,6 @@ public class SpecificFunction extends BaseFunction {
     }
 
     public void verifyEmployeeVisible() {
-        requiredXPath("verifyEmployeeVisible");
-        requiredValue("verifyEmployeeVisible", "Value");
         verifyTextContains();
     }
 }

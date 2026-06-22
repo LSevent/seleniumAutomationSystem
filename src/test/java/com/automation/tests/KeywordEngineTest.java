@@ -163,24 +163,6 @@ public class KeywordEngineTest {
         }
     }
 
-    @Test
-    public void executeStepShouldReturnClearFailureWhenXpathRequiredButObjectIsBlank() {
-        FakeWebDriver fakeDriver = localPageDriver();
-        try (ExcelReader excelReader = new ExcelReader(workbookPath.toString())) {
-            Scenario scenario = activeScenario(excelReader);
-            TestStep step = step("Login BRS", "click", "", "", 6, 1);
-            KeywordEngine keywordEngine = keywordEngine(excelReader, fakeDriver);
-
-            ExecutionResult result = keywordEngine.executeStep(scenario, step);
-
-            Assert.assertFalse(result.isSuccess());
-            Assert.assertTrue(result.getMessage().contains("Keyword 'click' failed at step row 6."));
-            Assert.assertTrue(result.getMessage().contains("Application: BRS."));
-            Assert.assertTrue(result.getMessage().contains("Scenario ACTION: Local Keyword Test."));
-            Assert.assertTrue(result.getMessage().contains("Cause: XPath is required for keyword 'click'."));
-        }
-    }
-
     private KeywordEngine keywordEngine(ExcelReader excelReader, FakeWebDriver fakeDriver) {
         DataReader dataReader = new DataReader(excelReader);
         ObjectRepositoryReader objectRepositoryReader = new ObjectRepositoryReader(excelReader, dataReader);

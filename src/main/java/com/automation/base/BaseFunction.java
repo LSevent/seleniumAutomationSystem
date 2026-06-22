@@ -3,7 +3,6 @@ package com.automation.base;
 import com.automation.context.StepContextHolder;
 import com.automation.drivers.DriverFactory;
 import com.automation.exceptions.ErrorContext;
-import com.automation.exceptions.FrameworkException;
 import com.automation.models.ResolvedStepContext;
 import com.automation.utils.JavaScriptUtil;
 import com.automation.utils.WaitUtil;
@@ -37,72 +36,65 @@ public class BaseFunction {
     }
 
     public void openUrl() {
-        String url = requiredValue("openUrl", "URL");
-        driver.get(url.trim());
+        driver.get(value().trim());
     }
 
     public void click() {
-        String xpath = requiredXPath("click");
-        waitForClickableElement(xpath, "click").click();
+        waitForClickableElement(xpath(), "click").click();
     }
 
     public void input() {
-        String xpath = requiredXPath("input");
-        String value = requiredValue("input", "Value");
-        String safeValue = value;
-        WebElement element = waitForVisibleElement(xpath, "input");
+        String targetXPath = xpath();
+        String inputValue = value();
+        WebElement element = waitForVisibleElement(targetXPath, "input");
         try {
             element.clear();
         } catch (RuntimeException exception) {
-            LOGGER.debug("Could not clear element before input. XPath: {}", xpath, exception);
+            LOGGER.debug("Could not clear element before input. XPath: {}", targetXPath, exception);
         }
-        element.sendKeys(safeValue);
+        element.sendKeys(inputValue);
     }
 
     public void clear() {
-        String xpath = requiredXPath("clear");
-        waitForVisibleElement(xpath, "clear").clear();
+        waitForVisibleElement(xpath(), "clear").clear();
     }
 
     public String getText() {
-        String xpath = requiredXPath("getText");
-        String text = waitForVisibleElement(xpath, "getText").getText();
-        return text;
+        return waitForVisibleElement(xpath(), "getText").getText();
     }
 
     public void verifyDisplayed() {
-        String xpath = requiredXPath("verifyDisplayed");
-        WebElement element = waitForVisibleElement(xpath, "verifyDisplayed");
+        String targetXPath = xpath();
+        WebElement element = waitForVisibleElement(targetXPath, "verifyDisplayed");
         if (!element.isDisplayed()) {
-            throw new AssertionError(withCurrentStepContext("Element is not displayed. XPath: " + xpath));
+            throw new AssertionError(withCurrentStepContext("Element is not displayed. XPath: " + targetXPath));
         }
     }
 
     public void verifyText() {
-        String xpath = requiredXPath("verifyText");
-        String expectedText = requiredValue("verifyText", "Expected text");
+        String targetXPath = xpath();
+        String expectedText = value();
         String actual = getText();
         if (!expectedText.equals(actual)) {
             throw new AssertionError(withCurrentStepContext(
-                    "Expected text '" + expectedText + "' but found '" + actual + "'. XPath: " + xpath
+                    "Expected text '" + expectedText + "' but found '" + actual + "'. XPath: " + targetXPath
             ));
         }
     }
 
     public void verifyTextContains() {
-        String xpath = requiredXPath("verifyTextContains");
-        String expectedText = requiredValue("verifyTextContains", "Expected text");
-        String expected = expectedText;
+        String targetXPath = xpath();
+        String expected = value();
         String actual = getText();
         if (!actual.contains(expected)) {
             throw new AssertionError(withCurrentStepContext(
-                    "Expected text to contain '" + expected + "' but found '" + actual + "'. XPath: " + xpath
+                    "Expected text to contain '" + expected + "' but found '" + actual + "'. XPath: " + targetXPath
             ));
         }
     }
 
     public void verifyUrlContains() {
-        String expectedValue = requiredValue("verifyUrlContains", "Expected value");
+        String expectedValue = value();
         String actualUrl = driver.getCurrentUrl();
         if (actualUrl == null || !actualUrl.contains(expectedValue.trim())) {
             throw new AssertionError(withCurrentStepContext(
@@ -112,7 +104,7 @@ public class BaseFunction {
     }
 
     public void verifyTitle() {
-        String expectedTitle = requiredValue("verifyTitle", "Expected title");
+        String expectedTitle = value();
         String actualTitle = driver.getTitle();
         if (!expectedTitle.trim().equals(actualTitle)) {
             throw new AssertionError(withCurrentStepContext(
@@ -122,7 +114,7 @@ public class BaseFunction {
     }
 
     public void verifyTitleContains() {
-        String expectedTitlePart = requiredValue("verifyTitleContains", "Expected title");
+        String expectedTitlePart = value();
         String actualTitle = driver.getTitle();
         if (actualTitle == null || !actualTitle.contains(expectedTitlePart.trim())) {
             throw new AssertionError(withCurrentStepContext(
@@ -132,40 +124,36 @@ public class BaseFunction {
     }
 
     public WebElement waitVisible() {
-        String xpath = requiredXPath("waitVisible");
-        return waitForVisibleElement(xpath, "waitVisible");
+        return waitForVisibleElement(xpath(), "waitVisible");
     }
 
     public WebElement waitClickable() {
-        String xpath = requiredXPath("waitClickable");
-        return waitForClickableElement(xpath, "waitClickable");
+        return waitForClickableElement(xpath(), "waitClickable");
     }
 
     public void scrollToElement() {
-        String xpath = requiredXPath("scrollToElement");
-        JavaScriptUtil.scrollToElement(driver, waitForVisibleElement(xpath, "scrollToElement"));
+        JavaScriptUtil.scrollToElement(driver, waitForVisibleElement(xpath(), "scrollToElement"));
     }
 
     public void safeClick() {
-        String xpath = requiredXPath("safeClick");
+        String targetXPath = xpath();
         try {
             click();
         } catch (ElementClickInterceptedException | StaleElementReferenceException | TimeoutException exception) {
-            clickUsingJavaScript(xpath, exception);
+            clickUsingJavaScript(targetXPath, exception);
         } catch (WebDriverException exception) {
-            clickUsingJavaScript(xpath, exception);
+            clickUsingJavaScript(targetXPath, exception);
         }
     }
 
     public void pressEnter() {
-        String xpath = requiredXPath("pressEnter");
-        waitForVisibleElement(xpath, "pressEnter").sendKeys(Keys.ENTER);
+        waitForVisibleElement(xpath(), "pressEnter").sendKeys(Keys.ENTER);
     }
 
     public boolean isDisplayed() {
-        String xpath = requiredXPath("isDisplayed");
+        String targetXPath = xpath();
         try {
-            return waitForVisibleElement(xpath, "isDisplayed").isDisplayed();
+            return waitForVisibleElement(targetXPath, "isDisplayed").isDisplayed();
         } catch (AssertionError exception) {
             return false;
         }
@@ -206,31 +194,24 @@ public class BaseFunction {
         return StepContextHolder.get();
     }
 
-    protected String requiredXPath(String keyword) {
-        return requireXPath(currentStep(), keyword);
+    protected String xpath() {
+        return currentStep().getResolvedXPath();
     }
 
-    protected String requiredValue(String keyword, String fieldName) {
-        return requireValue(currentStep(), keyword, fieldName);
+    protected String value() {
+        return currentStep().getResolvedValue();
     }
 
-    protected String requireXPath(ResolvedStepContext step, String keyword) {
-        String xpath = step.getResolvedXPath();
-        validateRequired(xpath, keyword, "XPath", step);
-        return xpath;
+    protected String rawValue() {
+        return currentStep().getRawValue();
     }
 
-    protected String requireValue(ResolvedStepContext step, String keyword, String fieldName) {
-        String value = step.getResolvedValue();
-        validateRequired(value, keyword, fieldName, step);
-        return value;
+    protected String objectName() {
+        return currentStep().getObjectName();
     }
 
-    private void validateRequired(String value, String keyword, String fieldName, ResolvedStepContext step) {
-        if (value == null || value.isBlank()) {
-            String message = fieldName + " is required for keyword '" + keyword + "'.";
-            throw new FrameworkException(withStepContext(message, step));
-        }
+    protected String application() {
+        return currentStep().getApplication();
     }
 
     private String withStepContext(String message, ResolvedStepContext step) {

@@ -201,30 +201,6 @@ public class FunctionResolverTest {
     }
 
     @Test
-    public void shouldFailClearlyForMissingXpathRequiredByKeyword() {
-        FunctionResolver resolver = new FunctionResolver(testDriver().driver());
-
-        IllegalArgumentException exception = Assert.expectThrows(
-                IllegalArgumentException.class,
-                () -> execute(resolver, "BRS", "click", " ", "")
-        );
-
-        Assert.assertTrue(exception.getMessage().contains("XPath is required for keyword 'click'."));
-    }
-
-    @Test
-    public void shouldFailClearlyForMissingValueRequiredByKeyword() {
-        FunctionResolver resolver = new FunctionResolver(testDriver().driver());
-
-        IllegalArgumentException exception = Assert.expectThrows(
-                IllegalArgumentException.class,
-                () -> execute(resolver, "BRS", "input", USERNAME_XPATH, " ")
-        );
-
-        Assert.assertTrue(exception.getMessage().contains("Value is required for keyword 'input'."));
-    }
-
-    @Test
     public void shouldExecuteOtherApplicationSpecificFunctions() {
         FunctionResolver resolver = new FunctionResolver(testDriver().driver());
 

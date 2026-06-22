@@ -2,7 +2,6 @@ package com.automation.tests;
 
 import com.automation.context.StepContextHolder;
 import com.automation.engine.FunctionResolver;
-import com.automation.exceptions.FrameworkException;
 import com.automation.models.FunctionExecutionResult;
 import com.automation.models.FunctionSourceType;
 import com.automation.models.ResolvedStepContext;
@@ -63,39 +62,6 @@ public class SpecificFunctionContextTest {
     }
 
     @Test
-    public void specificValidationFailureShouldIncludeOneCompleteContextBlock() {
-        FakeWebDriver driver = new FakeWebDriver();
-        ResolvedStepContext step = step(
-                "BRS",
-                "selectRoomByName",
-                "btnRoom",
-                "//button[@id='resolved-room']",
-                ""
-        );
-        StepContextHolder.set(step);
-
-        FrameworkException exception = Assert.expectThrows(
-                FrameworkException.class,
-                () -> new FunctionResolver(driver.driver()).execute(
-                        step.getApplication(),
-                        step.getFunction()
-                )
-        );
-
-        String message = exception.getMessage();
-        Assert.assertTrue(message.contains("Value is required for keyword 'selectRoomByName'."));
-        Assert.assertTrue(message.contains("Scenario NO: 1."));
-        Assert.assertTrue(message.contains("Scenario ACTION: Local Keyword Test."));
-        Assert.assertTrue(message.contains("Sheet: Local Keyword Test."));
-        Assert.assertTrue(message.contains("Testcase: Login BRS."));
-        Assert.assertTrue(message.contains("Row: 10."));
-        Assert.assertTrue(message.contains("Function: selectRoomByName."));
-        Assert.assertTrue(message.contains("Object: btnRoom."));
-        Assert.assertTrue(message.contains("Application: BRS."));
-        Assert.assertEquals(countOccurrences(message, "Scenario NO:"), 1);
-    }
-
-    @Test
     public void productionSpecificKeywordsShouldExposeOnlyNoArgEntryPoints() {
         assertNoArgKeyword(com.automation.functions.BRS.SpecificFunction.class, "click");
         assertNoArgKeyword(com.automation.functions.BRS.SpecificFunction.class, "selectRoomByName");
@@ -129,10 +95,6 @@ public class SpecificFunctionContextTest {
                 resolvedXpath,
                 ""
         );
-    }
-
-    private int countOccurrences(String value, String token) {
-        return value.split(java.util.regex.Pattern.quote(token), -1).length - 1;
     }
 
     private void assertNoArgKeyword(Class<?> functionClass, String keyword) {

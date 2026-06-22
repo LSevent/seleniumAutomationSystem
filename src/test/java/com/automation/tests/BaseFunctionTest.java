@@ -110,34 +110,6 @@ public class BaseFunctionTest {
     }
 
     @Test
-    public void blankXPathShouldThrowClearValidationError() {
-        BaseFunction baseFunction = new BaseFunction(testDriver());
-        useContext("click", " ", "");
-
-        IllegalArgumentException exception = Assert.expectThrows(
-                IllegalArgumentException.class,
-                baseFunction::click
-        );
-
-        Assert.assertTrue(exception.getMessage().startsWith("XPath is required for keyword 'click'."));
-    }
-
-    @Test
-    public void blankExpectedValueShouldThrowClearValidationError() {
-        BaseFunction baseFunction = new BaseFunction(testDriver());
-        useContext("verifyUrlContains", "", "");
-
-        IllegalArgumentException exception = Assert.expectThrows(
-                IllegalArgumentException.class,
-                baseFunction::verifyUrlContains
-        );
-
-        Assert.assertTrue(exception.getMessage().startsWith(
-                "Expected value is required for keyword 'verifyUrlContains'."
-        ));
-    }
-
-    @Test
     public void missingElementShouldThrowClearError() {
         BaseFunction baseFunction = new BaseFunction(testDriver());
         useContext("click", "//button[@id='missing']", "");

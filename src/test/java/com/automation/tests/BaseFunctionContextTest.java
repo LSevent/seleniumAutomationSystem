@@ -104,8 +104,12 @@ public class BaseFunctionContextTest {
         ));
         ContextHelperProbe function = new ContextHelperProbe(driver.driver());
 
-        Assert.assertEquals(function.xpath("customKeyword"), "//resolved");
-        Assert.assertEquals(function.value("customKeyword", "Value"), "resolved value");
+        Assert.assertSame(function.step(), StepContextHolder.get());
+        Assert.assertEquals(function.resolvedXPath(), "//resolved");
+        Assert.assertEquals(function.resolvedValue(), "resolved value");
+        Assert.assertEquals(function.unresolvedValue(), "RAW_VALUE");
+        Assert.assertEquals(function.stepObjectName(), "customObject");
+        Assert.assertEquals(function.stepApplication(), "BRS");
     }
 
     @Test
@@ -119,85 +123,6 @@ public class BaseFunctionContextTest {
                 exception.getMessage(),
                 "Step context is not available. Keyword must be executed through KeywordEngine."
         );
-    }
-
-    @Test
-    public void clickShouldFailClearlyWhenResolvedXpathIsBlank() {
-        StepContextHolder.set(step("click", "btnLogin", "", "", "//button[@id='raw-login']", ""));
-
-        FrameworkException exception = Assert.expectThrows(
-                FrameworkException.class,
-                () -> new BaseFunction(driver().driver()).click()
-        );
-
-        assertContextualValidation(exception, "XPath is required for keyword 'click'.", "btnLogin");
-    }
-
-    @Test
-    public void inputShouldFailClearlyWhenResolvedValueIsBlank() {
-        StepContextHolder.set(step(
-                "input",
-                "txtUsername",
-                "LOGIN_DATA.USERNAME",
-                "",
-                "//input[@id='raw-username']",
-                "//input[@id='resolved-username']"
-        ));
-
-        FrameworkException exception = Assert.expectThrows(
-                FrameworkException.class,
-                () -> new BaseFunction(driver().driver()).input()
-        );
-
-        assertContextualValidation(exception, "Value is required for keyword 'input'.", "txtUsername");
-    }
-
-    @Test
-    public void openUrlShouldFailClearlyWhenResolvedValueIsBlank() {
-        StepContextHolder.set(step("openUrl", "", "CONFIG.BASE_URL", "", "", ""));
-
-        FrameworkException exception = Assert.expectThrows(
-                FrameworkException.class,
-                () -> new BaseFunction(driver().driver()).openUrl()
-        );
-
-        assertContextualValidation(exception, "URL is required for keyword 'openUrl'.", "");
-    }
-
-    @Test
-    public void verifyTextShouldFailClearlyWhenResolvedValueIsBlank() {
-        StepContextHolder.set(step(
-                "verifyText",
-                "lblMessage",
-                "LOGIN_DATA.MESSAGE",
-                "",
-                "//div[@id='raw-message']",
-                "//div[@id='resolved-message']"
-        ));
-
-        FrameworkException exception = Assert.expectThrows(
-                FrameworkException.class,
-                () -> new BaseFunction(driver().driver()).verifyText()
-        );
-
-        assertContextualValidation(exception, "Expected text is required for keyword 'verifyText'.", "lblMessage");
-    }
-
-    private void assertContextualValidation(
-            FrameworkException exception,
-            String summary,
-            String objectName
-    ) {
-        Assert.assertTrue(exception.getMessage().startsWith(summary));
-        Assert.assertTrue(exception.getMessage().contains("Scenario NO: 1."));
-        Assert.assertTrue(exception.getMessage().contains("Scenario ACTION: Local Keyword Test."));
-        Assert.assertTrue(exception.getMessage().contains("Sheet: Local Keyword Test."));
-        Assert.assertTrue(exception.getMessage().contains("Testcase: Login BRS."));
-        Assert.assertTrue(exception.getMessage().contains("Row: 7."));
-        if (!objectName.isBlank()) {
-            Assert.assertTrue(exception.getMessage().contains("Object: " + objectName + "."));
-        }
-        Assert.assertTrue(exception.getMessage().contains("Application: BRS."));
     }
 
     private FakeWebDriver driver() {
@@ -245,12 +170,28 @@ public class BaseFunctionContextTest {
             super(driver);
         }
 
-        private String xpath(String keyword) {
-            return requiredXPath(keyword);
+        private ResolvedStepContext step() {
+            return currentStep();
         }
 
-        private String value(String keyword, String label) {
-            return requiredValue(keyword, label);
+        private String resolvedXPath() {
+            return xpath();
+        }
+
+        private String resolvedValue() {
+            return value();
+        }
+
+        private String unresolvedValue() {
+            return rawValue();
+        }
+
+        private String stepObjectName() {
+            return objectName();
+        }
+
+        private String stepApplication() {
+            return application();
         }
     }
 

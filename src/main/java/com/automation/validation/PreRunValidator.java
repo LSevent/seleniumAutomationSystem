@@ -110,9 +110,13 @@ public class PreRunValidator {
             case "screenshot" -> {
                 // Screenshot intentionally has no Object/XPath/Value requirement.
             }
-            case "openurl" -> requireValue(step, function, errors);
-            case "click", "verifydisplayed" -> requireObjectAndXpath(step, function, errors);
-            case "input", "verifytext" -> {
+            case "openurl", "verifyurlcontains", "verifytitle", "verifytitlecontains" ->
+                    requireValue(step, function, errors);
+            case "click", "verifydisplayed", "clear", "gettext", "waitvisible", "waitclickable",
+                    "scrolltoelement", "safeclick", "pressenter", "isdisplayed", "isnotdisplayed" ->
+                    requireObjectAndXpath(step, function, errors);
+            case "input", "verifytext", "verifytextcontains", "selectroombyname",
+                    "verifybookingcreated", "verifyemployeevisible" -> {
                 requireObjectAndXpath(step, function, errors);
                 requireValue(step, function, errors);
             }
