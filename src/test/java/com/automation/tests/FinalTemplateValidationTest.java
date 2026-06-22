@@ -59,7 +59,7 @@ public class FinalTemplateValidationTest {
     private static final List<String> SCENARIO_SHEET_HEADERS = List.of(
             "Testcase",
             "Run",
-            "Function",
+            "Keyword",
             "Object",
             "Value",
             "Application",

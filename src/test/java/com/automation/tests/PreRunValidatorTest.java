@@ -115,10 +115,10 @@ public class PreRunValidatorTest {
     }
 
     @Test
-    public void blankFunctionShouldFailClearly() {
+    public void blankKeywordShouldFailClearly() {
         FrameworkException exception = validationFailure(step("", "", "", "", "", "", "BRS"));
 
-        assertContainsContext(exception, "Function is required for active step.", "", "", "BRS");
+        assertContainsContext(exception, "Keyword is required for active step.", "", "", "BRS");
     }
 
     @Test
@@ -209,7 +209,7 @@ public class PreRunValidatorTest {
         FrameworkException exception = validationFailure(step("", "", "", "", "", "", ""));
 
         Assert.assertTrue(exception.getMessage().startsWith("Pre-run validation failed with 2 error(s)."));
-        Assert.assertTrue(exception.getMessage().contains("1. Function is required for active step."));
+        Assert.assertTrue(exception.getMessage().contains("1. Keyword is required for active step."));
         Assert.assertTrue(exception.getMessage().contains("2. Application is required for active step."));
     }
 
@@ -228,7 +228,7 @@ public class PreRunValidatorTest {
     }
 
     private ResolvedStepContext step(
-            String function,
+            String keyword,
             String object,
             String rawValue,
             String resolvedValue,
@@ -245,7 +245,7 @@ public class PreRunValidatorTest {
                 .testcaseParentRow(2)
                 .excelRow(3)
                 .stepNumber(1)
-                .function(function)
+                .keyword(keyword)
                 .objectName(object)
                 .application(application)
                 .description("Validation step")
@@ -260,7 +260,7 @@ public class PreRunValidatorTest {
     private void assertContainsContext(
             FrameworkException exception,
             String expectedError,
-            String function,
+            String keyword,
             String object,
             String application
     ) {
@@ -271,8 +271,8 @@ public class PreRunValidatorTest {
         Assert.assertTrue(message.contains("Sheet: Local Keyword Test."));
         Assert.assertTrue(message.contains("Testcase: Login BRS."));
         Assert.assertTrue(message.contains("Row: 3."));
-        if (!function.isBlank()) {
-            Assert.assertTrue(message.contains("Function: " + function + "."));
+        if (!keyword.isBlank()) {
+            Assert.assertTrue(message.contains("Keyword: " + keyword + "."));
         }
         if (!object.isBlank()) {
             Assert.assertTrue(message.contains("Object: " + object + "."));

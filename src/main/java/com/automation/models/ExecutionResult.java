@@ -11,7 +11,7 @@ public class ExecutionResult {
     private final String scenarioAction;
     private final String testcaseName;
     private final String description;
-    private final String functionName;
+    private final String keywordName;
     private final String objectName;
     private final String application;
     private final String rawValue;
@@ -33,7 +33,7 @@ public class ExecutionResult {
             String scenarioAction,
             String testcaseName,
             String description,
-            String functionName,
+            String keywordName,
             String objectName,
             String application,
             String rawValue,
@@ -54,7 +54,7 @@ public class ExecutionResult {
         this.scenarioAction = scenarioAction;
         this.testcaseName = testcaseName;
         this.description = description;
-        this.functionName = functionName;
+        this.keywordName = keywordName;
         this.objectName = objectName;
         this.application = application;
         this.rawValue = rawValue;
@@ -182,7 +182,7 @@ public class ExecutionResult {
                 safe(scenario == null ? "" : scenario.getAction()),
                 safe(step == null ? "" : step.getTestcaseName()),
                 safe(step == null ? "" : step.getDescription()),
-                safe(step == null ? "" : step.getFunction()),
+                safe(step == null ? "" : step.getKeyword()),
                 safe(step == null ? "" : step.getObject()),
                 safe(step == null ? "" : step.getApplication()),
                 safe(step == null ? "" : step.getValue()),
@@ -215,7 +215,7 @@ public class ExecutionResult {
                 safe(step == null ? "" : step.getScenarioAction()),
                 safe(step == null ? "" : step.getTestcaseName()),
                 safe(step == null ? "" : step.getDescription()),
-                safe(step == null ? "" : step.getFunction()),
+                safe(step == null ? "" : step.getKeyword()),
                 safe(step == null ? "" : step.getObjectName()),
                 safe(step == null ? "" : step.getApplication()),
                 safe(step == null ? "" : step.getRawValue()),
@@ -253,8 +253,8 @@ public class ExecutionResult {
         return description;
     }
 
-    public String getFunctionName() {
-        return functionName;
+    public String getKeywordName() {
+        return keywordName;
     }
 
     public String getObjectName() {
@@ -321,7 +321,7 @@ public class ExecutionResult {
                 ", scenarioAction='" + scenarioAction + '\'' +
                 ", testcaseName='" + testcaseName + '\'' +
                 ", description='" + description + '\'' +
-                ", functionName='" + functionName + '\'' +
+                ", keywordName='" + keywordName + '\'' +
                 ", objectName='" + objectName + '\'' +
                 ", application='" + application + '\'' +
                 ", rawValue='" + rawValue + '\'' +

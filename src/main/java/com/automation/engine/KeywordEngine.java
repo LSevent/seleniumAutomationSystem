@@ -101,22 +101,22 @@ public class KeywordEngine {
             logResolvedStepStarted(step);
 
             ExecutionResult result;
-            if (isBlank(step.getFunction())) {
+            if (isBlank(step.getKeyword())) {
                 result = ExecutionResult.failure(
                         step,
                         KeywordEngine.class.getName(),
                         "ENGINE",
                         failureMessage(
-                                "Function is required in sheet " + safe(step.getSheetName())
+                                "Keyword is required in sheet " + safe(step.getSheetName())
                                         + " row " + step.getExcelRow() + ".",
                                 step,
                                 null
                         )
                 );
-            } else if (isScreenshotKeyword(step.getFunction())) {
+            } else if (isScreenshotKeyword(step.getKeyword())) {
                 result = executeManualScreenshot(step);
             } else {
-                result = executeResolvedFunction(step);
+                result = executeResolvedKeyword(step);
             }
             return logResolvedResult(result);
         } finally {
@@ -133,48 +133,48 @@ public class KeywordEngine {
         context.setCurrentStepNumber(step.getStepOrder());
 
         LOGGER.info(
-                "Step started. Scenario NO = {}, ACTION = {}, Testcase = {}, Row = {}, Function = {}, Object = {}",
+                "Step started. Scenario NO = {}, ACTION = {}, Testcase = {}, Row = {}, Keyword = {}, Object = {}",
                 scenario.getNo(),
                 scenario.getAction(),
                 step.getTestcaseName(),
                 step.getExcelRowNumber(),
-                step.getFunction(),
+                step.getKeyword(),
                 step.getObject()
         );
 
-        if (isBlank(step.getFunction())) {
-            return logFailure(failure(context, "Function is required in sheet " + scenario.getAction() + " row " + step.getExcelRowNumber() + "."));
+        if (isBlank(step.getKeyword())) {
+            return logFailure(failure(context, "Keyword is required in sheet " + scenario.getAction() + " row " + step.getExcelRowNumber() + "."));
         }
 
         if (!resolveValue(context)) {
             return logFailure(failureFromContext(context));
         }
-        if (isScreenshotKeyword(step.getFunction())) {
+        if (isScreenshotKeyword(step.getKeyword())) {
             return logManualScreenshot(executeManualScreenshot(context));
         }
         if (!resolveObject(context)) {
             return logFailure(failureFromContext(context));
         }
 
-        ExecutionResult result = executeFunction(context);
+        ExecutionResult result = executeKeyword(context);
         if (ExecutionResult.STATUS_SKIP.equals(result.getStatus())) {
             LOGGER.info(
-                    "Step skipped. Scenario NO = {}, ACTION = {}, Testcase = {}, Row = {}, Function = {}, Message = {}",
+                    "Step skipped. Scenario NO = {}, ACTION = {}, Testcase = {}, Row = {}, Keyword = {}, Message = {}",
                     scenario.getNo(),
                     scenario.getAction(),
                     step.getTestcaseName(),
                     step.getExcelRowNumber(),
-                    step.getFunction(),
+                    step.getKeyword(),
                     result.getMessage()
             );
         } else if (result.isSuccess()) {
             LOGGER.info(
-                    "Step passed. Scenario NO = {}, ACTION = {}, Testcase = {}, Row = {}, Function = {}, Source = {}",
+                    "Step passed. Scenario NO = {}, ACTION = {}, Testcase = {}, Row = {}, Keyword = {}, Source = {}",
                     scenario.getNo(),
                     scenario.getAction(),
                     step.getTestcaseName(),
                     step.getExcelRowNumber(),
-                    step.getFunction(),
+                    step.getKeyword(),
                     result.getExecutionSource()
             );
         } else {
@@ -207,29 +207,29 @@ public class KeywordEngine {
         return objectRepositoryReader;
     }
 
-    private ExecutionResult executeResolvedFunction(ResolvedStepContext step) {
+    private ExecutionResult executeResolvedKeyword(ResolvedStepContext step) {
         try {
-            FunctionExecutionResult functionResult = functionResolver.execute(
+            FunctionExecutionResult keywordResult = functionResolver.execute(
                     step.getApplication(),
-                    step.getFunction()
+                    step.getKeyword()
             );
             String executedBy = isBlank(step.getExecutedBy())
-                    ? functionResult.getExecutedByClass()
+                    ? keywordResult.getExecutedByClass()
                     : step.getExecutedBy();
             return ExecutionResult.success(
                     step,
                     executedBy,
-                    functionResult.getSourceType().name(),
-                    functionResult.getMessage()
+                    keywordResult.getSourceType().name(),
+                    keywordResult.getMessage()
             );
         } catch (RuntimeException | AssertionError exception) {
-            String message = "Keyword '" + safe(step.getFunction()) + "' failed at step row "
+            String message = "Keyword '" + safe(step.getKeyword()) + "' failed at step row "
                     + step.getExcelRow() + ".";
             if (!containsStepContext(exception.getMessage())) {
                 message += System.lineSeparator() + resolvedStepContext(step);
             }
             message += System.lineSeparator() + "Cause: " + safe(exception.getMessage());
-            return ExecutionResult.failure(step, safe(step.getExecutedBy()), "FUNCTION", message);
+            return ExecutionResult.failure(step, safe(step.getExecutedBy()), "KEYWORD", message);
         }
     }
 
@@ -273,13 +273,13 @@ public class KeywordEngine {
     private ExecutionResult logResolvedResult(ExecutionResult result) {
         if (ExecutionResult.STATUS_SKIP.equals(result.getStatus())) {
             LOGGER.info(
-                    "Keyword skipped. Scenario NO = {}, ACTION = {}, Testcase = {}, Row = {}, Function = {}, "
+                    "Keyword skipped. Scenario NO = {}, ACTION = {}, Testcase = {}, Row = {}, Keyword = {}, "
                             + "Object = {}, Application = {}, XPath = {}, Status = {}, Source = {}, Message = {}",
                     result.getScenarioNo(),
                     result.getScenarioAction(),
                     result.getTestcaseName(),
                     result.getExcelRowNumber(),
-                    result.getFunctionName(),
+                    result.getKeywordName(),
                     result.getObjectName(),
                     result.getApplication(),
                     result.getResolvedXpath(),
@@ -289,13 +289,13 @@ public class KeywordEngine {
             );
         } else if (result.isSuccess()) {
             LOGGER.info(
-                    "Completed keyword. Scenario NO = {}, ACTION = {}, Testcase = {}, Row = {}, Function = {}, "
+                    "Completed keyword. Scenario NO = {}, ACTION = {}, Testcase = {}, Row = {}, Keyword = {}, "
                             + "Object = {}, Application = {}, XPath = {}, Status = {}, Source = {}",
                     result.getScenarioNo(),
                     result.getScenarioAction(),
                     result.getTestcaseName(),
                     result.getExcelRowNumber(),
-                    result.getFunctionName(),
+                    result.getKeywordName(),
                     result.getObjectName(),
                     result.getApplication(),
                     result.getResolvedXpath(),
@@ -304,13 +304,13 @@ public class KeywordEngine {
             );
         } else {
             LOGGER.error(
-                    "Keyword failed. Scenario NO = {}, ACTION = {}, Testcase = {}, Row = {}, Function = {}, "
+                    "Keyword failed. Scenario NO = {}, ACTION = {}, Testcase = {}, Row = {}, Keyword = {}, "
                             + "Object = {}, Application = {}, XPath = {}, Status = {}, Source = {}, Message = {}",
                     result.getScenarioNo(),
                     result.getScenarioAction(),
                     result.getTestcaseName(),
                     result.getExcelRowNumber(),
-                    result.getFunctionName(),
+                    result.getKeywordName(),
                     result.getObjectName(),
                     result.getApplication(),
                     result.getResolvedXpath(),
@@ -330,16 +330,16 @@ public class KeywordEngine {
                 step.getObjectName(),
                 step.getResolvedXPath(),
                 step.getDescription(),
-                step.getFunction()
+                step.getKeyword()
         );
         LOGGER.info(
-                "Executing keyword. Scenario NO = {}, ACTION = {}, Testcase = {}, Row = {}, Function = {}, "
+                "Executing keyword. Scenario NO = {}, ACTION = {}, Testcase = {}, Row = {}, Keyword = {}, "
                         + "Object = {}, Application = {}, XPath = {}, Value = {}",
                 step.getScenarioNo(),
                 step.getScenarioAction(),
                 step.getTestcaseName(),
                 step.getExcelRow(),
-                step.getFunction(),
+                step.getKeyword(),
                 step.getObjectName(),
                 step.getApplication(),
                 step.getResolvedXPath(),
@@ -399,16 +399,16 @@ public class KeywordEngine {
         }
     }
 
-    private ExecutionResult executeFunction(ExecutionContext context) {
+    private ExecutionResult executeKeyword(ExecutionContext context) {
         TestStep step = context.getTestStep();
         StepContextHolder.set(resolvedStep(context));
         try {
-            FunctionExecutionResult functionResult = functionResolver.execute(
+            FunctionExecutionResult keywordResult = functionResolver.execute(
                     step.getApplication(),
-                    step.getFunction()
+                    step.getKeyword()
             );
-            context.setExecutedByClass(functionResult.getExecutedByClass());
-            context.setExecutedBySource(functionResult.getSourceType().name());
+            context.setExecutedByClass(keywordResult.getExecutedByClass());
+            context.setExecutedBySource(keywordResult.getSourceType().name());
             return ExecutionResult.success(
                     context.getScenario(),
                     step,
@@ -417,10 +417,10 @@ public class KeywordEngine {
                     context.getResolvedXpath(),
                     context.getExecutedByClass(),
                     context.getExecutedBySource(),
-                    functionResult.getMessage()
+                    keywordResult.getMessage()
             );
         } catch (RuntimeException | AssertionError exception) {
-            context.setMessage("Keyword '" + safe(step.getFunction()) + "' failed at step row "
+            context.setMessage("Keyword '" + safe(step.getKeyword()) + "' failed at step row "
                     + step.getExcelRowNumber() + "."
                     + System.lineSeparator()
                     + stepContext(context)
@@ -445,7 +445,7 @@ public class KeywordEngine {
                 .testcaseParentRow(testcase == null ? 0 : testcase.getExcelRowNumber())
                 .excelRow(step.getExcelRowNumber())
                 .stepNumber(context.getCurrentStepNumber())
-                .function(safe(step.getFunction()))
+                .keyword(safe(step.getKeyword()))
                 .objectName(safe(step.getObject()))
                 .application(safe(step.getApplication()))
                 .description(safe(step.getDescription()))
@@ -555,12 +555,12 @@ public class KeywordEngine {
 
     private ExecutionResult logFailure(ExecutionResult result) {
         LOGGER.error(
-                "Step failed. Scenario NO = {}, ACTION = {}, Testcase = {}, Row = {}, Function = {}, Message = {}",
+                "Step failed. Scenario NO = {}, ACTION = {}, Testcase = {}, Row = {}, Keyword = {}, Message = {}",
                 result.getScenarioNo(),
                 result.getScenarioAction(),
                 result.getTestcaseName(),
                 result.getExcelRowNumber(),
-                result.getFunctionName(),
+                result.getKeywordName(),
                 result.getMessage()
         );
         return result;
@@ -579,7 +579,7 @@ public class KeywordEngine {
                 .sheet(step == null ? "" : step.getScenarioAction())
                 .testcase(step == null ? "" : step.getTestcaseName())
                 .row(step == null ? 0 : step.getExcelRowNumber())
-                .function(step == null ? "" : step.getFunction())
+                .keyword(step == null ? "" : step.getKeyword())
                 .object(step == null ? "" : step.getObject())
                 .application(step == null ? "" : step.getApplication())
                 .render();
@@ -592,7 +592,7 @@ public class KeywordEngine {
                 .sheet(step.getSheetName())
                 .testcase(step.getTestcaseName())
                 .row(step.getExcelRow())
-                .function(step.getFunction())
+                .keyword(step.getKeyword())
                 .object(step.getObjectName())
                 .application(step.getApplication())
                 .render();
@@ -606,8 +606,8 @@ public class KeywordEngine {
         return message;
     }
 
-    private boolean isScreenshotKeyword(String functionName) {
-        return functionName != null && "screenshot".equalsIgnoreCase(functionName.trim());
+    private boolean isScreenshotKeyword(String keywordName) {
+        return keywordName != null && "screenshot".equalsIgnoreCase(keywordName.trim());
     }
 
     private String screenshotBaseName(ExecutionContext context, String label) {

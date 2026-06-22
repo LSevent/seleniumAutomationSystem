@@ -65,7 +65,7 @@ public class ExcelExecutionReportTest {
             Assert.assertTrue(results.stream().allMatch(ExecutionResult::isSuccess), failureMessages(results));
 
             List<String> manualScreenshots = results.stream()
-                    .filter(result -> "screenshot".equalsIgnoreCase(result.getFunctionName()))
+                    .filter(result -> "screenshot".equalsIgnoreCase(result.getKeywordName()))
                     .map(ExecutionResult::getEvidence)
                     .filter(evidence -> evidence.toLowerCase().endsWith(".png"))
                     .toList();
@@ -91,7 +91,7 @@ public class ExcelExecutionReportTest {
             Assert.assertTrue(reportHtml.contains("Step"));
             Assert.assertTrue(reportHtml.contains("Excel Row"));
             Assert.assertTrue(reportHtml.contains("Description"));
-            Assert.assertTrue(reportHtml.contains("Function"));
+            Assert.assertTrue(reportHtml.contains("Keyword"));
             Assert.assertTrue(reportHtml.contains("Object"));
             Assert.assertTrue(reportHtml.contains("Application"));
             Assert.assertTrue(reportHtml.contains("Raw Value"));
@@ -175,7 +175,7 @@ public class ExcelExecutionReportTest {
         Assert.assertTrue(reportHtml.contains("Failure Details"));
         Assert.assertTrue(reportHtml.contains("Error Message"));
         Assert.assertTrue(reportHtml.contains("Excel Row"));
-        Assert.assertTrue(reportHtml.contains("Function"));
+        Assert.assertTrue(reportHtml.contains("Keyword"));
         Assert.assertTrue(reportHtml.contains("Object"));
         Assert.assertTrue(reportHtml.contains("Application"));
         Assert.assertTrue(reportHtml.contains("Evidence"));
@@ -222,7 +222,7 @@ public class ExcelExecutionReportTest {
         try (ExcelReader excelReader = new ExcelReader(workbookPath.toString())) {
             Scenario scenario = new ScenarioReader(excelReader).getActiveScenarios().get(0);
             TestStep screenshotStep = new StepReader(excelReader).getActiveSteps(scenario).stream()
-                    .filter(step -> "screenshot".equalsIgnoreCase(step.getFunction()))
+                    .filter(step -> "screenshot".equalsIgnoreCase(step.getKeyword()))
                     .findFirst()
                     .orElseThrow();
             KeywordEngine keywordEngine = keywordEngine(

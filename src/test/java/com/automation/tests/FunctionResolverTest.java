@@ -162,7 +162,7 @@ public class FunctionResolverTest {
     }
 
     @Test
-    public void screenshotShouldNotResolveAsNormalFunctionKeyword() {
+    public void screenshotShouldNotResolveAsNormalKeyword() {
         FunctionResolver resolver = new FunctionResolver(testDriver().driver());
 
         IllegalArgumentException exception = Assert.expectThrows(
@@ -189,7 +189,7 @@ public class FunctionResolverTest {
     }
 
     @Test
-    public void shouldFailClearlyForBlankFunction() {
+    public void shouldFailClearlyForBlankKeyword() {
         FunctionResolver resolver = new FunctionResolver(testDriver().driver());
 
         IllegalArgumentException exception = Assert.expectThrows(
@@ -197,7 +197,7 @@ public class FunctionResolverTest {
                 () -> resolver.resolve("BRS", " ")
         );
 
-        Assert.assertEquals(exception.getMessage(), "Function name is required.");
+        Assert.assertEquals(exception.getMessage(), "Keyword name is required.");
     }
 
     @Test
@@ -219,22 +219,22 @@ public class FunctionResolverTest {
         Assert.assertEquals(crmResult.getExecutedByClass(), "com.automation.functions.CRM.SpecificFunction");
     }
 
-    private void assertSpecificClass(ResolvedFunction resolvedFunction, String application) {
-        Assert.assertEquals(resolvedFunction.getApplication(), application);
-        Assert.assertEquals(resolvedFunction.getResolvedClassName(), "com.automation.functions." + application + ".SpecificFunction");
-        Assert.assertEquals(resolvedFunction.getSourceType(), FunctionSourceType.SPECIFIC);
+    private void assertSpecificClass(ResolvedFunction resolvedKeyword, String application) {
+        Assert.assertEquals(resolvedKeyword.getApplication(), application);
+        Assert.assertEquals(resolvedKeyword.getResolvedClassName(), "com.automation.functions." + application + ".SpecificFunction");
+        Assert.assertEquals(resolvedKeyword.getSourceType(), FunctionSourceType.SPECIFIC);
     }
 
     private FunctionExecutionResult execute(
             FunctionResolver resolver,
             String application,
-            String function,
+            String keyword,
             String resolvedXpath,
             String resolvedValue
     ) {
-        StepContextHolder.set(step(application, function, resolvedXpath, resolvedValue));
+        StepContextHolder.set(step(application, keyword, resolvedXpath, resolvedValue));
         try {
-            return resolver.execute(application, function);
+            return resolver.execute(application, keyword);
         } finally {
             StepContextHolder.clear();
         }
@@ -242,7 +242,7 @@ public class FunctionResolverTest {
 
     private ResolvedStepContext step(
             String application,
-            String function,
+            String keyword,
             String resolvedXpath,
             String resolvedValue
     ) {
@@ -255,7 +255,7 @@ public class FunctionResolverTest {
                 .testcaseParentRow(2)
                 .excelRow(3)
                 .stepNumber(1)
-                .function(function)
+                .keyword(keyword)
                 .objectName(resolvedXpath == null || resolvedXpath.isBlank() ? "" : "testObject")
                 .application(application)
                 .description("Resolver keyword test")
@@ -270,7 +270,7 @@ public class FunctionResolverTest {
     private FakeDriver testDriver() {
         FakeDriver fakeDriver = new FakeDriver();
         fakeDriver.title = "Dashboard - Function Resolver Test";
-        fakeDriver.currentUrl = "file:///function-resolver-test.html";
+        fakeDriver.currentUrl = "file:///keyword-resolver-test.html";
         fakeDriver.addElement(USERNAME_XPATH, "");
         fakeDriver.addElement("//input[@id='password']", "");
         fakeDriver.addElement(LOGIN_BUTTON_XPATH, "Login");

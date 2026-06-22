@@ -183,8 +183,10 @@ Example:
 Scenario sheets must use this header:
 
 ```text
-Testcase | Run | Function | Object | Value | Application | Description
+Testcase | Run | Keyword | Object | Value | Application | Description
 ```
+
+`Keyword` is the preferred step header and is used by `Final Excel Template.xlsx`. Older workbooks may continue to use `Function` as a legacy alias. Internally this value is named `keyword`; `KeywordEngine` and `FunctionResolver` use it to select and execute the matching keyword method.
 
 Rules:
 
@@ -319,7 +321,7 @@ report.manualScreenshotEnabled=true
 Manual screenshot step example:
 
 ```text
-Function = screenshot
+Keyword = screenshot
 Value = After select room
 ```
 
@@ -352,7 +354,7 @@ Scenario
 Every testcase uses the same step columns:
 
 ```text
-Step | Excel Row | Description | Function | Object | Application | Raw Value | Resolved Value | Raw XPath | Resolved XPath | Executed By | Status | Evidence
+Step | Excel Row | Description | Keyword | Object | Application | Raw Value | Resolved Value | Raw XPath | Resolved XPath | Executed By | Status | Evidence
 ```
 
 Sensitive resolved values are masked by default:
@@ -377,7 +379,7 @@ Current validation coverage includes:
 - `SCENARIOS` contains `NO`, `RUN`, `ACTION`, and `SCENARIOS`.
 - Active scenario `NO` is required and unique.
 - Active scenario `ACTION` matches an existing sheet.
-- Scenario sheets contain `Testcase`, `Run`, `Function`, `Object`, `Value`, `Application`, and `Description`.
+- Scenario sheets contain `Testcase`, `Run`, `Keyword`, `Object`, `Value`, `Application`, and `Description`. `Keyword` is the preferred step column; the legacy `Function` header remains supported for older workbooks.
 - Active testcase parent rows require `Application`.
 - Step rows inherit parent `Run` and `Application`.
 - Data references use `SHEET_NAME.COLUMN_NAME`.
@@ -385,7 +387,7 @@ Current validation coverage includes:
 - Object repository rows are unique by `Application + Object`.
 - XPath placeholder replacement supports one placeholder.
 - Keyword lookup fails clearly when no matching method exists.
-- Execution errors include scenario, testcase, Excel row, function, object, and application context where available.
+- Execution errors include scenario, testcase, Excel row, keyword, object, and application context where available.
 
 Example validation messages:
 

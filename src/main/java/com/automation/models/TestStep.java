@@ -6,7 +6,7 @@ public class TestStep {
     private final String scenarioName;
     private final String scenarioAction;
     private final String testcaseName;
-    private final String function;
+    private final String keyword;
     private final String object;
     private final String value;
     private final String application;
@@ -19,7 +19,7 @@ public class TestStep {
             String scenarioName,
             String scenarioAction,
             String testcaseName,
-            String function,
+            String keyword,
             String object,
             String value,
             String application,
@@ -31,7 +31,7 @@ public class TestStep {
         this.scenarioName = scenarioName;
         this.scenarioAction = scenarioAction;
         this.testcaseName = testcaseName;
-        this.function = function;
+        this.keyword = keyword;
         this.object = object;
         this.value = value;
         this.application = application;
@@ -56,8 +56,8 @@ public class TestStep {
         return testcaseName;
     }
 
-    public String getFunction() {
-        return function;
+    public String getKeyword() {
+        return keyword;
     }
 
     public String getObject() {
@@ -91,7 +91,7 @@ public class TestStep {
                 ", scenarioName='" + scenarioName + '\'' +
                 ", scenarioAction='" + scenarioAction + '\'' +
                 ", testcaseName='" + testcaseName + '\'' +
-                ", function='" + function + '\'' +
+                ", keyword='" + keyword + '\'' +
                 ", object='" + object + '\'' +
                 ", value='" + value + '\'' +
                 ", application='" + application + '\'' +

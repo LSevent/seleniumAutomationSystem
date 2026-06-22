@@ -30,7 +30,7 @@ public final class ExcelKeywordTestWorkbookFactory {
             createSheet(
                     workbook,
                     "Local Keyword Test",
-                    new String[]{"Testcase", "Run", "Function", "Object", "Value", "Application", "Description"},
+                    new String[]{"Testcase", "Run", "Keyword", "Object", "Value", "Application", "Description"},
                     new Object[][]{
                             {"Open Local Page", "Yes", "", "", "", "BRS", "Open local test page"},
                             {"", "", "openUrl", "", "CONFIG.BASE_URL", "", "Open local HTML"},
@@ -119,7 +119,7 @@ public final class ExcelKeywordTestWorkbookFactory {
             createSheet(
                     workbook,
                     action,
-                    new String[]{"Testcase", "Run", "Function", "Object", "Value", "Application", "Description"},
+                    new String[]{"Testcase", "Run", "Keyword", "Object", "Value", "Application", "Description"},
                     new Object[][]{
                             {"Open Local Page", "Yes", "", "", "", "BRS", "Open local test page"},
                             {"", "", "openUrl", "", "CONFIG.BASE_URL", "", "Open local HTML"},

@@ -102,14 +102,14 @@ public class BaseFunctionContextTest {
                 "//raw",
                 "//resolved"
         ));
-        ContextHelperProbe function = new ContextHelperProbe(driver.driver());
+        ContextHelperProbe keyword = new ContextHelperProbe(driver.driver());
 
-        Assert.assertSame(function.step(), StepContextHolder.get());
-        Assert.assertEquals(function.resolvedXPath(), "//resolved");
-        Assert.assertEquals(function.resolvedValue(), "resolved value");
-        Assert.assertEquals(function.unresolvedValue(), "RAW_VALUE");
-        Assert.assertEquals(function.stepObjectName(), "customObject");
-        Assert.assertEquals(function.stepApplication(), "BRS");
+        Assert.assertSame(keyword.step(), StepContextHolder.get());
+        Assert.assertEquals(keyword.resolvedXPath(), "//resolved");
+        Assert.assertEquals(keyword.resolvedValue(), "resolved value");
+        Assert.assertEquals(keyword.unresolvedValue(), "RAW_VALUE");
+        Assert.assertEquals(keyword.stepObjectName(), "customObject");
+        Assert.assertEquals(keyword.stepApplication(), "BRS");
     }
 
     @Test
@@ -136,7 +136,7 @@ public class BaseFunctionContextTest {
     }
 
     private ResolvedStepContext step(
-            String function,
+            String keyword,
             String objectName,
             String rawValue,
             String resolvedValue,
@@ -152,7 +152,7 @@ public class BaseFunctionContextTest {
                 .testcaseParentRow(4)
                 .excelRow(7)
                 .stepNumber(1)
-                .function(function)
+                .keyword(keyword)
                 .objectName(objectName)
                 .application("BRS")
                 .description("BaseFunction context test")

@@ -233,7 +233,7 @@ public class BaseFunction {
                 .sheet(step.getSheetName())
                 .testcase(step.getTestcaseName())
                 .row(step.getExcelRow())
-                .function(step.getFunction())
+                .keyword(step.getKeyword())
                 .object(step.getObjectName())
                 .application(step.getApplication())
                 .render();

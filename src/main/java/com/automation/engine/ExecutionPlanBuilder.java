@@ -115,7 +115,7 @@ public class ExecutionPlanBuilder {
                 .testcaseParentRow(testcase.getExcelRowNumber())
                 .excelRow(step.getExcelRowNumber())
                 .stepNumber(step.getStepOrder())
-                .function(safe(step.getFunction()))
+                .keyword(safe(step.getKeyword()))
                 .objectName(safe(step.getObject()))
                 .application(safe(step.getApplication()))
                 .description(safe(step.getDescription()))
@@ -140,7 +140,7 @@ public class ExecutionPlanBuilder {
                 .sheet(scenario.getAction())
                 .testcase(testcase.getTestcaseName())
                 .row(step.getExcelRowNumber())
-                .function(step.getFunction())
+                .keyword(step.getKeyword())
                 .object(step.getObject())
                 .application(step.getApplication())
                 .render();

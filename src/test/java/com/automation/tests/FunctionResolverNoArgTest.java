@@ -37,7 +37,7 @@ public class FunctionResolverNoArgTest {
 
         FunctionExecutionResult result = new FunctionResolver(driver().driver()).execute(
                 step.getApplication(),
-                step.getFunction()
+                step.getKeyword()
         );
 
         Assert.assertEquals(result.getSourceType(), FunctionSourceType.SPECIFIC);
@@ -66,7 +66,7 @@ public class FunctionResolverNoArgTest {
 
         FunctionExecutionResult result = new FunctionResolver(driver.driver()).execute(
                 step.getApplication(),
-                step.getFunction()
+                step.getKeyword()
         );
 
         Assert.assertEquals(result.getSourceType(), FunctionSourceType.BASE);
@@ -85,7 +85,7 @@ public class FunctionResolverNoArgTest {
 
         FunctionExecutionResult result = new FunctionResolver(driver.driver()).execute(
                 step.getApplication(),
-                step.getFunction()
+                step.getKeyword()
         );
 
         Assert.assertEquals(result.getSourceType(), FunctionSourceType.SPECIFIC);
@@ -112,7 +112,7 @@ public class FunctionResolverNoArgTest {
 
         FunctionExecutionResult result = new FunctionResolver(driver.driver()).execute(
                 step.getApplication(),
-                step.getFunction()
+                step.getKeyword()
         );
 
         Assert.assertEquals(result.getSourceType(), FunctionSourceType.SPECIFIC);
@@ -130,7 +130,7 @@ public class FunctionResolverNoArgTest {
 
         FunctionExecutionResult result = new FunctionResolver(driver.driver()).execute(
                 step.getApplication(),
-                step.getFunction()
+                step.getKeyword()
         );
 
         Assert.assertEquals(result.getSourceType(), FunctionSourceType.BASE);
@@ -173,7 +173,7 @@ public class FunctionResolverNoArgTest {
                 FrameworkException.class,
                 () -> new FunctionResolver(driver().driver()).execute(
                         step.getApplication(),
-                        step.getFunction()
+                        step.getKeyword()
                 )
         );
 
@@ -185,7 +185,7 @@ public class FunctionResolverNoArgTest {
         Assert.assertTrue(exception.getMessage().contains("Sheet: Local Keyword Test."));
         Assert.assertTrue(exception.getMessage().contains("Testcase: Login BRS."));
         Assert.assertTrue(exception.getMessage().contains("Row: 10."));
-        Assert.assertTrue(exception.getMessage().contains("Function: approveBooking."));
+        Assert.assertTrue(exception.getMessage().contains("Keyword: approveBooking."));
         Assert.assertTrue(exception.getMessage().contains("Object: btnApproveBooking."));
         Assert.assertTrue(exception.getMessage().contains("Application: BRS."));
         Assert.assertSame(StepContextHolder.get(), step);
@@ -208,7 +208,7 @@ public class FunctionResolverNoArgTest {
 
         ResolvedStepContext step = step("NO_SPECIFIC", "openUrl", "", "", "file:///resolver-test.html");
         StepContextHolder.set(step);
-        resolver.execute(step.getApplication(), step.getFunction());
+        resolver.execute(step.getApplication(), step.getKeyword());
         Assert.assertSame(StepContextHolder.get(), step);
     }
 
@@ -218,7 +218,7 @@ public class FunctionResolverNoArgTest {
 
     private ResolvedStepContext step(
             String application,
-            String function,
+            String keyword,
             String objectName,
             String resolvedXpath,
             String resolvedValue
@@ -232,7 +232,7 @@ public class FunctionResolverNoArgTest {
                 .testcaseParentRow(4)
                 .excelRow(10)
                 .stepNumber(1)
-                .function(function)
+                .keyword(keyword)
                 .objectName(objectName)
                 .application(application)
                 .description("Resolver test step")

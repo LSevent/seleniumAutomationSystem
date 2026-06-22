@@ -32,7 +32,7 @@ public class ExcelExecutionReporter {
             "Step",
             "Excel Row",
             "Description",
-            "Function",
+            "Keyword",
             "Object",
             "Application",
             "Raw Value",
@@ -259,7 +259,7 @@ public class ExcelExecutionReporter {
                 String.valueOf(result.getStepOrder()),
                 String.valueOf(result.getExcelRowNumber()),
                 safe(result.getDescription()),
-                safe(result.getFunctionName()),
+                safe(result.getKeywordName()),
                 safe(result.getObjectName()),
                 safe(result.getApplication()),
                 displayRawValue(result),
@@ -279,7 +279,7 @@ public class ExcelExecutionReporter {
                 result.getObjectName(),
                 result.getResolvedXpath(),
                 result.getDescription(),
-                result.getFunctionName()
+                result.getKeywordName()
         );
     }
 
@@ -295,7 +295,7 @@ public class ExcelExecutionReporter {
                 result.getObjectName(),
                 result.getResolvedXpath(),
                 result.getDescription(),
-                result.getFunctionName()
+                result.getKeywordName()
         );
     }
 
@@ -322,10 +322,10 @@ public class ExcelExecutionReporter {
             return "";
         }
         String simpleName = executedByClass.substring(executedByClass.lastIndexOf('.') + 1);
-        if (safe(result.getFunctionName()).isBlank()) {
+        if (safe(result.getKeywordName()).isBlank()) {
             return simpleName;
         }
-        return simpleName + "." + result.getFunctionName();
+        return simpleName + "." + result.getKeywordName();
     }
 
     private String stepTableHtml(List<String[]> rows) {
@@ -410,7 +410,7 @@ public class ExcelExecutionReporter {
         rows.add(new String[]{"Scenario ACTION", safe(result.getScenarioAction())});
         rows.add(new String[]{"Testcase", safe(result.getTestcaseName())});
         rows.add(new String[]{"Excel Row", String.valueOf(result.getExcelRowNumber())});
-        rows.add(new String[]{"Function", safe(result.getFunctionName())});
+        rows.add(new String[]{"Keyword", safe(result.getKeywordName())});
         rows.add(new String[]{"Object", safe(result.getObjectName())});
         rows.add(new String[]{"Application", safe(result.getApplication())});
         rows.add(new String[]{"Error Message", safe(result.getMessage())});
@@ -465,7 +465,7 @@ public class ExcelExecutionReporter {
     }
 
     private String screenshotLabel(ExecutionResult result) {
-        if ("screenshot".equalsIgnoreCase(safe(result.getFunctionName()).trim())) {
+        if ("screenshot".equalsIgnoreCase(safe(result.getKeywordName()).trim())) {
             String label = safe(result.getResolvedValue());
             return label.isBlank() ? "Manual screenshot" : "Manual screenshot: " + label;
         }

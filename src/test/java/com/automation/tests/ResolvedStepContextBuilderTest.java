@@ -21,7 +21,7 @@ public class ResolvedStepContextBuilderTest {
         Assert.assertEquals(step.getTestcaseParentRow(), 4);
         Assert.assertEquals(step.getExcelRow(), 7);
         Assert.assertEquals(step.getStepNumber(), 2);
-        Assert.assertEquals(step.getFunction(), "click");
+        Assert.assertEquals(step.getKeyword(), "click");
         Assert.assertEquals(step.getObjectName(), "btnLogin");
         Assert.assertEquals(step.getApplication(), "BRS");
         Assert.assertEquals(step.getDescription(), "Click login button");
@@ -71,7 +71,7 @@ public class ResolvedStepContextBuilderTest {
         Assert.assertFalse(text.contains("resolvedValue="));
         Assert.assertTrue(text.contains("scenarioNo='1'"));
         Assert.assertTrue(text.contains("testcaseName='Login BRS'"));
-        Assert.assertTrue(text.contains("function='click'"));
+        Assert.assertTrue(text.contains("keyword='click'"));
         Assert.assertTrue(text.contains("objectName='btnLogin'"));
         Assert.assertTrue(text.contains("application='BRS'"));
         Assert.assertTrue(text.contains("resolvedXPath='//button[@id='loginButton']'"));
@@ -87,7 +87,7 @@ public class ResolvedStepContextBuilderTest {
                 .testcaseParentRow(4)
                 .excelRow(7)
                 .stepNumber(2)
-                .function("click")
+                .keyword("click")
                 .objectName("btnLogin")
                 .application("BRS")
                 .description("Click login button")

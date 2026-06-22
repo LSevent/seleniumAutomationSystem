@@ -25,7 +25,7 @@ public class StepReaderTest {
     private static final Path TEMPLATE_FILE = Path.of("src", "test", "resources", "testdata", "Template Testing.xlsx");
     private static final String CREATE_BOOKING_SHEET = "Create New Booking";
     private static final String[] REQUIRED_HEADERS = {
-            "Testcase", "Run", "Function", "Object", "Value", "Application", "Description"
+            "Testcase", "Run", "Keyword", "Object", "Value", "Application", "Description"
     };
 
     @BeforeClass
@@ -43,6 +43,44 @@ public class StepReaderTest {
             Assert.assertEquals(testCases.size(), 2);
             Assert.assertEquals(testCases.get(0).getTestcaseName(), "Login BRS");
             Assert.assertEquals(testCases.get(1).getTestcaseName(), "Create Booking");
+        }
+    }
+
+    @Test
+    public void legacyFunctionHeaderShouldStillBeSupported() throws IOException {
+        Path workbookPath = createWorkbook(
+                "legacy-function-header.xlsx",
+                CREATE_BOOKING_SHEET,
+                new String[]{"Testcase", "Run", "Function", "Object", "Value", "Application", "Description"},
+                new Object[][]{
+                        {"Login BRS", "Yes", "", "", "", "BRS", "Login"},
+                        {"", "", "click", "btnLogin", "", "", "Click login"}
+                }
+        );
+
+        try (ExcelReader excelReader = new ExcelReader(workbookPath.toString())) {
+            TestStep step = new StepReader(excelReader).getActiveSteps(scenario(CREATE_BOOKING_SHEET)).get(0);
+
+            Assert.assertEquals(step.getKeyword(), "click");
+        }
+    }
+
+    @Test
+    public void keywordHeaderShouldWinWhenLegacyFunctionHeaderAlsoExists() throws IOException {
+        Path workbookPath = createWorkbook(
+                "keyword-preferred-over-function.xlsx",
+                CREATE_BOOKING_SHEET,
+                new String[]{"Testcase", "Run", "Keyword", "Function", "Object", "Value", "Application", "Description"},
+                new Object[][]{
+                        {"Login BRS", "Yes", "", "", "", "", "BRS", "Login"},
+                        {"", "", "click", "input", "btnLogin", "", "", "Click login"}
+                }
+        );
+
+        try (ExcelReader excelReader = new ExcelReader(workbookPath.toString())) {
+            TestStep step = new StepReader(excelReader).getActiveSteps(scenario(CREATE_BOOKING_SHEET)).get(0);
+
+            Assert.assertEquals(step.getKeyword(), "click");
         }
     }
 
@@ -104,9 +142,9 @@ public class StepReaderTest {
         try (ExcelReader excelReader = new ExcelReader(workbookPath.toString())) {
             TestCaseBlock loginTestCase = new StepReader(excelReader).getTestCases(scenario(CREATE_BOOKING_SHEET)).get(0);
 
-            Assert.assertEquals(loginTestCase.getSteps().get(0).getFunction(), "input");
-            Assert.assertEquals(loginTestCase.getSteps().get(1).getFunction(), "input");
-            Assert.assertEquals(loginTestCase.getSteps().get(2).getFunction(), "click");
+            Assert.assertEquals(loginTestCase.getSteps().get(0).getKeyword(), "input");
+            Assert.assertEquals(loginTestCase.getSteps().get(1).getKeyword(), "input");
+            Assert.assertEquals(loginTestCase.getSteps().get(2).getKeyword(), "click");
             Assert.assertEquals(loginTestCase.getSteps().get(0).getStepOrder(), 1);
             Assert.assertEquals(loginTestCase.getSteps().get(1).getStepOrder(), 2);
             Assert.assertEquals(loginTestCase.getSteps().get(2).getStepOrder(), 3);
@@ -129,7 +167,7 @@ public class StepReaderTest {
         Path workbookPath = createWorkbook(
                 "reordered-step-columns.xlsx",
                 CREATE_BOOKING_SHEET,
-                new String[]{" function ", " object ", " value ", " testcase ", " run ", " application ", " description "},
+                new String[]{" keyword ", " object ", " value ", " testcase ", " run ", " application ", " description "},
                 new Object[][]{
                         {"", "", "", "Login BRS", "Yes", "BRS", "Login to BRS"},
                         {"input", "txtUsername", "LOGIN_DATA.USERNAME", "", "", "", "Input username"},
@@ -144,12 +182,12 @@ public class StepReaderTest {
             Assert.assertEquals(loginTestCase.getTestcaseName(), "Login BRS");
             Assert.assertEquals(loginTestCase.getApplication(), "BRS");
             Assert.assertEquals(steps.size(), 2);
-            Assert.assertEquals(steps.get(0).getFunction(), "input");
+            Assert.assertEquals(steps.get(0).getKeyword(), "input");
             Assert.assertEquals(steps.get(0).getObject(), "txtUsername");
             Assert.assertEquals(steps.get(0).getValue(), "LOGIN_DATA.USERNAME");
             Assert.assertEquals(steps.get(0).getApplication(), "BRS");
             Assert.assertEquals(steps.get(0).getDescription(), "Input username");
-            Assert.assertEquals(steps.get(1).getFunction(), "click");
+            Assert.assertEquals(steps.get(1).getKeyword(), "click");
             Assert.assertEquals(steps.get(1).getStepOrder(), 2);
         }
     }
@@ -178,7 +216,7 @@ public class StepReaderTest {
         Path workbookPath = createWorkbook(
                 "description-optional.xlsx",
                 CREATE_BOOKING_SHEET,
-                new String[]{"Testcase", "Run", "Function", "Object", "Value", "Application"},
+                new String[]{"Testcase", "Run", "Keyword", "Object", "Value", "Application"},
                 new Object[][]{
                         {"Login BRS", "Yes", "", "", "", "BRS"},
                         {"", "", "click", "btnLogin", "", ""}
@@ -215,7 +253,7 @@ public class StepReaderTest {
     @Test
     public void missingRequiredHeaderShouldThrowClearError() throws IOException {
         Path workbookPath = createWorkbook(
-                "missing-function-header.xlsx",
+                "missing-keyword-header.xlsx",
                 CREATE_BOOKING_SHEET,
                 new String[]{"Testcase", "Run", "Object", "Value", "Application", "Description"},
                 new Object[][]{
@@ -229,7 +267,11 @@ public class StepReaderTest {
             }
         });
 
-        Assert.assertTrue(exception.getMessage().contains("Header not found: Function in sheet Create New Booking."));
+        Assert.assertEquals(
+                exception.getMessage(),
+                "Missing required column 'Keyword' in sheet 'Create New Booking'. "
+                        + "Legacy column 'Function' is also supported, but neither was found."
+        );
     }
 
     @Test
@@ -312,7 +354,7 @@ public class StepReaderTest {
             }
         });
 
-        Assert.assertTrue(exception.getMessage().contains("Testcase parent row should not contain Function, Object, or Value. Sheet: Create New Booking. Row: 2."));
+        Assert.assertTrue(exception.getMessage().contains("Testcase parent row should not contain Keyword, Object, or Value. Sheet: Create New Booking. Row: 2."));
     }
 
     @Test

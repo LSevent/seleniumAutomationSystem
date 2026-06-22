@@ -15,7 +15,8 @@ public class StepReader {
 
     private static final String TESTCASE_COLUMN = "Testcase";
     private static final String RUN_COLUMN = "Run";
-    private static final String FUNCTION_COLUMN = "Function";
+    private static final String KEYWORD_COLUMN = "Keyword";
+    private static final String LEGACY_FUNCTION_COLUMN = "Function";
     private static final String OBJECT_COLUMN = "Object";
     private static final String VALUE_COLUMN = "Value";
     private static final String APPLICATION_COLUMN = "Application";
@@ -73,13 +74,13 @@ public class StepReader {
             if (!rowData.testcase().isBlank()) {
                 currentTestCase = toTestCaseBlock(scenario, rowData, excelRowNumber);
                 testCases.add(currentTestCase);
-            } else if (!rowData.function().isBlank()) {
+            } else if (!rowData.keyword().isBlank()) {
                 if (currentTestCase == null) {
                     throw new FrameworkException("Step row found before any testcase parent row. Sheet: " + sheetName + ". Row: " + excelRowNumber + ".");
                 }
                 currentTestCase.addStep(toTestStep(scenario, currentTestCase, rowData, excelRowNumber));
             } else {
-                throw new FrameworkException("Function is required for step row. Sheet: " + sheetName + ". Row: " + excelRowNumber + ".");
+                throw new FrameworkException("Keyword is required for step row. Sheet: " + sheetName + ". Row: " + excelRowNumber + ".");
             }
         }
         return testCases;
@@ -89,8 +90,8 @@ public class StepReader {
         String sheetName = scenario.getAction();
         boolean run = parseRunValue(rowData.run(), sheetName, excelRowNumber);
 
-        if (!rowData.function().isBlank() || !rowData.object().isBlank() || !rowData.value().isBlank()) {
-            throw new FrameworkException("Testcase parent row should not contain Function, Object, or Value. Sheet: " + sheetName + ". Row: " + excelRowNumber + ".");
+        if (!rowData.keyword().isBlank() || !rowData.object().isBlank() || !rowData.value().isBlank()) {
+            throw new FrameworkException("Testcase parent row should not contain Keyword, Object, or Value. Sheet: " + sheetName + ". Row: " + excelRowNumber + ".");
         }
         if (run && rowData.application().isBlank()) {
             throw new FrameworkException("Application is required for active testcase '" + rowData.testcase() + "'. Sheet: " + sheetName + ". Row: " + excelRowNumber + ".");
@@ -117,7 +118,7 @@ public class StepReader {
                 scenario.getScenarioName(),
                 scenario.getAction(),
                 testCaseBlock.getTestcaseName(),
-                rowData.function(),
+                rowData.keyword(),
                 rowData.object(),
                 rowData.value(),
                 application,
@@ -147,7 +148,7 @@ public class StepReader {
     private void validateRequiredHeaders(String sheetName) {
         findRequiredColumnIndex(sheetName, TESTCASE_COLUMN);
         findRequiredColumnIndex(sheetName, RUN_COLUMN);
-        findRequiredColumnIndex(sheetName, FUNCTION_COLUMN);
+        findKeywordColumnName(sheetName);
         findRequiredColumnIndex(sheetName, OBJECT_COLUMN);
         findRequiredColumnIndex(sheetName, VALUE_COLUMN);
         findRequiredColumnIndex(sheetName, APPLICATION_COLUMN);
@@ -176,7 +177,7 @@ public class StepReader {
         return new RowData(
                 readCell(sheetName, rowIndex, TESTCASE_COLUMN, true),
                 readCell(sheetName, rowIndex, RUN_COLUMN, true),
-                readCell(sheetName, rowIndex, FUNCTION_COLUMN, true),
+                readCell(sheetName, rowIndex, findKeywordColumnName(sheetName), true),
                 readCell(sheetName, rowIndex, OBJECT_COLUMN, true),
                 readCell(sheetName, rowIndex, VALUE_COLUMN, true),
                 readCell(sheetName, rowIndex, APPLICATION_COLUMN, true),
@@ -225,6 +226,17 @@ public class StepReader {
         }
     }
 
+    private String findKeywordColumnName(String sheetName) {
+        if (findOptionalColumnIndex(sheetName, KEYWORD_COLUMN) >= 0) {
+            return KEYWORD_COLUMN;
+        }
+        if (findOptionalColumnIndex(sheetName, LEGACY_FUNCTION_COLUMN) >= 0) {
+            return LEGACY_FUNCTION_COLUMN;
+        }
+        throw new FrameworkException("Missing required column 'Keyword' in sheet '" + sheetName
+                + "'. Legacy column 'Function' is also supported, but neither was found.");
+    }
+
     private static String normalize(String value) {
         return value == null ? "" : value.trim().toUpperCase(Locale.ROOT);
     }
@@ -236,7 +248,7 @@ public class StepReader {
     private record RowData(
             String testcase,
             String run,
-            String function,
+            String keyword,
             String object,
             String value,
             String application,
@@ -245,7 +257,7 @@ public class StepReader {
         private boolean isBlank() {
             return testcase.isBlank()
                     && run.isBlank()
-                    && function.isBlank()
+                    && keyword.isBlank()
                     && object.isBlank()
                     && value.isBlank()
                     && application.isBlank()

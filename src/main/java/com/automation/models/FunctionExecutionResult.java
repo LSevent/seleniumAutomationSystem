@@ -3,7 +3,7 @@ package com.automation.models;
 public class FunctionExecutionResult {
 
     private final String application;
-    private final String functionName;
+    private final String keywordName;
     private final String executedByClass;
     private final FunctionSourceType sourceType;
     private final boolean success;
@@ -11,14 +11,14 @@ public class FunctionExecutionResult {
 
     public FunctionExecutionResult(
             String application,
-            String functionName,
+            String keywordName,
             String executedByClass,
             FunctionSourceType sourceType,
             boolean success,
             String message
     ) {
         this.application = application;
-        this.functionName = functionName;
+        this.keywordName = keywordName;
         this.executedByClass = executedByClass;
         this.sourceType = sourceType;
         this.success = success;
@@ -29,8 +29,8 @@ public class FunctionExecutionResult {
         return application;
     }
 
-    public String getFunctionName() {
-        return functionName;
+    public String getKeywordName() {
+        return keywordName;
     }
 
     public String getExecutedByClass() {
@@ -53,7 +53,7 @@ public class FunctionExecutionResult {
     public String toString() {
         return "FunctionExecutionResult{" +
                 "application='" + application + '\'' +
-                ", functionName='" + functionName + '\'' +
+                ", keywordName='" + keywordName + '\'' +
                 ", executedByClass='" + executedByClass + '\'' +
                 ", sourceType=" + sourceType +
                 ", success=" + success +

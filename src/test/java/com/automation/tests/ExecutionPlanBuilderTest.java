@@ -115,7 +115,7 @@ public class ExecutionPlanBuilderTest {
         Assert.assertTrue(exception.getMessage().contains("Scenario NO: 1."));
         Assert.assertTrue(exception.getMessage().contains("Testcase: Create Booking."));
         Assert.assertTrue(exception.getMessage().contains("Row: 3."));
-        Assert.assertTrue(exception.getMessage().contains("Function: click."));
+        Assert.assertTrue(exception.getMessage().contains("Keyword: click."));
         Assert.assertTrue(exception.getMessage().contains("Object: btnRoomByName."));
         Assert.assertTrue(exception.getMessage().contains("Application: BRS."));
     }

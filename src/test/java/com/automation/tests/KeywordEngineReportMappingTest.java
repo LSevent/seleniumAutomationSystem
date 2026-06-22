@@ -45,7 +45,7 @@ public class KeywordEngineReportMappingTest {
                 .testcaseParentRow(20)
                 .excelRow(23)
                 .stepNumber(4)
-                .function("mappingKeyword")
+                .keyword("mappingKeyword")
                 .objectName("btnMapped")
                 .application("BRS")
                 .description("Preserve every resolved field")
@@ -65,7 +65,7 @@ public class KeywordEngineReportMappingTest {
         Assert.assertEquals(result.getStepOrder(), step.getStepNumber());
         Assert.assertEquals(result.getExcelRowNumber(), step.getExcelRow());
         Assert.assertEquals(result.getDescription(), step.getDescription());
-        Assert.assertEquals(result.getFunctionName(), step.getFunction());
+        Assert.assertEquals(result.getKeywordName(), step.getKeyword());
         Assert.assertEquals(result.getObjectName(), step.getObjectName());
         Assert.assertEquals(result.getApplication(), step.getApplication());
         Assert.assertEquals(result.getRawValue(), step.getRawValue());
@@ -96,11 +96,11 @@ public class KeywordEngineReportMappingTest {
         }
 
         @Override
-        public FunctionExecutionResult execute(String application, String functionName) {
+        public FunctionExecutionResult execute(String application, String keywordName) {
             Assert.assertTrue(StepContextHolder.current().isPresent());
             return new FunctionExecutionResult(
                     application,
-                    functionName,
+                    keywordName,
                     "mapping.Executor",
                     FunctionSourceType.BASE,
                     true,

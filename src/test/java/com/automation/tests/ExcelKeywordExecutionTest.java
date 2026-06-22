@@ -53,7 +53,7 @@ public class ExcelKeywordExecutionTest {
             Assert.assertTrue(results.stream().allMatch(ExecutionResult::isSuccess), failureMessages(results));
             Assert.assertTrue(results.stream().allMatch(result -> "1".equals(result.getScenarioNo())));
             Assert.assertEquals(
-                    results.stream().map(ExecutionResult::getFunctionName).toList(),
+                    results.stream().map(ExecutionResult::getKeywordName).toList(),
                     List.of("openUrl", "input", "input", "click", "verifyDisplayed", "input", "screenshot", "click", "screenshot", "verifyText", "screenshot")
             );
             Assert.assertEquals(results.get(0).getResolvedValue(), baseUrl);

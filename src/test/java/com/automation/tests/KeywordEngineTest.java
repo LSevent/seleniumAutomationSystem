@@ -95,7 +95,7 @@ public class KeywordEngineTest {
         FakeWebDriver fakeDriver = localPageDriver();
         try (ExcelReader excelReader = new ExcelReader(workbookPath.toString())) {
             Scenario scenario = activeScenario(excelReader);
-            TestStep step = stepByFunction(excelReader, scenario, "openUrl");
+            TestStep step = stepByKeyword(excelReader, scenario, "openUrl");
             KeywordEngine keywordEngine = keywordEngine(excelReader, fakeDriver);
 
             ExecutionResult result = keywordEngine.executeStep(scenario, step);
@@ -109,7 +109,7 @@ public class KeywordEngineTest {
     }
 
     @Test
-    public void executeStepShouldReturnClearFailureForBlankFunction() {
+    public void executeStepShouldReturnClearFailureForBlankKeyword() {
         FakeWebDriver fakeDriver = localPageDriver();
         try (ExcelReader excelReader = new ExcelReader(workbookPath.toString())) {
             Scenario scenario = activeScenario(excelReader);
@@ -119,7 +119,7 @@ public class KeywordEngineTest {
             ExecutionResult result = keywordEngine.executeStep(scenario, step);
 
             Assert.assertFalse(result.isSuccess());
-            Assert.assertEquals(result.getMessage(), "Function is required in sheet Local Keyword Test row 3.");
+            Assert.assertEquals(result.getMessage(), "Keyword is required in sheet Local Keyword Test row 3.");
         }
     }
 
@@ -174,9 +174,9 @@ public class KeywordEngineTest {
         return new ScenarioReader(excelReader).getActiveScenarios().get(0);
     }
 
-    private TestStep stepByFunction(ExcelReader excelReader, Scenario scenario, String function) {
+    private TestStep stepByKeyword(ExcelReader excelReader, Scenario scenario, String keyword) {
         return activeSteps(excelReader, scenario).stream()
-                .filter(step -> function.equals(step.getFunction()))
+                .filter(step -> keyword.equals(step.getKeyword()))
                 .findFirst()
                 .orElseThrow();
     }
@@ -192,13 +192,13 @@ public class KeywordEngineTest {
         return new StepReader(excelReader).getActiveSteps(scenario);
     }
 
-    private TestStep step(String testcaseName, String function, String object, String value, int excelRowNumber, int stepOrder) {
+    private TestStep step(String testcaseName, String keyword, String object, String value, int excelRowNumber, int stepOrder) {
         return new TestStep(
                 "1",
                 "Local keyword execution test",
                 "Local Keyword Test",
                 testcaseName,
-                function,
+                keyword,
                 object,
                 value,
                 "BRS",

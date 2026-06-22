@@ -137,7 +137,7 @@ public class BaseFunctionTest {
         ));
     }
 
-    private void useContext(String function, String resolvedXpath, String resolvedValue) {
+    private void useContext(String keyword, String resolvedXpath, String resolvedValue) {
         StepContextHolder.set(ResolvedStepContext.builder()
                 .scenarioNo("1")
                 .scenarioAction("Base Function Test")
@@ -147,7 +147,7 @@ public class BaseFunctionTest {
                 .testcaseParentRow(2)
                 .excelRow(3)
                 .stepNumber(1)
-                .function(function)
+                .keyword(keyword)
                 .objectName(resolvedXpath == null || resolvedXpath.isBlank() ? "" : "testObject")
                 .application("BRS")
                 .description("BaseFunction keyword test")

@@ -22,7 +22,7 @@ public class ScenarioReaderTest {
     private static final Path TEMPLATE_FILE = Path.of("src", "test", "resources", "testdata", "Template Testing.xlsx");
     private static final Path TEMP_DIR = Path.of("target", "scenario-reader-test");
     private static final String[] SCENARIO_SHEET_HEADERS = {
-            "Testcase", "Run", "Function", "Object", "Value", "Application", "Description"
+            "Testcase", "Run", "Keyword", "Object", "Value", "Application", "Description"
     };
 
     @BeforeClass

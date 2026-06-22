@@ -3,20 +3,20 @@ package com.automation.models;
 public class ResolvedFunction {
 
     private final String application;
-    private final String functionName;
+    private final String keywordName;
     private final String resolvedClassName;
     private final FunctionSourceType sourceType;
     private final String methodName;
 
     public ResolvedFunction(
             String application,
-            String functionName,
+            String keywordName,
             String resolvedClassName,
             FunctionSourceType sourceType,
             String methodName
     ) {
         this.application = application;
-        this.functionName = functionName;
+        this.keywordName = keywordName;
         this.resolvedClassName = resolvedClassName;
         this.sourceType = sourceType;
         this.methodName = methodName;
@@ -26,8 +26,8 @@ public class ResolvedFunction {
         return application;
     }
 
-    public String getFunctionName() {
-        return functionName;
+    public String getKeywordName() {
+        return keywordName;
     }
 
     public String getResolvedClassName() {
@@ -46,7 +46,7 @@ public class ResolvedFunction {
     public String toString() {
         return "ResolvedFunction{" +
                 "application='" + application + '\'' +
-                ", functionName='" + functionName + '\'' +
+                ", keywordName='" + keywordName + '\'' +
                 ", resolvedClassName='" + resolvedClassName + '\'' +
                 ", sourceType=" + sourceType +
                 ", methodName='" + methodName + '\'' +

@@ -39,7 +39,7 @@ public final class ValidationWorkbookFactory {
     }
 
     public static SheetData scenarioSheet(String name, Object[][] rows) {
-        return sheet(name, new String[]{"Testcase", "Run", "Function", "Object", "Value", "Application", "Description"}, rows);
+        return sheet(name, new String[]{"Testcase", "Run", "Keyword", "Object", "Value", "Application", "Description"}, rows);
     }
 
     public static SheetData objectRepository(Object[][] rows) {

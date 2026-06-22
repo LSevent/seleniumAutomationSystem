@@ -87,9 +87,9 @@ public class PreRunValidator {
             return;
         }
 
-        String function = safe(step.getFunction());
-        if (function.isBlank()) {
-            addStepError(errors, "Function is required for active step.", step);
+        String keyword = safe(step.getKeyword());
+        if (keyword.isBlank()) {
+            addStepError(errors, "Keyword is required for active step.", step);
         }
         if (isBlank(step.getApplication())) {
             addStepError(errors, "Application is required for active step.", step);
@@ -101,24 +101,24 @@ public class PreRunValidator {
         }
 
         validateDynamicXpath(step, errors);
-        if (function.isBlank()) {
+        if (keyword.isBlank()) {
             return;
         }
 
-        String normalizedFunction = function.toLowerCase(Locale.ROOT);
-        switch (normalizedFunction) {
+        String normalizedKeyword = keyword.toLowerCase(Locale.ROOT);
+        switch (normalizedKeyword) {
             case "screenshot" -> {
                 // Screenshot intentionally has no Object/XPath/Value requirement.
             }
             case "openurl", "verifyurlcontains", "verifytitle", "verifytitlecontains" ->
-                    requireValue(step, function, errors);
+                    requireValue(step, keyword, errors);
             case "click", "verifydisplayed", "clear", "gettext", "waitvisible", "waitclickable",
                     "scrolltoelement", "safeclick", "pressenter", "isdisplayed", "isnotdisplayed" ->
-                    requireObjectAndXpath(step, function, errors);
+                    requireObjectAndXpath(step, keyword, errors);
             case "input", "verifytext", "verifytextcontains", "selectroombyname",
                     "verifybookingcreated", "verifyemployeevisible" -> {
-                requireObjectAndXpath(step, function, errors);
-                requireValue(step, function, errors);
+                requireObjectAndXpath(step, keyword, errors);
+                requireValue(step, keyword, errors);
             }
             default -> {
                 // Phase 13B intentionally validates only the simple keyword rules above.
@@ -128,28 +128,28 @@ public class PreRunValidator {
 
     private void requireObjectAndXpath(
             ResolvedStepContext step,
-            String function,
+            String keyword,
             List<ValidationError> errors
     ) {
         if (isBlank(step.getObjectName())) {
-            addStepError(errors, "Object is required for keyword '" + function + "'.", step);
+            addStepError(errors, "Object is required for keyword '" + keyword + "'.", step);
             return;
         }
         if (isBlank(step.getRawXPath())) {
             addStepError(errors, "Object was not resolved from OBJECT_REPOSITORY.", step);
         }
         if (isBlank(step.getResolvedXPath())) {
-            addStepError(errors, "XPath is required for keyword '" + function + "'.", step);
+            addStepError(errors, "XPath is required for keyword '" + keyword + "'.", step);
         }
     }
 
     private void requireValue(
             ResolvedStepContext step,
-            String function,
+            String keyword,
             List<ValidationError> errors
     ) {
         if (isBlank(step.getResolvedValue())) {
-            addStepError(errors, "Value is required for keyword '" + function + "'.", step);
+            addStepError(errors, "Value is required for keyword '" + keyword + "'.", step);
         }
     }
 
@@ -228,7 +228,7 @@ public class PreRunValidator {
                 step.getSheetName(),
                 step.getTestcaseName(),
                 step.getExcelRow(),
-                step.getFunction(),
+                step.getKeyword(),
                 step.getObjectName(),
                 step.getApplication()
         ));
@@ -273,7 +273,7 @@ public class PreRunValidator {
             String sheetName,
             String testcaseName,
             int row,
-            String function,
+            String keyword,
             String objectName,
             String application
     ) {
@@ -283,11 +283,11 @@ public class PreRunValidator {
                 String scenarioAction,
                 String sheetName,
                 int row,
-                String function,
+                String keyword,
                 String objectName,
                 String application
         ) {
-            this(message, scenarioNo, scenarioAction, sheetName, "", row, function, objectName, application);
+            this(message, scenarioNo, scenarioAction, sheetName, "", row, keyword, objectName, application);
         }
 
         private String context() {
@@ -297,7 +297,7 @@ public class PreRunValidator {
                     .sheet(sheetName)
                     .testcase(testcaseName)
                     .row(row)
-                    .function(function)
+                    .keyword(keyword)
                     .object(objectName)
                     .application(application)
                     .render();

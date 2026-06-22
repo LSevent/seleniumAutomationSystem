@@ -17,7 +17,7 @@ public class ResolvedStepContextTest {
                 .testcaseParentRow(3)
                 .excelRow(5)
                 .stepNumber(2)
-                .function("input")
+                .keyword("input")
                 .objectName("txtBookingTitle")
                 .application("BRS")
                 .description("Input booking title")
@@ -36,7 +36,7 @@ public class ResolvedStepContextTest {
         Assert.assertEquals(context.getTestcaseParentRow(), 3);
         Assert.assertEquals(context.getExcelRow(), 5);
         Assert.assertEquals(context.getStepNumber(), 2);
-        Assert.assertEquals(context.getFunction(), "input");
+        Assert.assertEquals(context.getKeyword(), "input");
         Assert.assertEquals(context.getObjectName(), "txtBookingTitle");
         Assert.assertEquals(context.getApplication(), "BRS");
         Assert.assertEquals(context.getDescription(), "Input booking title");

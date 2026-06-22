@@ -97,7 +97,7 @@ public class KeywordEngineResolvedContextTest {
         Assert.assertEquals(result.getScenarioAction(), "Login Flow");
         Assert.assertEquals(result.getTestcaseName(), "Valid Login");
         Assert.assertEquals(result.getDescription(), "Execute an already-resolved step");
-        Assert.assertEquals(result.getFunctionName(), "input");
+        Assert.assertEquals(result.getKeywordName(), "input");
         Assert.assertEquals(result.getObjectName(), "txtUsername");
         Assert.assertEquals(result.getApplication(), "BRS");
         Assert.assertEquals(result.getRawValue(), "LOGIN_DATA.USERNAME");
@@ -137,7 +137,7 @@ public class KeywordEngineResolvedContextTest {
 
         String messages = String.join(System.lineSeparator(), appender.messages());
         Assert.assertTrue(messages.contains("Executing keyword."));
-        Assert.assertTrue(messages.contains("Function = input"));
+        Assert.assertTrue(messages.contains("Keyword = input"));
         Assert.assertTrue(messages.contains("Object = txtPassword"));
         Assert.assertTrue(messages.contains("XPath = //input[@id='resolvedUsername']"));
         Assert.assertTrue(messages.contains("Value = ****"));
@@ -171,7 +171,7 @@ public class KeywordEngineResolvedContextTest {
         Assert.assertTrue(result.getMessage().contains("Sheet: Login Flow."));
         Assert.assertTrue(result.getMessage().contains("Testcase: Valid Login."));
         Assert.assertTrue(result.getMessage().contains("Row: 17."));
-        Assert.assertTrue(result.getMessage().contains("Function: click."));
+        Assert.assertTrue(result.getMessage().contains("Keyword: click."));
         Assert.assertTrue(result.getMessage().contains("Object: btnLogin."));
         Assert.assertTrue(result.getMessage().contains("Application: BRS."));
         Assert.assertTrue(result.getMessage().contains("Cause: Synthetic keyword failure."));
@@ -214,7 +214,7 @@ public class KeywordEngineResolvedContextTest {
     }
 
     private ResolvedStepContext step(
-            String function,
+            String keyword,
             String objectName,
             String rawValue,
             String resolvedValue,
@@ -229,7 +229,7 @@ public class KeywordEngineResolvedContextTest {
                 .testcaseParentRow(14)
                 .excelRow(17)
                 .stepNumber(3)
-                .function(function)
+                .keyword(keyword)
                 .objectName(objectName)
                 .application("BRS")
                 .description("Execute an already-resolved step")
@@ -254,7 +254,7 @@ public class KeywordEngineResolvedContextTest {
         }
 
         @Override
-        public FunctionExecutionResult execute(String application, String functionName) {
+        public FunctionExecutionResult execute(String application, String keywordName) {
             observedContext = StepContextHolder.get();
             observedXpath = observedContext.getResolvedXPath();
             observedValue = observedContext.getResolvedValue();
@@ -263,7 +263,7 @@ public class KeywordEngineResolvedContextTest {
             }
             return new FunctionExecutionResult(
                     application,
-                    functionName,
+                    keywordName,
                     "resolver.Executor",
                     FunctionSourceType.BASE,
                     true,

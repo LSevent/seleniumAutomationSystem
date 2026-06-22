@@ -10,7 +10,7 @@ public final class ResolvedStepContext {
     private final int testcaseParentRow;
     private final int excelRow;
     private final int stepNumber;
-    private final String function;
+    private final String keyword;
     private final String objectName;
     private final String application;
     private final String description;
@@ -33,7 +33,7 @@ public final class ResolvedStepContext {
         this.testcaseParentRow = builder.testcaseParentRow;
         this.excelRow = builder.excelRow;
         this.stepNumber = builder.stepNumber;
-        this.function = builder.function;
+        this.keyword = builder.keyword;
         this.objectName = builder.objectName;
         this.application = builder.application;
         this.description = builder.description;
@@ -76,8 +76,8 @@ public final class ResolvedStepContext {
         return stepNumber;
     }
 
-    public String getFunction() {
-        return function;
+    public String getKeyword() {
+        return keyword;
     }
 
     public String getObjectName() {
@@ -167,7 +167,7 @@ public final class ResolvedStepContext {
                 ", testcaseParentRow=" + testcaseParentRow +
                 ", excelRow=" + excelRow +
                 ", stepNumber=" + stepNumber +
-                ", function='" + function + '\'' +
+                ", keyword='" + keyword + '\'' +
                 ", objectName='" + objectName + '\'' +
                 ", application='" + application + '\'' +
                 ", description='" + description + '\'' +
@@ -187,7 +187,7 @@ public final class ResolvedStepContext {
         private int testcaseParentRow;
         private int excelRow;
         private int stepNumber;
-        private String function;
+        private String keyword;
         private String objectName;
         private String application;
         private String description;
@@ -240,8 +240,8 @@ public final class ResolvedStepContext {
             return this;
         }
 
-        public Builder function(String function) {
-            this.function = function;
+        public Builder keyword(String keyword) {
+            this.keyword = keyword;
             return this;
         }
 

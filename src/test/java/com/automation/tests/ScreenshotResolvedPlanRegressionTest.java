@@ -55,7 +55,7 @@ public class ScreenshotResolvedPlanRegressionTest {
         );
 
         List<ExecutionResult> screenshots = results.stream()
-                .filter(result -> "screenshot".equalsIgnoreCase(result.getFunctionName()))
+                .filter(result -> "screenshot".equalsIgnoreCase(result.getKeywordName()))
                 .toList();
         Assert.assertEquals(screenshots.size(), 3);
         for (ExecutionResult screenshot : screenshots) {

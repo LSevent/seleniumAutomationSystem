@@ -85,7 +85,7 @@ public class KeywordEngineValidationTest {
     }
 
     @Test
-    public void blankFunctionShouldIncludeSheetAndRow() {
+    public void blankKeywordShouldIncludeSheetAndRow() {
         try (ExcelReader excelReader = new ExcelReader(workbookPath.toString())) {
             ExecutionResult result = engine(excelReader).executeStep(
                     scenario(),
@@ -93,7 +93,7 @@ public class KeywordEngineValidationTest {
             );
 
             Assert.assertFalse(result.isSuccess());
-            Assert.assertEquals(result.getMessage(), "Function is required in sheet Local Keyword Test row 8.");
+            Assert.assertEquals(result.getMessage(), "Keyword is required in sheet Local Keyword Test row 8.");
         }
     }
 
@@ -115,8 +115,8 @@ public class KeywordEngineValidationTest {
         return new Scenario("1", true, "Local Keyword Test", "Local keyword execution test", 2);
     }
 
-    private TestStep step(String function, String object, String value, int row) {
+    private TestStep step(String keyword, String object, String value, int row) {
         return new TestStep("1", "Local keyword execution test", "Local Keyword Test", "Login BRS",
-                function, object, value, "BRS", "Validation step", row, 1);
+                keyword, object, value, "BRS", "Validation step", row, 1);
     }
 }

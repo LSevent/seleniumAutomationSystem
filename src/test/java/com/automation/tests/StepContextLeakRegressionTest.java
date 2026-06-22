@@ -63,7 +63,7 @@ public class StepContextLeakRegressionTest {
         Assert.assertSame(resolver.observedContext, step);
         Assert.assertTrue(result.getMessage().contains("Scenario NO: 1."));
         Assert.assertTrue(result.getMessage().contains("Row: 9."));
-        Assert.assertTrue(result.getMessage().contains("Function: failingKeyword."));
+        Assert.assertTrue(result.getMessage().contains("Keyword: failingKeyword."));
         Assert.assertTrue(result.getMessage().contains("Object: btnFailure."));
         Assert.assertTrue(StepContextHolder.current().isEmpty());
     }
@@ -75,7 +75,7 @@ public class StepContextLeakRegressionTest {
         return new KeywordEngine(dataReader, objectRepositoryReader, resolver);
     }
 
-    private ResolvedStepContext step(int row, String function, String objectName) {
+    private ResolvedStepContext step(int row, String keyword, String objectName) {
         return ResolvedStepContext.builder()
                 .scenarioNo("1")
                 .scenarioAction("Local Keyword Test")
@@ -85,7 +85,7 @@ public class StepContextLeakRegressionTest {
                 .testcaseParentRow(4)
                 .excelRow(row)
                 .stepNumber(row - 6)
-                .function(function)
+                .keyword(keyword)
                 .objectName(objectName)
                 .application("BRS")
                 .description("Context cleanup step")
@@ -108,14 +108,14 @@ public class StepContextLeakRegressionTest {
         }
 
         @Override
-        public FunctionExecutionResult execute(String application, String functionName) {
+        public FunctionExecutionResult execute(String application, String keywordName) {
             observedContext = StepContextHolder.get();
             if (fail) {
                 throw new FrameworkException("Synthetic resolved-plan failure.");
             }
             return new FunctionExecutionResult(
                     application,
-                    functionName,
+                    keywordName,
                     "leak-test.Executor",
                     FunctionSourceType.BASE,
                     true,

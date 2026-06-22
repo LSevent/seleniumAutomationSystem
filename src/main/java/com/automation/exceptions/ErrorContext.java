@@ -34,8 +34,8 @@ public class ErrorContext {
         return add("Testcase", testcaseName);
     }
 
-    public ErrorContext function(String functionName) {
-        return add("Function", functionName);
+    public ErrorContext keyword(String keywordName) {
+        return add("Keyword", keywordName);
     }
 
     public ErrorContext object(String objectName) {

@@ -10,14 +10,14 @@ public class SensitiveDataMasker {
         return isSensitive(rawValue, objectName, xpath, description, "");
     }
 
-    public boolean isSensitive(String rawValue, String objectName, String xpath, String description, String functionName) {
+    public boolean isSensitive(String rawValue, String objectName, String xpath, String description, String keywordName) {
         String combinedText = String.join(
                 " ",
                 safe(rawValue),
                 safe(objectName),
                 safe(xpath),
                 safe(description),
-                safe(functionName)
+                safe(keywordName)
         ).toLowerCase(Locale.ROOT);
 
         return combinedText.contains("password")
@@ -45,12 +45,12 @@ public class SensitiveDataMasker {
             String objectName,
             String xpath,
             String description,
-            String functionName
+            String keywordName
     ) {
         if (showSensitiveData || value == null || value.isBlank()) {
             return value == null ? "" : value;
         }
-        return isSensitive(rawValue, objectName, xpath, description, functionName) ? MASK : value;
+        return isSensitive(rawValue, objectName, xpath, description, keywordName) ? MASK : value;
     }
 
     public String maskRawValueIfNeeded(
@@ -59,7 +59,7 @@ public class SensitiveDataMasker {
             String objectName,
             String xpath,
             String description,
-            String functionName
+            String keywordName
     ) {
         if (rawValue == null || rawValue.isBlank()) {
             return "";
@@ -67,7 +67,7 @@ public class SensitiveDataMasker {
         if (showSensitiveData || looksLikeDataReference(rawValue)) {
             return rawValue;
         }
-        return isSensitive(rawValue, objectName, xpath, description, functionName) ? MASK : rawValue;
+        return isSensitive(rawValue, objectName, xpath, description, keywordName) ? MASK : rawValue;
     }
 
     private boolean looksLikeDataReference(String value) {

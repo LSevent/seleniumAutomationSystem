@@ -101,8 +101,8 @@ public class ScenarioRunnerResolvedPlanExecutionTest {
             Assert.assertTrue(results.stream().allMatch(ExecutionResult::isSuccess), failures(results));
             Assert.assertEquals(engineReference.get().executedSteps.size(), 11);
             Assert.assertEquals(
-                    engineReference.get().executedSteps.stream().map(ResolvedStepContext::getFunction).toList(),
-                    results.stream().map(ExecutionResult::getFunctionName).toList()
+                    engineReference.get().executedSteps.stream().map(ResolvedStepContext::getKeyword).toList(),
+                    results.stream().map(ExecutionResult::getKeywordName).toList()
             );
             Assert.assertTrue(engineReference.get().executedSteps.stream()
                     .allMatch(step -> "1".equals(step.getScenarioNo())));

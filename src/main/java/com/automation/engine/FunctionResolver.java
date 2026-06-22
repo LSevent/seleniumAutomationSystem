@@ -36,50 +36,50 @@ public class FunctionResolver {
         this.baseFunction = new BaseFunction(driver);
     }
 
-    public ResolvedFunction resolve(String application, String functionName) {
+    public ResolvedFunction resolve(String application, String keywordName) {
         return resolveInternal(
                 application,
-                functionName,
+                keywordName,
                 StepContextHolder.current().orElse(null)
-        ).resolvedFunction();
+        ).resolvedKeyword();
     }
 
     public WebDriver getDriver() {
         return driver;
     }
 
-    public FunctionExecutionResult execute(String application, String functionName) {
+    public FunctionExecutionResult execute(String application, String keywordName) {
         ResolvedStepContext step = StepContextHolder.get();
-        MethodResolution resolution = resolveInternal(application, functionName, step);
-        String keyword = functionName.trim();
+        MethodResolution resolution = resolveInternal(application, keywordName, step);
+        String keyword = keywordName.trim();
 
         try {
             resolution.method().invoke(resolution.target());
             String message = "Executed keyword '" + keyword + "' using "
-                    + resolution.resolvedFunction().getResolvedClassName() + ".";
+                    + resolution.resolvedKeyword().getResolvedClassName() + ".";
             return new FunctionExecutionResult(
-                    resolution.resolvedFunction().getApplication(),
-                    resolution.resolvedFunction().getFunctionName(),
-                    resolution.resolvedFunction().getResolvedClassName(),
-                    resolution.resolvedFunction().getSourceType(),
+                    resolution.resolvedKeyword().getApplication(),
+                    resolution.resolvedKeyword().getKeywordName(),
+                    resolution.resolvedKeyword().getResolvedClassName(),
+                    resolution.resolvedKeyword().getSourceType(),
                     true,
                     message
             );
         } catch (IllegalAccessException exception) {
-            throw keywordExecutionFailure(keyword, resolution.resolvedFunction(), exception, step);
+            throw keywordExecutionFailure(keyword, resolution.resolvedKeyword(), exception, step);
         } catch (InvocationTargetException exception) {
             Throwable cause = exception.getCause() == null ? exception : exception.getCause();
-            throw keywordExecutionFailure(keyword, resolution.resolvedFunction(), cause, step);
+            throw keywordExecutionFailure(keyword, resolution.resolvedKeyword(), cause, step);
         }
     }
 
     private MethodResolution resolveInternal(
             String application,
-            String functionName,
+            String keywordName,
             ResolvedStepContext step
     ) {
-        validateFunctionName(functionName);
-        String keyword = functionName.trim();
+        validateKeywordName(keywordName);
+        String keyword = keywordName.trim();
         String normalizedApplication = normalizeApplication(application, keyword);
         String specificClassName = specificClassName(normalizedApplication);
 
@@ -110,7 +110,7 @@ public class FunctionResolver {
             Method method
     ) {
         Object target = createSpecificFunction(specificClass, application);
-        ResolvedFunction resolvedFunction = new ResolvedFunction(
+        ResolvedFunction resolvedKeyword = new ResolvedFunction(
                 application,
                 keyword,
                 specificClass.getName(),
@@ -118,11 +118,11 @@ public class FunctionResolver {
                 method.getName()
         );
         LOGGER.info("Selected SpecificFunction for keyword '{}': {}", keyword, specificClass.getName());
-        return new MethodResolution(resolvedFunction, method, target);
+        return new MethodResolution(resolvedKeyword, method, target);
     }
 
     private MethodResolution baseResolution(String application, String keyword, Method method) {
-        ResolvedFunction resolvedFunction = new ResolvedFunction(
+        ResolvedFunction resolvedKeyword = new ResolvedFunction(
                 application,
                 keyword,
                 BaseFunction.class.getName(),
@@ -130,7 +130,7 @@ public class FunctionResolver {
                 method.getName()
         );
         LOGGER.info("Selected BaseFunction for keyword '{}'.", keyword);
-        return new MethodResolution(resolvedFunction, method, baseFunction);
+        return new MethodResolution(resolvedKeyword, method, baseFunction);
     }
 
     private Class<?> loadSpecificFunctionClass(String className, String application) {
@@ -172,12 +172,12 @@ public class FunctionResolver {
 
     private RuntimeException keywordExecutionFailure(
             String keyword,
-            ResolvedFunction resolvedFunction,
+            ResolvedFunction resolvedKeyword,
             Throwable cause,
             ResolvedStepContext step
     ) {
         String message = "Failed to execute keyword '" + keyword + "' using "
-                + simpleClassName(resolvedFunction.getResolvedClassName()) + ". Cause: " + cause.getMessage();
+                + simpleClassName(resolvedKeyword.getResolvedClassName()) + ". Cause: " + cause.getMessage();
         message = withStepContext(message, step);
         LOGGER.error(message, cause);
         if (cause instanceof AssertionError) {
@@ -193,9 +193,9 @@ public class FunctionResolver {
         return application.trim().toUpperCase(Locale.ROOT);
     }
 
-    private void validateFunctionName(String functionName) {
-        if (isBlank(functionName)) {
-            throw new FrameworkException("Function name is required.");
+    private void validateKeywordName(String keywordName) {
+        if (isBlank(keywordName)) {
+            throw new FrameworkException("Keyword name is required.");
         }
     }
 
@@ -224,7 +224,7 @@ public class FunctionResolver {
                 .sheet(step.getSheetName())
                 .testcase(step.getTestcaseName())
                 .row(step.getExcelRow())
-                .function(step.getFunction())
+                .keyword(step.getKeyword())
                 .object(step.getObjectName())
                 .application(step.getApplication())
                 .render();
@@ -244,6 +244,6 @@ public class FunctionResolver {
     }
 
 
-    private record MethodResolution(ResolvedFunction resolvedFunction, Method method, Object target) {
+    private record MethodResolution(ResolvedFunction resolvedKeyword, Method method, Object target) {
     }
 }

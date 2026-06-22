@@ -33,8 +33,8 @@ public class StepReaderValidationTest {
     }
 
     @Test
-    public void missingFunctionHeaderShouldFailClearly() throws IOException {
-        Path workbookPath = workbook("missing-function-header.xlsx",
+    public void missingKeywordAndLegacyFunctionHeadersShouldFailClearly() throws IOException {
+        Path workbookPath = workbook("missing-keyword-header.xlsx",
                 sheet(SHEET, new String[]{"Testcase", "Run", "Object", "Value", "Application"}, new Object[][]{}));
 
         IllegalArgumentException exception = Assert.expectThrows(IllegalArgumentException.class, () -> {
@@ -43,7 +43,11 @@ public class StepReaderValidationTest {
             }
         });
 
-        Assert.assertEquals(exception.getMessage(), "Header not found: Function in sheet Local Keyword Test.");
+        Assert.assertEquals(
+                exception.getMessage(),
+                "Missing required column 'Keyword' in sheet 'Local Keyword Test'. "
+                        + "Legacy column 'Function' is also supported, but neither was found."
+        );
     }
 
     @Test
@@ -108,12 +112,12 @@ public class StepReaderValidationTest {
             }
         });
 
-        Assert.assertEquals(exception.getMessage(), "Testcase parent row should not contain Function, Object, or Value. Sheet: Local Keyword Test. Row: 2.");
+        Assert.assertEquals(exception.getMessage(), "Testcase parent row should not contain Keyword, Object, or Value. Sheet: Local Keyword Test. Row: 2.");
     }
 
     @Test
-    public void stepMissingFunctionShouldFailClearly() throws IOException {
-        Path workbookPath = workbook("step-missing-function.xlsx",
+    public void stepMissingKeywordShouldFailClearly() throws IOException {
+        Path workbookPath = workbook("step-missing-keyword.xlsx",
                 scenarioSheet(SHEET, new Object[][]{
                         {"Login BRS", "Y", "", "", "", "BRS", "Login"},
                         {"", "", "", "btnLogin", "", "", "Click login"}
@@ -125,7 +129,7 @@ public class StepReaderValidationTest {
             }
         });
 
-        Assert.assertEquals(exception.getMessage(), "Function is required for step row. Sheet: Local Keyword Test. Row: 3.");
+        Assert.assertEquals(exception.getMessage(), "Keyword is required for step row. Sheet: Local Keyword Test. Row: 3.");
     }
 
     @Test

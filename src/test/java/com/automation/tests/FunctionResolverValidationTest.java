@@ -21,7 +21,7 @@ public class FunctionResolverValidationTest {
     }
 
     @Test
-    public void blankFunctionShouldFailClearly() {
+    public void blankKeywordShouldFailClearly() {
         FunctionResolver resolver = new FunctionResolver(driver().driver());
 
         IllegalArgumentException exception = Assert.expectThrows(
@@ -29,7 +29,7 @@ public class FunctionResolverValidationTest {
                 () -> resolver.resolve("BRS", " ")
         );
 
-        Assert.assertEquals(exception.getMessage(), "Function name is required.");
+        Assert.assertEquals(exception.getMessage(), "Keyword name is required.");
     }
 
     @Test
@@ -94,7 +94,7 @@ public class FunctionResolverValidationTest {
     private FunctionExecutionResult execute(
             FunctionResolver resolver,
             String application,
-            String function,
+            String keyword,
             String resolvedXpath,
             String resolvedValue
     ) {
@@ -107,7 +107,7 @@ public class FunctionResolverValidationTest {
                 .testcaseParentRow(2)
                 .excelRow(3)
                 .stepNumber(1)
-                .function(function)
+                .keyword(keyword)
                 .objectName(resolvedXpath == null || resolvedXpath.isBlank() ? "" : "testObject")
                 .application(application)
                 .description("Resolver validation step")
@@ -118,7 +118,7 @@ public class FunctionResolverValidationTest {
                 .executedBy("")
                 .build());
         try {
-            return resolver.execute(application, function);
+            return resolver.execute(application, keyword);
         } finally {
             StepContextHolder.clear();
         }

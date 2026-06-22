@@ -95,7 +95,7 @@ public class StepContextHolderTest {
                 .testcaseParentRow(3)
                 .excelRow(4)
                 .stepNumber(stepNumber)
-                .function("click")
+                .keyword("click")
                 .objectName("btnSubmit")
                 .application("BRS")
                 .description("Submit booking")

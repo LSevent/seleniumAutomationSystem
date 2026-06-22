@@ -28,7 +28,7 @@ public class SpecificFunctionContextTest {
 
         FunctionExecutionResult result = new FunctionResolver(driver.driver()).execute(
                 step.getApplication(),
-                step.getFunction()
+                step.getKeyword()
         );
 
         Assert.assertEquals(result.getSourceType(), FunctionSourceType.SPECIFIC);
@@ -53,7 +53,7 @@ public class SpecificFunctionContextTest {
 
         FunctionExecutionResult result = new FunctionResolver(driver.driver()).execute(
                 step.getApplication(),
-                step.getFunction()
+                step.getKeyword()
         );
 
         Assert.assertEquals(result.getSourceType(), FunctionSourceType.SPECIFIC);
@@ -71,7 +71,7 @@ public class SpecificFunctionContextTest {
 
     private ResolvedStepContext step(
             String application,
-            String function,
+            String keyword,
             String objectName,
             String resolvedXpath,
             String resolvedValue
@@ -85,7 +85,7 @@ public class SpecificFunctionContextTest {
                 .testcaseParentRow(4)
                 .excelRow(10)
                 .stepNumber(1)
-                .function(function)
+                .keyword(keyword)
                 .objectName(objectName)
                 .application(application)
                 .description("Application-specific keyword")
