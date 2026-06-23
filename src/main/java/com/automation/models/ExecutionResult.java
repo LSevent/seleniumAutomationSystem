@@ -324,8 +324,6 @@ public class ExecutionResult {
                 ", keywordName='" + keywordName + '\'' +
                 ", objectName='" + objectName + '\'' +
                 ", application='" + application + '\'' +
-                ", rawValue='" + rawValue + '\'' +
-                ", resolvedValue='" + resolvedValue + '\'' +
                 ", rawXpath='" + rawXpath + '\'' +
                 ", resolvedXpath='" + resolvedXpath + '\'' +
                 ", executedByClass='" + executedByClass + '\'' +

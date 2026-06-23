@@ -93,6 +93,8 @@ Public keyword methods are context-based, no-argument entry points. They read th
 
 `ResolvedStepContext` is an immutable model for one resolved Excel step and should be created through `builder()`. Its long constructor is intentionally private to prevent parameter-order mistakes, while convenience accessors such as `xpath()` and `value()` keep consumers concise. During execution, `StepContextHolder` stores that single context in a `ThreadLocal`; `KeywordEngine` owns the set/clear lifecycle. Its `toString()` omits raw and resolved values so sensitive step data is not exposed accidentally.
 
+Model `toString()` methods avoid exposing raw or resolved Excel values in logs and debug output. Reports still display values according to the existing report masking rules.
+
 SpecificFunction keywords also use no-argument context-based execution for application-specific behavior. `BaseFunction` remains the home for common reusable keywords, while `FunctionResolver` checks `SpecificFunction` before `BaseFunction`.
 
 `KeywordEngine` centrally logs keyword start, completion, skip, and failure events using the resolved step context, with sensitive values masked. Internal function helpers are limited to shared context access, validation, waiting, and reusable custom-function support; they are not Excel-facing keyword entry points.

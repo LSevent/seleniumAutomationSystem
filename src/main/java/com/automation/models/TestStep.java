@@ -93,7 +93,6 @@ public class TestStep {
                 ", testcaseName='" + testcaseName + '\'' +
                 ", keyword='" + keyword + '\'' +
                 ", object='" + object + '\'' +
-                ", value='" + value + '\'' +
                 ", application='" + application + '\'' +
                 ", description='" + description + '\'' +
                 ", excelRowNumber=" + excelRowNumber +

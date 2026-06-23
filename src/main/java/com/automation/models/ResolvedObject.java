@@ -63,8 +63,6 @@ public class ResolvedObject {
                 ", application='" + application + '\'' +
                 ", rawXpath='" + rawXpath + '\'' +
                 ", resolvedXpath='" + resolvedXpath + '\'' +
-                ", rawValue='" + rawValue + '\'' +
-                ", resolvedValue='" + resolvedValue + '\'' +
                 ", excelRowNumber=" + excelRowNumber +
                 '}';
     }
