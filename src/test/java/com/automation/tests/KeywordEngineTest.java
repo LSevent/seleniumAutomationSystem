@@ -8,7 +8,7 @@ import com.automation.excel.ObjectRepositoryReader;
 import com.automation.excel.ScenarioReader;
 import com.automation.excel.StepReader;
 import com.automation.models.ExecutionResult;
-import com.automation.models.FunctionSourceType;
+import com.automation.models.KeywordSourceType;
 import com.automation.models.Scenario;
 import com.automation.models.TestStep;
 import com.automation.tests.support.ExcelKeywordTestWorkbookFactory;
@@ -51,7 +51,7 @@ public class KeywordEngineTest {
             Assert.assertEquals(result.getResolvedValue(), "brs_admin");
             Assert.assertEquals(result.getRawXpath(), "//input[@id='username']");
             Assert.assertEquals(result.getResolvedXpath(), "//input[@id='username']");
-            Assert.assertEquals(result.getExecutionSource(), FunctionSourceType.BASE.name());
+            Assert.assertEquals(result.getExecutionSource(), KeywordSourceType.BASE.name());
             Assert.assertEquals(fakeDriver.element("//input[@id='username']").getValue(), "brs_admin");
         }
     }
@@ -69,7 +69,7 @@ public class KeywordEngineTest {
             Assert.assertTrue(result.isSuccess(), result.getMessage());
             Assert.assertEquals(result.getResolvedValue(), "Meeting Room A");
             Assert.assertEquals(result.getResolvedXpath(), "//button[contains(text(),'Meeting Room A')]");
-            Assert.assertEquals(result.getExecutionSource(), FunctionSourceType.SPECIFIC.name());
+            Assert.assertEquals(result.getExecutionSource(), KeywordSourceType.SPECIFIC.name());
             Assert.assertTrue(fakeDriver.element("//button[contains(text(),'Meeting Room A')]").isClicked());
         }
     }

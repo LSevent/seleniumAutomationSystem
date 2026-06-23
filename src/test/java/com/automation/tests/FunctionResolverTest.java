@@ -2,9 +2,9 @@ package com.automation.tests;
 
 import com.automation.context.StepContextHolder;
 import com.automation.engine.FunctionResolver;
-import com.automation.models.FunctionExecutionResult;
-import com.automation.models.FunctionSourceType;
-import com.automation.models.ResolvedFunction;
+import com.automation.models.KeywordExecutionResult;
+import com.automation.models.KeywordSourceType;
+import com.automation.models.ResolvedKeyword;
 import com.automation.models.ResolvedStepContext;
 import org.openqa.selenium.By;
 import org.openqa.selenium.Dimension;
@@ -55,9 +55,9 @@ public class FunctionResolverTest {
         FakeDriver fakeDriver = testDriver();
         FunctionResolver resolver = new FunctionResolver(fakeDriver.driver());
 
-        FunctionExecutionResult result = execute(resolver, "BRS", "input", USERNAME_XPATH, "brs_user");
+        KeywordExecutionResult result = execute(resolver, "BRS", "input", USERNAME_XPATH, "brs_user");
 
-        Assert.assertEquals(result.getSourceType(), FunctionSourceType.BASE);
+        Assert.assertEquals(result.getSourceType(), KeywordSourceType.BASE);
         Assert.assertEquals(result.getExecutedByClass(), "com.automation.base.BaseFunction");
         Assert.assertEquals(fakeDriver.element(USERNAME_XPATH).value, "brs_user");
     }
@@ -67,9 +67,9 @@ public class FunctionResolverTest {
         FakeDriver fakeDriver = testDriver();
         FunctionResolver resolver = new FunctionResolver(fakeDriver.driver());
 
-        FunctionExecutionResult result = execute(resolver, "BRS", "click", LOGIN_BUTTON_XPATH, "");
+        KeywordExecutionResult result = execute(resolver, "BRS", "click", LOGIN_BUTTON_XPATH, "");
 
-        Assert.assertEquals(result.getSourceType(), FunctionSourceType.SPECIFIC);
+        Assert.assertEquals(result.getSourceType(), KeywordSourceType.SPECIFIC);
         Assert.assertEquals(result.getExecutedByClass(), "com.automation.functions.BRS.SpecificFunction");
         Assert.assertTrue(fakeDriver.element(LOGIN_BUTTON_XPATH).clicked);
     }
@@ -79,7 +79,7 @@ public class FunctionResolverTest {
         FakeDriver fakeDriver = testDriver();
         FunctionResolver resolver = new FunctionResolver(fakeDriver.driver());
 
-        FunctionExecutionResult result = execute(
+        KeywordExecutionResult result = execute(
                 resolver,
                 "BRS",
                 "selectRoomByName",
@@ -87,7 +87,7 @@ public class FunctionResolverTest {
                 "Meeting Room A"
         );
 
-        Assert.assertEquals(result.getSourceType(), FunctionSourceType.SPECIFIC);
+        Assert.assertEquals(result.getSourceType(), KeywordSourceType.SPECIFIC);
         Assert.assertTrue(fakeDriver.element(ROOM_BUTTON_XPATH).clicked);
     }
 
@@ -95,7 +95,7 @@ public class FunctionResolverTest {
     public void shouldExecuteBaseFunctionVerifyTextThroughResolver() {
         FunctionResolver resolver = new FunctionResolver(testDriver().driver());
 
-        FunctionExecutionResult result = execute(
+        KeywordExecutionResult result = execute(
                 resolver,
                 "BRS",
                 "verifyText",
@@ -103,7 +103,7 @@ public class FunctionResolverTest {
                 "Booking created successfully"
         );
 
-        Assert.assertEquals(result.getSourceType(), FunctionSourceType.BASE);
+        Assert.assertEquals(result.getSourceType(), KeywordSourceType.BASE);
         Assert.assertTrue(result.isSuccess());
     }
 
@@ -111,9 +111,9 @@ public class FunctionResolverTest {
     public void shouldExecuteValueOnlyKeywordThroughResolver() {
         FunctionResolver resolver = new FunctionResolver(testDriver().driver());
 
-        FunctionExecutionResult result = execute(resolver, "BRS", "verifyTitleContains", "", "Dashboard");
+        KeywordExecutionResult result = execute(resolver, "BRS", "verifyTitleContains", "", "Dashboard");
 
-        Assert.assertEquals(result.getSourceType(), FunctionSourceType.BASE);
+        Assert.assertEquals(result.getSourceType(), KeywordSourceType.BASE);
         Assert.assertTrue(result.isSuccess());
     }
 
@@ -121,7 +121,7 @@ public class FunctionResolverTest {
     public void shouldFallbackToBaseFunctionForUnknownApplicationWhenKeywordExists() {
         FunctionResolver resolver = new FunctionResolver(testDriver().driver());
 
-        FunctionExecutionResult result = execute(
+        KeywordExecutionResult result = execute(
                 resolver,
                 "UNKNOWN",
                 "verifyText",
@@ -129,7 +129,7 @@ public class FunctionResolverTest {
                 "Booking created successfully"
         );
 
-        Assert.assertEquals(result.getSourceType(), FunctionSourceType.BASE);
+        Assert.assertEquals(result.getSourceType(), KeywordSourceType.BASE);
         Assert.assertEquals(result.getExecutedByClass(), "com.automation.base.BaseFunction");
     }
 
@@ -204,28 +204,28 @@ public class FunctionResolverTest {
     public void shouldExecuteOtherApplicationSpecificFunctions() {
         FunctionResolver resolver = new FunctionResolver(testDriver().driver());
 
-        FunctionExecutionResult hrisResult = execute(
+        KeywordExecutionResult hrisResult = execute(
                 resolver,
                 "HRIS",
                 "verifyEmployeeVisible",
                 PAGE_TITLE_XPATH,
                 "Dashboard"
         );
-        FunctionExecutionResult crmResult = execute(resolver, "CRM", "waitForApplicationReady", "", "");
+        KeywordExecutionResult crmResult = execute(resolver, "CRM", "waitForApplicationReady", "", "");
 
-        Assert.assertEquals(hrisResult.getSourceType(), FunctionSourceType.SPECIFIC);
+        Assert.assertEquals(hrisResult.getSourceType(), KeywordSourceType.SPECIFIC);
         Assert.assertEquals(hrisResult.getExecutedByClass(), "com.automation.functions.HRIS.SpecificFunction");
-        Assert.assertEquals(crmResult.getSourceType(), FunctionSourceType.SPECIFIC);
+        Assert.assertEquals(crmResult.getSourceType(), KeywordSourceType.SPECIFIC);
         Assert.assertEquals(crmResult.getExecutedByClass(), "com.automation.functions.CRM.SpecificFunction");
     }
 
-    private void assertSpecificClass(ResolvedFunction resolvedKeyword, String application) {
+    private void assertSpecificClass(ResolvedKeyword resolvedKeyword, String application) {
         Assert.assertEquals(resolvedKeyword.getApplication(), application);
         Assert.assertEquals(resolvedKeyword.getResolvedClassName(), "com.automation.functions." + application + ".SpecificFunction");
-        Assert.assertEquals(resolvedKeyword.getSourceType(), FunctionSourceType.SPECIFIC);
+        Assert.assertEquals(resolvedKeyword.getSourceType(), KeywordSourceType.SPECIFIC);
     }
 
-    private FunctionExecutionResult execute(
+    private KeywordExecutionResult execute(
             FunctionResolver resolver,
             String application,
             String keyword,

@@ -8,8 +8,8 @@ import com.automation.excel.ExcelReader;
 import com.automation.excel.ObjectRepositoryReader;
 import com.automation.exceptions.FrameworkException;
 import com.automation.models.ExecutionResult;
-import com.automation.models.FunctionExecutionResult;
-import com.automation.models.FunctionSourceType;
+import com.automation.models.KeywordExecutionResult;
+import com.automation.models.KeywordSourceType;
 import com.automation.models.ResolvedStepContext;
 import com.automation.tests.support.FakeWebDriver;
 import org.testng.Assert;
@@ -108,16 +108,16 @@ public class StepContextLeakRegressionTest {
         }
 
         @Override
-        public FunctionExecutionResult execute(String application, String keywordName) {
+        public KeywordExecutionResult execute(String application, String keywordName) {
             observedContext = StepContextHolder.get();
             if (fail) {
                 throw new FrameworkException("Synthetic resolved-plan failure.");
             }
-            return new FunctionExecutionResult(
+            return new KeywordExecutionResult(
                     application,
                     keywordName,
                     "leak-test.Executor",
-                    FunctionSourceType.BASE,
+                    KeywordSourceType.BASE,
                     true,
                     "Synthetic success."
             );

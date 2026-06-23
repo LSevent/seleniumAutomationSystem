@@ -9,8 +9,8 @@ import com.automation.excel.ExcelReader;
 import com.automation.excel.ObjectRepositoryReader;
 import com.automation.exceptions.FrameworkException;
 import com.automation.models.ExecutionResult;
-import com.automation.models.FunctionExecutionResult;
-import com.automation.models.FunctionSourceType;
+import com.automation.models.KeywordExecutionResult;
+import com.automation.models.KeywordSourceType;
 import com.automation.models.ResolvedStepContext;
 import com.automation.reports.ExcelReportConfig;
 import com.automation.services.ScreenshotService;
@@ -105,7 +105,7 @@ public class KeywordEngineResolvedContextTest {
         Assert.assertEquals(result.getRawXpath(), "//input[@id='rawUsername']");
         Assert.assertEquals(result.getResolvedXpath(), "//input[@id='resolvedUsername']");
         Assert.assertEquals(result.getExecutedByClass(), "context.Executor");
-        Assert.assertEquals(result.getExecutionSource(), FunctionSourceType.BASE.name());
+        Assert.assertEquals(result.getExecutionSource(), KeywordSourceType.BASE.name());
         Assert.assertEquals(result.getStatus(), ExecutionResult.STATUS_PASS);
         Assert.assertEquals(result.getEvidence(), "");
         Assert.assertEquals(result.getExcelRowNumber(), 17);
@@ -254,18 +254,18 @@ public class KeywordEngineResolvedContextTest {
         }
 
         @Override
-        public FunctionExecutionResult execute(String application, String keywordName) {
+        public KeywordExecutionResult execute(String application, String keywordName) {
             observedContext = StepContextHolder.get();
             observedXpath = observedContext.getResolvedXPath();
             observedValue = observedContext.getResolvedValue();
             if (fail) {
                 throw new FrameworkException("Synthetic keyword failure.");
             }
-            return new FunctionExecutionResult(
+            return new KeywordExecutionResult(
                     application,
                     keywordName,
                     "resolver.Executor",
-                    FunctionSourceType.BASE,
+                    KeywordSourceType.BASE,
                     true,
                     "Synthetic keyword success."
             );

@@ -4,9 +4,9 @@ import com.automation.base.BaseFunction;
 import com.automation.context.StepContextHolder;
 import com.automation.exceptions.ErrorContext;
 import com.automation.exceptions.FrameworkException;
-import com.automation.models.FunctionExecutionResult;
-import com.automation.models.FunctionSourceType;
-import com.automation.models.ResolvedFunction;
+import com.automation.models.KeywordExecutionResult;
+import com.automation.models.KeywordSourceType;
+import com.automation.models.ResolvedKeyword;
 import com.automation.models.ResolvedStepContext;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -36,7 +36,7 @@ public class FunctionResolver {
         this.baseFunction = new BaseFunction(driver);
     }
 
-    public ResolvedFunction resolve(String application, String keywordName) {
+    public ResolvedKeyword resolve(String application, String keywordName) {
         return resolveInternal(
                 application,
                 keywordName,
@@ -48,7 +48,7 @@ public class FunctionResolver {
         return driver;
     }
 
-    public FunctionExecutionResult execute(String application, String keywordName) {
+    public KeywordExecutionResult execute(String application, String keywordName) {
         ResolvedStepContext step = StepContextHolder.get();
         MethodResolution resolution = resolveInternal(application, keywordName, step);
         String keyword = keywordName.trim();
@@ -57,7 +57,7 @@ public class FunctionResolver {
             resolution.method().invoke(resolution.target());
             String message = "Executed keyword '" + keyword + "' using "
                     + resolution.resolvedKeyword().getResolvedClassName() + ".";
-            return new FunctionExecutionResult(
+            return new KeywordExecutionResult(
                     resolution.resolvedKeyword().getApplication(),
                     resolution.resolvedKeyword().getKeywordName(),
                     resolution.resolvedKeyword().getResolvedClassName(),
@@ -110,11 +110,11 @@ public class FunctionResolver {
             Method method
     ) {
         Object target = createSpecificFunction(specificClass, application);
-        ResolvedFunction resolvedKeyword = new ResolvedFunction(
+        ResolvedKeyword resolvedKeyword = new ResolvedKeyword(
                 application,
                 keyword,
                 specificClass.getName(),
-                FunctionSourceType.SPECIFIC,
+                KeywordSourceType.SPECIFIC,
                 method.getName()
         );
         LOGGER.info("Selected SpecificFunction for keyword '{}': {}", keyword, specificClass.getName());
@@ -122,11 +122,11 @@ public class FunctionResolver {
     }
 
     private MethodResolution baseResolution(String application, String keyword, Method method) {
-        ResolvedFunction resolvedKeyword = new ResolvedFunction(
+        ResolvedKeyword resolvedKeyword = new ResolvedKeyword(
                 application,
                 keyword,
                 BaseFunction.class.getName(),
-                FunctionSourceType.BASE,
+                KeywordSourceType.BASE,
                 method.getName()
         );
         LOGGER.info("Selected BaseFunction for keyword '{}'.", keyword);
@@ -172,7 +172,7 @@ public class FunctionResolver {
 
     private RuntimeException keywordExecutionFailure(
             String keyword,
-            ResolvedFunction resolvedKeyword,
+            ResolvedKeyword resolvedKeyword,
             Throwable cause,
             ResolvedStepContext step
     ) {
@@ -244,6 +244,6 @@ public class FunctionResolver {
     }
 
 
-    private record MethodResolution(ResolvedFunction resolvedKeyword, Method method, Object target) {
+    private record MethodResolution(ResolvedKeyword resolvedKeyword, Method method, Object target) {
     }
 }

@@ -7,8 +7,8 @@ import com.automation.excel.DataReader;
 import com.automation.excel.ExcelReader;
 import com.automation.excel.ObjectRepositoryReader;
 import com.automation.models.ExecutionResult;
-import com.automation.models.FunctionExecutionResult;
-import com.automation.models.FunctionSourceType;
+import com.automation.models.KeywordExecutionResult;
+import com.automation.models.KeywordSourceType;
 import com.automation.models.ResolvedStepContext;
 import com.automation.tests.support.FakeWebDriver;
 import org.testng.Assert;
@@ -96,13 +96,13 @@ public class KeywordEngineReportMappingTest {
         }
 
         @Override
-        public FunctionExecutionResult execute(String application, String keywordName) {
+        public KeywordExecutionResult execute(String application, String keywordName) {
             Assert.assertTrue(StepContextHolder.current().isPresent());
-            return new FunctionExecutionResult(
+            return new KeywordExecutionResult(
                     application,
                     keywordName,
                     "mapping.Executor",
-                    FunctionSourceType.BASE,
+                    KeywordSourceType.BASE,
                     true,
                     "Mapped resolved step."
             );

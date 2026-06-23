@@ -6,7 +6,7 @@ import com.automation.excel.ObjectRepositoryReader;
 import com.automation.exceptions.ErrorContext;
 import com.automation.config.ExcelExecutionConfig;
 import com.automation.models.ExecutionResult;
-import com.automation.models.FunctionExecutionResult;
+import com.automation.models.KeywordExecutionResult;
 import com.automation.models.ResolvedObject;
 import com.automation.models.ResolvedStepContext;
 import com.automation.models.Scenario;
@@ -209,7 +209,7 @@ public class KeywordEngine {
 
     private ExecutionResult executeResolvedKeyword(ResolvedStepContext step) {
         try {
-            FunctionExecutionResult keywordResult = functionResolver.execute(
+            KeywordExecutionResult keywordResult = functionResolver.execute(
                     step.getApplication(),
                     step.getKeyword()
             );
@@ -403,7 +403,7 @@ public class KeywordEngine {
         TestStep step = context.getTestStep();
         StepContextHolder.set(resolvedStep(context));
         try {
-            FunctionExecutionResult keywordResult = functionResolver.execute(
+            KeywordExecutionResult keywordResult = functionResolver.execute(
                     step.getApplication(),
                     step.getKeyword()
             );

@@ -4,8 +4,8 @@ import com.automation.base.BaseFunction;
 import com.automation.context.StepContextHolder;
 import com.automation.engine.FunctionResolver;
 import com.automation.exceptions.FrameworkException;
-import com.automation.models.FunctionExecutionResult;
-import com.automation.models.FunctionSourceType;
+import com.automation.models.KeywordExecutionResult;
+import com.automation.models.KeywordSourceType;
 import com.automation.models.ResolvedStepContext;
 import com.automation.tests.support.FakeWebDriver;
 import org.testng.Assert;
@@ -35,12 +35,12 @@ public class FunctionResolverNoArgTest {
         );
         StepContextHolder.set(step);
 
-        FunctionExecutionResult result = new FunctionResolver(driver().driver()).execute(
+        KeywordExecutionResult result = new FunctionResolver(driver().driver()).execute(
                 step.getApplication(),
                 step.getKeyword()
         );
 
-        Assert.assertEquals(result.getSourceType(), FunctionSourceType.SPECIFIC);
+        Assert.assertEquals(result.getSourceType(), KeywordSourceType.SPECIFIC);
         Assert.assertEquals(
                 com.automation.functions.RESOLVERTEST.SpecificFunction.getInvocation(),
                 "no-arg"
@@ -64,12 +64,12 @@ public class FunctionResolverNoArgTest {
         );
         StepContextHolder.set(step);
 
-        FunctionExecutionResult result = new FunctionResolver(driver.driver()).execute(
+        KeywordExecutionResult result = new FunctionResolver(driver.driver()).execute(
                 step.getApplication(),
                 step.getKeyword()
         );
 
-        Assert.assertEquals(result.getSourceType(), FunctionSourceType.BASE);
+        Assert.assertEquals(result.getSourceType(), KeywordSourceType.BASE);
         Assert.assertEquals(result.getExecutedByClass(), "com.automation.base.BaseFunction");
         Assert.assertEquals(driver.getCurrentUrl(), step.getResolvedValue());
         Assert.assertSame(StepContextHolder.get(), step);
@@ -83,12 +83,12 @@ public class FunctionResolverNoArgTest {
         ResolvedStepContext step = step("BRS", "click", "btnLogin", resolvedXpath, "");
         StepContextHolder.set(step);
 
-        FunctionExecutionResult result = new FunctionResolver(driver.driver()).execute(
+        KeywordExecutionResult result = new FunctionResolver(driver.driver()).execute(
                 step.getApplication(),
                 step.getKeyword()
         );
 
-        Assert.assertEquals(result.getSourceType(), FunctionSourceType.SPECIFIC);
+        Assert.assertEquals(result.getSourceType(), KeywordSourceType.SPECIFIC);
         Assert.assertEquals(
                 result.getExecutedByClass(),
                 "com.automation.functions.BRS.SpecificFunction"
@@ -110,12 +110,12 @@ public class FunctionResolverNoArgTest {
         );
         StepContextHolder.set(step);
 
-        FunctionExecutionResult result = new FunctionResolver(driver.driver()).execute(
+        KeywordExecutionResult result = new FunctionResolver(driver.driver()).execute(
                 step.getApplication(),
                 step.getKeyword()
         );
 
-        Assert.assertEquals(result.getSourceType(), FunctionSourceType.SPECIFIC);
+        Assert.assertEquals(result.getSourceType(), KeywordSourceType.SPECIFIC);
         Assert.assertTrue(driver.element(resolvedXpath).isClicked());
         Assert.assertSame(StepContextHolder.get(), step);
     }
@@ -128,12 +128,12 @@ public class FunctionResolverNoArgTest {
         ResolvedStepContext step = step("NO_SPECIFIC", "input", "txtUsername", resolvedXpath, "resolved_user");
         StepContextHolder.set(step);
 
-        FunctionExecutionResult result = new FunctionResolver(driver.driver()).execute(
+        KeywordExecutionResult result = new FunctionResolver(driver.driver()).execute(
                 step.getApplication(),
                 step.getKeyword()
         );
 
-        Assert.assertEquals(result.getSourceType(), FunctionSourceType.BASE);
+        Assert.assertEquals(result.getSourceType(), KeywordSourceType.BASE);
         Assert.assertEquals(driver.element(resolvedXpath).getValue(), "resolved_user");
         Assert.assertSame(StepContextHolder.get(), step);
     }

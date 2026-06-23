@@ -1,18 +1,18 @@
 package com.automation.models;
 
-public class ResolvedFunction {
+public class ResolvedKeyword {
 
     private final String application;
     private final String keywordName;
     private final String resolvedClassName;
-    private final FunctionSourceType sourceType;
+    private final KeywordSourceType sourceType;
     private final String methodName;
 
-    public ResolvedFunction(
+    public ResolvedKeyword(
             String application,
             String keywordName,
             String resolvedClassName,
-            FunctionSourceType sourceType,
+            KeywordSourceType sourceType,
             String methodName
     ) {
         this.application = application;
@@ -34,7 +34,7 @@ public class ResolvedFunction {
         return resolvedClassName;
     }
 
-    public FunctionSourceType getSourceType() {
+    public KeywordSourceType getSourceType() {
         return sourceType;
     }
 
@@ -44,7 +44,7 @@ public class ResolvedFunction {
 
     @Override
     public String toString() {
-        return "ResolvedFunction{" +
+        return "ResolvedKeyword{" +
                 "application='" + application + '\'' +
                 ", keywordName='" + keywordName + '\'' +
                 ", resolvedClassName='" + resolvedClassName + '\'' +

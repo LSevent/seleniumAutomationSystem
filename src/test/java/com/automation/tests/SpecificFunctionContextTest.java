@@ -2,8 +2,8 @@ package com.automation.tests;
 
 import com.automation.context.StepContextHolder;
 import com.automation.engine.FunctionResolver;
-import com.automation.models.FunctionExecutionResult;
-import com.automation.models.FunctionSourceType;
+import com.automation.models.KeywordExecutionResult;
+import com.automation.models.KeywordSourceType;
 import com.automation.models.ResolvedStepContext;
 import com.automation.tests.support.FakeWebDriver;
 import org.testng.Assert;
@@ -26,12 +26,12 @@ public class SpecificFunctionContextTest {
         ResolvedStepContext step = step("BRS", "click", "btnLogin", resolvedXpath, "");
         StepContextHolder.set(step);
 
-        FunctionExecutionResult result = new FunctionResolver(driver.driver()).execute(
+        KeywordExecutionResult result = new FunctionResolver(driver.driver()).execute(
                 step.getApplication(),
                 step.getKeyword()
         );
 
-        Assert.assertEquals(result.getSourceType(), FunctionSourceType.SPECIFIC);
+        Assert.assertEquals(result.getSourceType(), KeywordSourceType.SPECIFIC);
         Assert.assertEquals(result.getExecutedByClass(), "com.automation.functions.BRS.SpecificFunction");
         Assert.assertTrue(driver.element(resolvedXpath).isClicked());
         Assert.assertSame(StepContextHolder.get(), step);
@@ -51,12 +51,12 @@ public class SpecificFunctionContextTest {
         );
         StepContextHolder.set(step);
 
-        FunctionExecutionResult result = new FunctionResolver(driver.driver()).execute(
+        KeywordExecutionResult result = new FunctionResolver(driver.driver()).execute(
                 step.getApplication(),
                 step.getKeyword()
         );
 
-        Assert.assertEquals(result.getSourceType(), FunctionSourceType.SPECIFIC);
+        Assert.assertEquals(result.getSourceType(), KeywordSourceType.SPECIFIC);
         Assert.assertEquals(result.getExecutedByClass(), "com.automation.functions.HRIS.SpecificFunction");
         Assert.assertSame(StepContextHolder.get(), step);
     }

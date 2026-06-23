@@ -1,19 +1,19 @@
 package com.automation.models;
 
-public class FunctionExecutionResult {
+public class KeywordExecutionResult {
 
     private final String application;
     private final String keywordName;
     private final String executedByClass;
-    private final FunctionSourceType sourceType;
+    private final KeywordSourceType sourceType;
     private final boolean success;
     private final String message;
 
-    public FunctionExecutionResult(
+    public KeywordExecutionResult(
             String application,
             String keywordName,
             String executedByClass,
-            FunctionSourceType sourceType,
+            KeywordSourceType sourceType,
             boolean success,
             String message
     ) {
@@ -37,7 +37,7 @@ public class FunctionExecutionResult {
         return executedByClass;
     }
 
-    public FunctionSourceType getSourceType() {
+    public KeywordSourceType getSourceType() {
         return sourceType;
     }
 
@@ -51,7 +51,7 @@ public class FunctionExecutionResult {
 
     @Override
     public String toString() {
-        return "FunctionExecutionResult{" +
+        return "KeywordExecutionResult{" +
                 "application='" + application + '\'' +
                 ", keywordName='" + keywordName + '\'' +
                 ", executedByClass='" + executedByClass + '\'' +

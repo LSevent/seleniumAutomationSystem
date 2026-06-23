@@ -2,8 +2,8 @@ package com.automation.tests;
 
 import com.automation.context.StepContextHolder;
 import com.automation.engine.FunctionResolver;
-import com.automation.models.FunctionExecutionResult;
-import com.automation.models.FunctionSourceType;
+import com.automation.models.KeywordExecutionResult;
+import com.automation.models.KeywordSourceType;
 import com.automation.models.ResolvedStepContext;
 import com.automation.tests.support.FakeWebDriver;
 import org.testng.Assert;
@@ -50,9 +50,9 @@ public class FunctionResolverValidationTest {
     public void unknownApplicationShouldFallbackToBaseFunctionWhenKeywordExists() {
         FunctionResolver resolver = new FunctionResolver(driver().driver());
 
-        FunctionExecutionResult result = execute(resolver, "UNKNOWN", "verifyText", MESSAGE_XPATH, "Ready");
+        KeywordExecutionResult result = execute(resolver, "UNKNOWN", "verifyText", MESSAGE_XPATH, "Ready");
 
-        Assert.assertEquals(result.getSourceType(), FunctionSourceType.BASE);
+        Assert.assertEquals(result.getSourceType(), KeywordSourceType.BASE);
         Assert.assertEquals(result.getExecutedByClass(), "com.automation.base.BaseFunction");
     }
 
@@ -91,7 +91,7 @@ public class FunctionResolverValidationTest {
         return fakeWebDriver;
     }
 
-    private FunctionExecutionResult execute(
+    private KeywordExecutionResult execute(
             FunctionResolver resolver,
             String application,
             String keyword,

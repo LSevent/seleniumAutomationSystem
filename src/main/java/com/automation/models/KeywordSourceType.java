@@ -1,6 +1,6 @@
 package com.automation.models;
 
-public enum FunctionSourceType {
+public enum KeywordSourceType {
     SPECIFIC,
     BASE
 }
