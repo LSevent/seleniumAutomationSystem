@@ -95,6 +95,8 @@ Public keyword methods are context-based, no-argument entry points. They read th
 
 Model `toString()` methods avoid exposing raw or resolved Excel values in logs and debug output. Reports still display values according to the existing report masking rules.
 
+`ExecutionResult` and `TestStep` support builder-based construction. Builders are preferred for readability and to avoid parameter-order mistakes, while existing runtime behavior remains unchanged.
+
 SpecificFunction keywords also use no-argument context-based execution for application-specific behavior. `BaseFunction` remains the home for common reusable keywords, while `FunctionResolver` checks `SpecificFunction` before `BaseFunction`.
 
 The framework resolves an Excel keyword into a `ResolvedKeyword`; `KeywordExecutionResult` represents the result of invoking that resolved keyword method, and `KeywordSourceType` identifies whether the keyword came from `SpecificFunction` or `BaseFunction`.

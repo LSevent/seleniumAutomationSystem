@@ -36,6 +36,9 @@
             <class name="com.automation.tests.SensitiveDataMaskerTest"/>
             <class name="com.automation.tests.ExcelExecutionReportTest"/>
             <class name="com.automation.tests.FinalTemplateValidationTest"/>
+            <class name="com.automation.tests.ModelToStringSafetyTest"/>
+            <class name="com.automation.tests.ExecutionResultBuilderTest"/>
+            <class name="com.automation.tests.TestStepBuilderTest"/>
             <class name="com.automation.tests.ResolvedStepContextTest"/>
             <class name="com.automation.tests.ResolvedStepContextBuilderTest"/>
             <class name="com.automation.tests.StepContextHolderTest"/>

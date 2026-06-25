@@ -6,6 +6,29 @@ public class ExecutionResult {
     public static final String STATUS_FAIL = "FAIL";
     public static final String STATUS_SKIP = "SKIP";
 
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public static Builder fromStep(ResolvedStepContext step) {
+        return builder()
+                .scenarioNo(safe(step == null ? "" : step.getScenarioNo()))
+                .scenarioName(safe(step == null ? "" : step.getScenarioName()))
+                .scenarioAction(safe(step == null ? "" : step.getScenarioAction()))
+                .testcaseName(safe(step == null ? "" : step.getTestcaseName()))
+                .description(safe(step == null ? "" : step.getDescription()))
+                .keywordName(safe(step == null ? "" : step.getKeyword()))
+                .objectName(safe(step == null ? "" : step.getObjectName()))
+                .application(safe(step == null ? "" : step.getApplication()))
+                .rawValue(safe(step == null ? "" : step.getRawValue()))
+                .resolvedValue(safe(step == null ? "" : step.getResolvedValue()))
+                .rawXpath(safe(step == null ? "" : step.getRawXPath()))
+                .resolvedXpath(safe(step == null ? "" : step.getResolvedXPath()))
+                .executedByClass(safe(step == null ? "" : step.getExecutedBy()))
+                .excelRowNumber(step == null ? 0 : step.getExcelRow())
+                .stepOrder(step == null ? 0 : step.getStepNumber());
+    }
+
     private final String scenarioNo;
     private final String scenarioName;
     private final String scenarioAction;
@@ -69,6 +92,29 @@ public class ExecutionResult {
         this.message = message;
         this.excelRowNumber = excelRowNumber;
         this.stepOrder = stepOrder;
+    }
+
+    private ExecutionResult(Builder builder) {
+        this.scenarioNo = builder.scenarioNo;
+        this.scenarioName = builder.scenarioName;
+        this.scenarioAction = builder.scenarioAction;
+        this.testcaseName = builder.testcaseName;
+        this.description = builder.description;
+        this.keywordName = builder.keywordName;
+        this.objectName = builder.objectName;
+        this.application = builder.application;
+        this.rawValue = builder.rawValue;
+        this.resolvedValue = builder.resolvedValue;
+        this.rawXpath = builder.rawXpath;
+        this.resolvedXpath = builder.resolvedXpath;
+        this.executedByClass = builder.executedByClass;
+        this.executionSource = builder.executionSource;
+        this.success = builder.success;
+        this.status = builder.status;
+        this.evidence = builder.evidence;
+        this.message = builder.message;
+        this.excelRowNumber = builder.excelRowNumber;
+        this.stepOrder = builder.stepOrder;
     }
 
     public static ExecutionResult success(
@@ -176,28 +222,28 @@ public class ExecutionResult {
             String evidence,
             String message
     ) {
-        return new ExecutionResult(
-                safe(scenario == null ? "" : scenario.getNo()),
-                safe(scenario == null ? "" : scenario.getScenarioName()),
-                safe(scenario == null ? "" : scenario.getAction()),
-                safe(step == null ? "" : step.getTestcaseName()),
-                safe(step == null ? "" : step.getDescription()),
-                safe(step == null ? "" : step.getKeyword()),
-                safe(step == null ? "" : step.getObject()),
-                safe(step == null ? "" : step.getApplication()),
-                safe(step == null ? "" : step.getValue()),
-                safe(resolvedValue),
-                safe(rawXpath),
-                safe(resolvedXpath),
-                safe(executedByClass),
-                safe(executionSource),
-                success,
-                safe(status),
-                safe(evidence),
-                safe(message),
-                step == null ? 0 : step.getExcelRowNumber(),
-                step == null ? 0 : step.getStepOrder()
-        );
+        return builder()
+                .scenarioNo(safe(scenario == null ? "" : scenario.getNo()))
+                .scenarioName(safe(scenario == null ? "" : scenario.getScenarioName()))
+                .scenarioAction(safe(scenario == null ? "" : scenario.getAction()))
+                .testcaseName(safe(step == null ? "" : step.getTestcaseName()))
+                .description(safe(step == null ? "" : step.getDescription()))
+                .keywordName(safe(step == null ? "" : step.getKeyword()))
+                .objectName(safe(step == null ? "" : step.getObject()))
+                .application(safe(step == null ? "" : step.getApplication()))
+                .rawValue(safe(step == null ? "" : step.getValue()))
+                .resolvedValue(safe(resolvedValue))
+                .rawXpath(safe(rawXpath))
+                .resolvedXpath(safe(resolvedXpath))
+                .executedByClass(safe(executedByClass))
+                .executionSource(safe(executionSource))
+                .success(success)
+                .status(safe(status))
+                .evidence(safe(evidence))
+                .message(safe(message))
+                .excelRowNumber(step == null ? 0 : step.getExcelRowNumber())
+                .stepOrder(step == null ? 0 : step.getStepOrder())
+                .build();
     }
 
     private static ExecutionResult fromResolvedStep(
@@ -209,28 +255,14 @@ public class ExecutionResult {
             String evidence,
             String message
     ) {
-        return new ExecutionResult(
-                safe(step == null ? "" : step.getScenarioNo()),
-                safe(step == null ? "" : step.getScenarioName()),
-                safe(step == null ? "" : step.getScenarioAction()),
-                safe(step == null ? "" : step.getTestcaseName()),
-                safe(step == null ? "" : step.getDescription()),
-                safe(step == null ? "" : step.getKeyword()),
-                safe(step == null ? "" : step.getObjectName()),
-                safe(step == null ? "" : step.getApplication()),
-                safe(step == null ? "" : step.getRawValue()),
-                safe(step == null ? "" : step.getResolvedValue()),
-                safe(step == null ? "" : step.getRawXPath()),
-                safe(step == null ? "" : step.getResolvedXPath()),
-                safe(executedByClass),
-                safe(executionSource),
-                success,
-                safe(status),
-                safe(evidence),
-                safe(message),
-                step == null ? 0 : step.getExcelRow(),
-                step == null ? 0 : step.getStepNumber()
-        );
+        return fromStep(step)
+                .executedByClass(safe(executedByClass))
+                .executionSource(safe(executionSource))
+                .success(success)
+                .status(safe(status))
+                .evidence(safe(evidence))
+                .message(safe(message))
+                .build();
     }
 
     public String getScenarioNo() {
@@ -339,5 +371,152 @@ public class ExecutionResult {
 
     private static String safe(String value) {
         return value == null ? "" : value;
+    }
+
+    public static final class Builder {
+
+        private String scenarioNo;
+        private String scenarioName;
+        private String scenarioAction;
+        private String testcaseName;
+        private String description;
+        private String keywordName;
+        private String objectName;
+        private String application;
+        private String rawValue;
+        private String resolvedValue;
+        private String rawXpath;
+        private String resolvedXpath;
+        private String executedByClass;
+        private String executionSource;
+        private boolean success;
+        private String status;
+        private String evidence;
+        private String message;
+        private int excelRowNumber;
+        private int stepOrder;
+
+        private Builder() {
+        }
+
+        public Builder scenarioNo(String scenarioNo) {
+            this.scenarioNo = scenarioNo;
+            return this;
+        }
+
+        public Builder scenarioName(String scenarioName) {
+            this.scenarioName = scenarioName;
+            return this;
+        }
+
+        public Builder scenarioAction(String scenarioAction) {
+            this.scenarioAction = scenarioAction;
+            return this;
+        }
+
+        public Builder testcaseName(String testcaseName) {
+            this.testcaseName = testcaseName;
+            return this;
+        }
+
+        public Builder description(String description) {
+            this.description = description;
+            return this;
+        }
+
+        public Builder keywordName(String keywordName) {
+            this.keywordName = keywordName;
+            return this;
+        }
+
+        public Builder keyword(String keyword) {
+            return keywordName(keyword);
+        }
+
+        public Builder objectName(String objectName) {
+            this.objectName = objectName;
+            return this;
+        }
+
+        public Builder application(String application) {
+            this.application = application;
+            return this;
+        }
+
+        public Builder rawValue(String rawValue) {
+            this.rawValue = rawValue;
+            return this;
+        }
+
+        public Builder resolvedValue(String resolvedValue) {
+            this.resolvedValue = resolvedValue;
+            return this;
+        }
+
+        public Builder rawXpath(String rawXpath) {
+            this.rawXpath = rawXpath;
+            return this;
+        }
+
+        public Builder resolvedXpath(String resolvedXpath) {
+            this.resolvedXpath = resolvedXpath;
+            return this;
+        }
+
+        public Builder executedByClass(String executedByClass) {
+            this.executedByClass = executedByClass;
+            return this;
+        }
+
+        public Builder executedBy(String executedBy) {
+            return executedByClass(executedBy);
+        }
+
+        public Builder executionSource(String executionSource) {
+            this.executionSource = executionSource;
+            return this;
+        }
+
+        public Builder success(boolean success) {
+            this.success = success;
+            return this;
+        }
+
+        public Builder status(String status) {
+            this.status = status;
+            return this;
+        }
+
+        public Builder evidence(String evidence) {
+            this.evidence = evidence;
+            return this;
+        }
+
+        public Builder message(String message) {
+            this.message = message;
+            return this;
+        }
+
+        public Builder excelRowNumber(int excelRowNumber) {
+            this.excelRowNumber = excelRowNumber;
+            return this;
+        }
+
+        public Builder excelRow(int excelRow) {
+            return excelRowNumber(excelRow);
+        }
+
+        public Builder stepOrder(int stepOrder) {
+            this.stepOrder = stepOrder;
+            return this;
+        }
+
+        public Builder stepNumber(int stepNumber) {
+            return stepOrder(stepNumber);
+        }
+
+        public ExecutionResult build() {
+            return new ExecutionResult(this);
+        }
     }
 }

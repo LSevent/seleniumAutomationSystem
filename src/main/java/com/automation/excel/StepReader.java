@@ -113,19 +113,19 @@ public class StepReader {
         int stepOrder = testCaseBlock.getSteps().size() + 1;
         String application = rowData.application().isBlank() ? testCaseBlock.getApplication() : rowData.application();
 
-        return new TestStep(
-                scenario.getNo(),
-                scenario.getScenarioName(),
-                scenario.getAction(),
-                testCaseBlock.getTestcaseName(),
-                rowData.keyword(),
-                rowData.object(),
-                rowData.value(),
-                application,
-                rowData.description(),
-                excelRowNumber,
-                stepOrder
-        );
+        return TestStep.builder()
+                .scenarioNo(scenario.getNo())
+                .scenarioName(scenario.getScenarioName())
+                .scenarioAction(scenario.getAction())
+                .testcaseName(testCaseBlock.getTestcaseName())
+                .keyword(rowData.keyword())
+                .object(rowData.object())
+                .value(rowData.value())
+                .application(application)
+                .description(rowData.description())
+                .excelRowNumber(excelRowNumber)
+                .stepOrder(stepOrder)
+                .build();
     }
 
     private boolean parseRunValue(String runValue, String sheetName, int excelRowNumber) {
