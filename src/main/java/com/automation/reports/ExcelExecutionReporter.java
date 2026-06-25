@@ -264,8 +264,8 @@ public class ExcelExecutionReporter {
                 safe(result.getApplication()),
                 displayRawValue(result),
                 displayResolvedValue(result),
-                safe(result.getRawXpath()),
-                safe(result.getResolvedXpath()),
+                safe(result.getRawXPath()),
+                safe(result.getResolvedXPath()),
                 executedBy(result),
                 safe(result.getStatus()),
                 safe(evidence)
@@ -277,7 +277,7 @@ public class ExcelExecutionReporter {
                 safe(result.getRawValue()),
                 config.isShowSensitiveData(),
                 result.getObjectName(),
-                result.getResolvedXpath(),
+                result.getResolvedXPath(),
                 result.getDescription(),
                 result.getKeywordName()
         );
@@ -293,7 +293,7 @@ public class ExcelExecutionReporter {
                 config.isShowSensitiveData(),
                 result.getRawValue(),
                 result.getObjectName(),
-                result.getResolvedXpath(),
+                result.getResolvedXPath(),
                 result.getDescription(),
                 result.getKeywordName()
         );

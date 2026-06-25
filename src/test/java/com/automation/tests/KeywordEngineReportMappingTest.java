@@ -70,8 +70,8 @@ public class KeywordEngineReportMappingTest {
         Assert.assertEquals(result.getApplication(), step.getApplication());
         Assert.assertEquals(result.getRawValue(), step.getRawValue());
         Assert.assertEquals(result.getResolvedValue(), step.getResolvedValue());
-        Assert.assertEquals(result.getRawXpath(), step.getRawXPath());
-        Assert.assertEquals(result.getResolvedXpath(), step.getResolvedXPath());
+        Assert.assertEquals(result.getRawXPath(), step.getRawXPath());
+        Assert.assertEquals(result.getResolvedXPath(), step.getResolvedXPath());
         Assert.assertEquals(result.getExecutedByClass(), "mapping.Executor");
         Assert.assertEquals(result.getStatus(), ExecutionResult.STATUS_PASS);
         Assert.assertEquals(result.getEvidence(), "");

@@ -78,9 +78,9 @@ public class FunctionResolverNoArgTest {
     @Test
     public void specificNoArgMethodShouldWinWhenBaseHasSameKeyword() {
         FakeWebDriver driver = driver();
-        String resolvedXpath = "//button[@id='specific-click']";
-        driver.addElement(resolvedXpath, "Login");
-        ResolvedStepContext step = step("BRS", "click", "btnLogin", resolvedXpath, "");
+        String resolvedXPath = "//button[@id='specific-click']";
+        driver.addElement(resolvedXPath, "Login");
+        ResolvedStepContext step = step("BRS", "click", "btnLogin", resolvedXPath, "");
         StepContextHolder.set(step);
 
         KeywordExecutionResult result = new FunctionResolver(driver.driver()).execute(
@@ -93,19 +93,19 @@ public class FunctionResolverNoArgTest {
                 result.getExecutedByClass(),
                 "com.automation.functions.BRS.SpecificFunction"
         );
-        Assert.assertTrue(driver.element(resolvedXpath).isClicked());
+        Assert.assertTrue(driver.element(resolvedXPath).isClicked());
     }
 
     @Test
-    public void productionSpecificNoArgShouldUseResolvedXpathFromCurrentContext() {
+    public void productionSpecificNoArgShouldUseResolvedXPathFromCurrentContext() {
         FakeWebDriver driver = driver();
-        String resolvedXpath = "//button[@id='resolved-room']";
-        driver.addElement(resolvedXpath, "Meeting Room A");
+        String resolvedXPath = "//button[@id='resolved-room']";
+        driver.addElement(resolvedXPath, "Meeting Room A");
         ResolvedStepContext step = step(
                 "BRS",
                 "selectRoomByName",
                 "btnRoom",
-                resolvedXpath,
+                resolvedXPath,
                 "Meeting Room A"
         );
         StepContextHolder.set(step);
@@ -116,16 +116,16 @@ public class FunctionResolverNoArgTest {
         );
 
         Assert.assertEquals(result.getSourceType(), KeywordSourceType.SPECIFIC);
-        Assert.assertTrue(driver.element(resolvedXpath).isClicked());
+        Assert.assertTrue(driver.element(resolvedXPath).isClicked());
         Assert.assertSame(StepContextHolder.get(), step);
     }
 
     @Test
     public void baseNoArgShouldUseResolvedValueFromCurrentContext() {
         FakeWebDriver driver = driver();
-        String resolvedXpath = "//input[@id='resolved-username']";
-        driver.addElement(resolvedXpath, "");
-        ResolvedStepContext step = step("NO_SPECIFIC", "input", "txtUsername", resolvedXpath, "resolved_user");
+        String resolvedXPath = "//input[@id='resolved-username']";
+        driver.addElement(resolvedXPath, "");
+        ResolvedStepContext step = step("NO_SPECIFIC", "input", "txtUsername", resolvedXPath, "resolved_user");
         StepContextHolder.set(step);
 
         KeywordExecutionResult result = new FunctionResolver(driver.driver()).execute(
@@ -134,7 +134,7 @@ public class FunctionResolverNoArgTest {
         );
 
         Assert.assertEquals(result.getSourceType(), KeywordSourceType.BASE);
-        Assert.assertEquals(driver.element(resolvedXpath).getValue(), "resolved_user");
+        Assert.assertEquals(driver.element(resolvedXPath).getValue(), "resolved_user");
         Assert.assertSame(StepContextHolder.get(), step);
     }
 
@@ -220,7 +220,7 @@ public class FunctionResolverNoArgTest {
             String application,
             String keyword,
             String objectName,
-            String resolvedXpath,
+            String resolvedXPath,
             String resolvedValue
     ) {
         return ResolvedStepContext.builder()
@@ -238,8 +238,8 @@ public class FunctionResolverNoArgTest {
                 .description("Resolver test step")
                 .rawValue(resolvedValue)
                 .resolvedValue(resolvedValue)
-                .rawXPath(resolvedXpath)
-                .resolvedXPath(resolvedXpath)
+                .rawXPath(resolvedXPath)
+                .resolvedXPath(resolvedXPath)
                 .executedBy("")
                 .build();
     }

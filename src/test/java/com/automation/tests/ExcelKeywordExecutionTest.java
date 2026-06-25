@@ -62,7 +62,7 @@ public class ExcelKeywordExecutionTest {
             Assert.assertEquals(fakeDriver.element("//input[@id='password']").getValue(), "brs123");
             Assert.assertEquals(fakeDriver.element("//input[@id='bookingTitle']").getValue(), "Weekly Meeting");
             Assert.assertTrue(fakeDriver.element("//button[contains(text(),'Meeting Room A')]").isClicked());
-            Assert.assertEquals(results.get(7).getResolvedXpath(), "//button[contains(text(),'Meeting Room A')]");
+            Assert.assertEquals(results.get(7).getResolvedXPath(), "//button[contains(text(),'Meeting Room A')]");
         }
     }
 

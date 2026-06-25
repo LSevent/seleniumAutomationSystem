@@ -27,7 +27,7 @@ public class PreRunValidatorTest {
     }
 
     @Test
-    public void allXpathDependentKeywordsShouldBeValidatedBeforeRuntime() {
+    public void allXPathDependentKeywordsShouldBeValidatedBeforeRuntime() {
         List<String> keywords = List.of(
                 "click",
                 "verifyDisplayed",
@@ -107,7 +107,7 @@ public class PreRunValidatorTest {
     }
 
     @Test
-    public void missingXpathShouldFailClearly() {
+    public void missingXPathShouldFailClearly() {
         FrameworkException exception = validationFailure(step("click", "btnMissing", "", "", "", "", "BRS"));
 
         Assert.assertTrue(exception.getMessage().contains("Object was not resolved from OBJECT_REPOSITORY."));
@@ -138,7 +138,7 @@ public class PreRunValidatorTest {
     }
 
     @Test
-    public void clickMissingXpathShouldFailClearly() {
+    public void clickMissingXPathShouldFailClearly() {
         FrameworkException exception = validationFailure(step("click", "btnLogin", "", "", "", "", "BRS"));
 
         assertContainsContext(exception, "XPath is required for keyword 'click'.", "click", "btnLogin", "BRS");
@@ -190,7 +190,7 @@ public class PreRunValidatorTest {
     }
 
     @Test
-    public void unresolvedDynamicXpathShouldFailClearly() {
+    public void unresolvedDynamicXPathShouldFailClearly() {
         FrameworkException exception = validationFailure(step(
                 "click",
                 "btnRoomByName",

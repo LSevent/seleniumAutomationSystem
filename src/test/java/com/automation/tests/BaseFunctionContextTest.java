@@ -28,7 +28,7 @@ public class BaseFunctionContextTest {
     }
 
     @Test
-    public void clickShouldUseResolvedXpathInsteadOfObjectNameOrRawXpath() {
+    public void clickShouldUseResolvedXPathInsteadOfObjectNameOrRawXPath() {
         FakeWebDriver driver = driver();
         StepContextHolder.set(step(
                 "click",
@@ -45,7 +45,7 @@ public class BaseFunctionContextTest {
     }
 
     @Test
-    public void inputShouldUseResolvedXpathAndResolvedValue() {
+    public void inputShouldUseResolvedXPathAndResolvedValue() {
         FakeWebDriver driver = driver();
         StepContextHolder.set(step(
                 "input",
@@ -62,7 +62,7 @@ public class BaseFunctionContextTest {
     }
 
     @Test
-    public void verifyDisplayedShouldUseResolvedXpath() {
+    public void verifyDisplayedShouldUseResolvedXPath() {
         FakeWebDriver driver = driver();
         StepContextHolder.set(step(
                 "verifyDisplayed",
@@ -77,7 +77,7 @@ public class BaseFunctionContextTest {
     }
 
     @Test
-    public void verifyTextShouldUseResolvedXpathAndResolvedValue() {
+    public void verifyTextShouldUseResolvedXPathAndResolvedValue() {
         FakeWebDriver driver = driver();
         StepContextHolder.set(step(
                 "verifyText",
@@ -140,8 +140,8 @@ public class BaseFunctionContextTest {
             String objectName,
             String rawValue,
             String resolvedValue,
-            String rawXpath,
-            String resolvedXpath
+            String rawXPath,
+            String resolvedXPath
     ) {
         return ResolvedStepContext.builder()
                 .scenarioNo("1")
@@ -158,8 +158,8 @@ public class BaseFunctionContextTest {
                 .description("BaseFunction context test")
                 .rawValue(rawValue)
                 .resolvedValue(resolvedValue)
-                .rawXPath(rawXpath)
-                .resolvedXPath(resolvedXpath)
+                .rawXPath(rawXPath)
+                .resolvedXPath(resolvedXPath)
                 .executedBy("")
                 .build();
     }

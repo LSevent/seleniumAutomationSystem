@@ -282,7 +282,7 @@ public class KeywordEngine {
                     result.getKeywordName(),
                     result.getObjectName(),
                     result.getApplication(),
-                    result.getResolvedXpath(),
+                    result.getResolvedXPath(),
                     result.getStatus(),
                     result.getExecutionSource(),
                     result.getMessage()
@@ -298,7 +298,7 @@ public class KeywordEngine {
                     result.getKeywordName(),
                     result.getObjectName(),
                     result.getApplication(),
-                    result.getResolvedXpath(),
+                    result.getResolvedXPath(),
                     result.getStatus(),
                     result.getExecutionSource()
             );
@@ -313,7 +313,7 @@ public class KeywordEngine {
                     result.getKeywordName(),
                     result.getObjectName(),
                     result.getApplication(),
-                    result.getResolvedXpath(),
+                    result.getResolvedXPath(),
                     result.getStatus(),
                     result.getExecutionSource(),
                     result.getMessage()
@@ -357,8 +357,8 @@ public class KeywordEngine {
             context.setExecutedBySource("DATA");
             context.setExecutedByClass(DataReader.class.getName());
             context.setResolvedValue("");
-            context.setResolvedXpath("");
-            context.setRawXpath("");
+            context.setResolvedXPath("");
+            context.setRawXPath("");
             context.setMessage("Failed to resolve value for step row " + step.getExcelRowNumber() + "."
                     + System.lineSeparator()
                     + "Raw value: " + rawValue + "."
@@ -373,16 +373,16 @@ public class KeywordEngine {
     private boolean resolveObject(ExecutionContext context) {
         TestStep step = context.getTestStep();
         if (isBlank(step.getObject())) {
-            context.setRawXpath("");
-            context.setResolvedXpath("");
+            context.setRawXPath("");
+            context.setResolvedXPath("");
             return true;
         }
 
         try {
             ResolvedObject resolvedObject = objectRepositoryReader.resolveObject(step, context.getScenario());
             context.setResolvedObject(resolvedObject);
-            context.setRawXpath(resolvedObject == null ? "" : resolvedObject.getRawXpath());
-            context.setResolvedXpath(resolvedObject == null ? "" : resolvedObject.getResolvedXpath());
+            context.setRawXPath(resolvedObject == null ? "" : resolvedObject.getRawXPath());
+            context.setResolvedXPath(resolvedObject == null ? "" : resolvedObject.getResolvedXPath());
             if (resolvedObject != null) {
                 context.setResolvedValue(resolvedObject.getResolvedValue());
             }
@@ -413,8 +413,8 @@ public class KeywordEngine {
                     context.getScenario(),
                     step,
                     context.getResolvedValue(),
-                    context.getRawXpath(),
-                    context.getResolvedXpath(),
+                    context.getRawXPath(),
+                    context.getResolvedXPath(),
                     context.getExecutedByClass(),
                     context.getExecutedBySource(),
                     keywordResult.getMessage()
@@ -451,8 +451,8 @@ public class KeywordEngine {
                 .description(safe(step.getDescription()))
                 .rawValue(safe(step.getValue()))
                 .resolvedValue(context.getResolvedValue())
-                .rawXPath(context.getRawXpath())
-                .resolvedXPath(context.getResolvedXpath())
+                .rawXPath(context.getRawXPath())
+                .resolvedXPath(context.getResolvedXPath())
                 .executedBy(context.getExecutedByClass())
                 .build();
     }
@@ -545,8 +545,8 @@ public class KeywordEngine {
                 context.getScenario(),
                 step,
                 context.getResolvedValue(),
-                context.getRawXpath(),
-                context.getResolvedXpath(),
+                context.getRawXPath(),
+                context.getResolvedXPath(),
                 context.getExecutedByClass(),
                 context.getExecutedBySource(),
                 context.getMessage()

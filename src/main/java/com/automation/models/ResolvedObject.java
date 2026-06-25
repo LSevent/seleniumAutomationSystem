@@ -4,8 +4,8 @@ public class ResolvedObject {
 
     private final String originalObjectName;
     private final String application;
-    private final String rawXpath;
-    private final String resolvedXpath;
+    private final String rawXPath;
+    private final String resolvedXPath;
     private final String rawValue;
     private final String resolvedValue;
     private final int excelRowNumber;
@@ -13,16 +13,16 @@ public class ResolvedObject {
     public ResolvedObject(
             String originalObjectName,
             String application,
-            String rawXpath,
-            String resolvedXpath,
+            String rawXPath,
+            String resolvedXPath,
             String rawValue,
             String resolvedValue,
             int excelRowNumber
     ) {
         this.originalObjectName = originalObjectName;
         this.application = application;
-        this.rawXpath = rawXpath;
-        this.resolvedXpath = resolvedXpath;
+        this.rawXPath = rawXPath;
+        this.resolvedXPath = resolvedXPath;
         this.rawValue = rawValue;
         this.resolvedValue = resolvedValue;
         this.excelRowNumber = excelRowNumber;
@@ -36,12 +36,12 @@ public class ResolvedObject {
         return application;
     }
 
-    public String getRawXpath() {
-        return rawXpath;
+    public String getRawXPath() {
+        return rawXPath;
     }
 
-    public String getResolvedXpath() {
-        return resolvedXpath;
+    public String getResolvedXPath() {
+        return resolvedXPath;
     }
 
     public String getRawValue() {
@@ -61,8 +61,8 @@ public class ResolvedObject {
         return "ResolvedObject{" +
                 "originalObjectName='" + originalObjectName + '\'' +
                 ", application='" + application + '\'' +
-                ", rawXpath='" + rawXpath + '\'' +
-                ", resolvedXpath='" + resolvedXpath + '\'' +
+                ", rawXPath='" + rawXPath + '\'' +
+                ", resolvedXPath='" + resolvedXPath + '\'' +
                 ", excelRowNumber=" + excelRowNumber +
                 '}';
     }

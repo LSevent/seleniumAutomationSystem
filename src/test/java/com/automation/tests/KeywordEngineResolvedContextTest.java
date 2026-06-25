@@ -58,7 +58,7 @@ public class KeywordEngineResolvedContextTest {
 
         Assert.assertTrue(result.isSuccess(), result.getMessage());
         Assert.assertSame(resolver.observedContext, step);
-        Assert.assertEquals(resolver.observedXpath, step.getResolvedXPath());
+        Assert.assertEquals(resolver.observedXPath, step.getResolvedXPath());
         Assert.assertEquals(resolver.observedValue, step.getResolvedValue());
     }
 
@@ -102,8 +102,8 @@ public class KeywordEngineResolvedContextTest {
         Assert.assertEquals(result.getApplication(), "BRS");
         Assert.assertEquals(result.getRawValue(), "LOGIN_DATA.USERNAME");
         Assert.assertEquals(result.getResolvedValue(), "brs_admin");
-        Assert.assertEquals(result.getRawXpath(), "//input[@id='rawUsername']");
-        Assert.assertEquals(result.getResolvedXpath(), "//input[@id='resolvedUsername']");
+        Assert.assertEquals(result.getRawXPath(), "//input[@id='rawUsername']");
+        Assert.assertEquals(result.getResolvedXPath(), "//input[@id='resolvedUsername']");
         Assert.assertEquals(result.getExecutedByClass(), "context.Executor");
         Assert.assertEquals(result.getExecutionSource(), KeywordSourceType.BASE.name());
         Assert.assertEquals(result.getStatus(), ExecutionResult.STATUS_PASS);
@@ -245,7 +245,7 @@ public class KeywordEngineResolvedContextTest {
 
         private final boolean fail;
         private ResolvedStepContext observedContext;
-        private String observedXpath;
+        private String observedXPath;
         private String observedValue;
 
         private ObservingResolver(FakeWebDriver driver, boolean fail) {
@@ -256,7 +256,7 @@ public class KeywordEngineResolvedContextTest {
         @Override
         public KeywordExecutionResult execute(String application, String keywordName) {
             observedContext = StepContextHolder.get();
-            observedXpath = observedContext.getResolvedXPath();
+            observedXPath = observedContext.getResolvedXPath();
             observedValue = observedContext.getResolvedValue();
             if (fail) {
                 throw new FrameworkException("Synthetic keyword failure.");

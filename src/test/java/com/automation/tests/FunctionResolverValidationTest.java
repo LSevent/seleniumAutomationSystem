@@ -95,7 +95,7 @@ public class FunctionResolverValidationTest {
             FunctionResolver resolver,
             String application,
             String keyword,
-            String resolvedXpath,
+            String resolvedXPath,
             String resolvedValue
     ) {
         StepContextHolder.set(ResolvedStepContext.builder()
@@ -108,13 +108,13 @@ public class FunctionResolverValidationTest {
                 .excelRow(3)
                 .stepNumber(1)
                 .keyword(keyword)
-                .objectName(resolvedXpath == null || resolvedXpath.isBlank() ? "" : "testObject")
+                .objectName(resolvedXPath == null || resolvedXPath.isBlank() ? "" : "testObject")
                 .application(application)
                 .description("Resolver validation step")
                 .rawValue(resolvedValue)
                 .resolvedValue(resolvedValue)
-                .rawXPath(resolvedXpath)
-                .resolvedXPath(resolvedXpath)
+                .rawXPath(resolvedXPath)
+                .resolvedXPath(resolvedXPath)
                 .executedBy("")
                 .build());
         try {

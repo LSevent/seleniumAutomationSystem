@@ -12,8 +12,8 @@ public class ExecutionContext {
     private TestStep testStep;
     private String resolvedValue = "";
     private ResolvedObject resolvedObject;
-    private String resolvedXpath = "";
-    private String rawXpath = "";
+    private String resolvedXPath = "";
+    private String rawXPath = "";
     private String executedByClass = "";
     private String executedBySource = "";
     private String message = "";
@@ -59,20 +59,20 @@ public class ExecutionContext {
         this.resolvedObject = resolvedObject;
     }
 
-    public String getResolvedXpath() {
-        return resolvedXpath;
+    public String getResolvedXPath() {
+        return resolvedXPath;
     }
 
-    public void setResolvedXpath(String resolvedXpath) {
-        this.resolvedXpath = resolvedXpath == null ? "" : resolvedXpath;
+    public void setResolvedXPath(String resolvedXPath) {
+        this.resolvedXPath = resolvedXPath == null ? "" : resolvedXPath;
     }
 
-    public String getRawXpath() {
-        return rawXpath;
+    public String getRawXPath() {
+        return rawXPath;
     }
 
-    public void setRawXpath(String rawXpath) {
-        this.rawXpath = rawXpath == null ? "" : rawXpath;
+    public void setRawXPath(String rawXPath) {
+        this.rawXPath = rawXPath == null ? "" : rawXPath;
     }
 
     public String getExecutedByClass() {

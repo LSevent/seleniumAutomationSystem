@@ -22,8 +22,8 @@ public class ExecutionResult {
                 .application(safe(step == null ? "" : step.getApplication()))
                 .rawValue(safe(step == null ? "" : step.getRawValue()))
                 .resolvedValue(safe(step == null ? "" : step.getResolvedValue()))
-                .rawXpath(safe(step == null ? "" : step.getRawXPath()))
-                .resolvedXpath(safe(step == null ? "" : step.getResolvedXPath()))
+                .rawXPath(safe(step == null ? "" : step.getRawXPath()))
+                .resolvedXPath(safe(step == null ? "" : step.getResolvedXPath()))
                 .executedByClass(safe(step == null ? "" : step.getExecutedBy()))
                 .excelRowNumber(step == null ? 0 : step.getExcelRow())
                 .stepOrder(step == null ? 0 : step.getStepNumber());
@@ -39,8 +39,8 @@ public class ExecutionResult {
     private final String application;
     private final String rawValue;
     private final String resolvedValue;
-    private final String rawXpath;
-    private final String resolvedXpath;
+    private final String rawXPath;
+    private final String resolvedXPath;
     private final String executedByClass;
     private final String executionSource;
     private final boolean success;
@@ -61,8 +61,8 @@ public class ExecutionResult {
             String application,
             String rawValue,
             String resolvedValue,
-            String rawXpath,
-            String resolvedXpath,
+            String rawXPath,
+            String resolvedXPath,
             String executedByClass,
             String executionSource,
             boolean success,
@@ -82,8 +82,8 @@ public class ExecutionResult {
         this.application = application;
         this.rawValue = rawValue;
         this.resolvedValue = resolvedValue;
-        this.rawXpath = rawXpath;
-        this.resolvedXpath = resolvedXpath;
+        this.rawXPath = rawXPath;
+        this.resolvedXPath = resolvedXPath;
         this.executedByClass = executedByClass;
         this.executionSource = executionSource;
         this.success = success;
@@ -105,8 +105,8 @@ public class ExecutionResult {
         this.application = builder.application;
         this.rawValue = builder.rawValue;
         this.resolvedValue = builder.resolvedValue;
-        this.rawXpath = builder.rawXpath;
-        this.resolvedXpath = builder.resolvedXpath;
+        this.rawXPath = builder.rawXPath;
+        this.resolvedXPath = builder.resolvedXPath;
         this.executedByClass = builder.executedByClass;
         this.executionSource = builder.executionSource;
         this.success = builder.success;
@@ -121,54 +121,54 @@ public class ExecutionResult {
             Scenario scenario,
             TestStep step,
             String resolvedValue,
-            String rawXpath,
-            String resolvedXpath,
+            String rawXPath,
+            String resolvedXPath,
             String executedByClass,
             String executionSource,
             String message
     ) {
-        return fromStep(scenario, step, resolvedValue, rawXpath, resolvedXpath, executedByClass, executionSource, true, STATUS_PASS, "", message);
+        return fromStep(scenario, step, resolvedValue, rawXPath, resolvedXPath, executedByClass, executionSource, true, STATUS_PASS, "", message);
     }
 
     public static ExecutionResult success(
             Scenario scenario,
             TestStep step,
             String resolvedValue,
-            String rawXpath,
-            String resolvedXpath,
+            String rawXPath,
+            String resolvedXPath,
             String executedByClass,
             String executionSource,
             String evidence,
             String message
     ) {
-        return fromStep(scenario, step, resolvedValue, rawXpath, resolvedXpath, executedByClass, executionSource, true, STATUS_PASS, evidence, message);
+        return fromStep(scenario, step, resolvedValue, rawXPath, resolvedXPath, executedByClass, executionSource, true, STATUS_PASS, evidence, message);
     }
 
     public static ExecutionResult failure(
             Scenario scenario,
             TestStep step,
             String resolvedValue,
-            String rawXpath,
-            String resolvedXpath,
+            String rawXPath,
+            String resolvedXPath,
             String executedByClass,
             String executionSource,
             String message
     ) {
-        return fromStep(scenario, step, resolvedValue, rawXpath, resolvedXpath, executedByClass, executionSource, false, STATUS_FAIL, "", message);
+        return fromStep(scenario, step, resolvedValue, rawXPath, resolvedXPath, executedByClass, executionSource, false, STATUS_FAIL, "", message);
     }
 
     public static ExecutionResult skipped(
             Scenario scenario,
             TestStep step,
             String resolvedValue,
-            String rawXpath,
-            String resolvedXpath,
+            String rawXPath,
+            String resolvedXPath,
             String executedByClass,
             String executionSource,
             String evidence,
             String message
     ) {
-        return fromStep(scenario, step, resolvedValue, rawXpath, resolvedXpath, executedByClass, executionSource, true, STATUS_SKIP, evidence, message);
+        return fromStep(scenario, step, resolvedValue, rawXPath, resolvedXPath, executedByClass, executionSource, true, STATUS_SKIP, evidence, message);
     }
 
     public static ExecutionResult success(
@@ -213,8 +213,8 @@ public class ExecutionResult {
             Scenario scenario,
             TestStep step,
             String resolvedValue,
-            String rawXpath,
-            String resolvedXpath,
+            String rawXPath,
+            String resolvedXPath,
             String executedByClass,
             String executionSource,
             boolean success,
@@ -233,8 +233,8 @@ public class ExecutionResult {
                 .application(safe(step == null ? "" : step.getApplication()))
                 .rawValue(safe(step == null ? "" : step.getValue()))
                 .resolvedValue(safe(resolvedValue))
-                .rawXpath(safe(rawXpath))
-                .resolvedXpath(safe(resolvedXpath))
+                .rawXPath(safe(rawXPath))
+                .resolvedXPath(safe(resolvedXPath))
                 .executedByClass(safe(executedByClass))
                 .executionSource(safe(executionSource))
                 .success(success)
@@ -305,12 +305,12 @@ public class ExecutionResult {
         return resolvedValue;
     }
 
-    public String getRawXpath() {
-        return rawXpath;
+    public String getRawXPath() {
+        return rawXPath;
     }
 
-    public String getResolvedXpath() {
-        return resolvedXpath;
+    public String getResolvedXPath() {
+        return resolvedXPath;
     }
 
     public String getExecutedByClass() {
@@ -356,8 +356,8 @@ public class ExecutionResult {
                 ", keywordName='" + keywordName + '\'' +
                 ", objectName='" + objectName + '\'' +
                 ", application='" + application + '\'' +
-                ", rawXpath='" + rawXpath + '\'' +
-                ", resolvedXpath='" + resolvedXpath + '\'' +
+                ", rawXPath='" + rawXPath + '\'' +
+                ", resolvedXPath='" + resolvedXPath + '\'' +
                 ", executedByClass='" + executedByClass + '\'' +
                 ", executionSource='" + executionSource + '\'' +
                 ", success=" + success +
@@ -385,8 +385,8 @@ public class ExecutionResult {
         private String application;
         private String rawValue;
         private String resolvedValue;
-        private String rawXpath;
-        private String resolvedXpath;
+        private String rawXPath;
+        private String resolvedXPath;
         private String executedByClass;
         private String executionSource;
         private boolean success;
@@ -453,13 +453,13 @@ public class ExecutionResult {
             return this;
         }
 
-        public Builder rawXpath(String rawXpath) {
-            this.rawXpath = rawXpath;
+        public Builder rawXPath(String rawXPath) {
+            this.rawXPath = rawXPath;
             return this;
         }
 
-        public Builder resolvedXpath(String resolvedXpath) {
-            this.resolvedXpath = resolvedXpath;
+        public Builder resolvedXPath(String resolvedXPath) {
+            this.resolvedXPath = resolvedXPath;
             return this;
         }
 

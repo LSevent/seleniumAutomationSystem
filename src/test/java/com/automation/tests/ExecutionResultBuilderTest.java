@@ -23,8 +23,8 @@ public class ExecutionResultBuilderTest {
                 .application("BRS")
                 .rawValue(RAW_SECRET)
                 .resolvedValue(RESOLVED_SECRET)
-                .rawXpath("//input[@name='password']")
-                .resolvedXpath("//input[@id='password']")
+                .rawXPath("//input[@name='password']")
+                .resolvedXPath("//input[@id='password']")
                 .executedByClass("com.automation.base.BaseFunction")
                 .executionSource("BASE")
                 .success(true)
@@ -45,8 +45,8 @@ public class ExecutionResultBuilderTest {
         Assert.assertEquals(result.getApplication(), "BRS");
         Assert.assertEquals(result.getRawValue(), RAW_SECRET);
         Assert.assertEquals(result.getResolvedValue(), RESOLVED_SECRET);
-        Assert.assertEquals(result.getRawXpath(), "//input[@name='password']");
-        Assert.assertEquals(result.getResolvedXpath(), "//input[@id='password']");
+        Assert.assertEquals(result.getRawXPath(), "//input[@name='password']");
+        Assert.assertEquals(result.getResolvedXPath(), "//input[@id='password']");
         Assert.assertEquals(result.getExecutedByClass(), "com.automation.base.BaseFunction");
         Assert.assertEquals(result.getExecutionSource(), "BASE");
         Assert.assertTrue(result.isSuccess());
@@ -92,8 +92,8 @@ public class ExecutionResultBuilderTest {
         Assert.assertEquals(result.getApplication(), "BRS");
         Assert.assertEquals(result.getRawValue(), RAW_SECRET);
         Assert.assertEquals(result.getResolvedValue(), RESOLVED_SECRET);
-        Assert.assertEquals(result.getRawXpath(), "//input[@name='password']");
-        Assert.assertEquals(result.getResolvedXpath(), "//input[@id='password']");
+        Assert.assertEquals(result.getRawXPath(), "//input[@name='password']");
+        Assert.assertEquals(result.getResolvedXPath(), "//input[@id='password']");
         Assert.assertEquals(result.getExecutedByClass(), "com.automation.base.BaseFunction");
         Assert.assertEquals(result.getExecutionSource(), "KEYWORD");
         Assert.assertFalse(result.isSuccess());
@@ -112,8 +112,8 @@ public class ExecutionResultBuilderTest {
                 .application("BRS")
                 .rawValue(RAW_SECRET)
                 .resolvedValue(RESOLVED_SECRET)
-                .rawXpath("//input[@name='password']")
-                .resolvedXpath("//input[@id='password']")
+                .rawXPath("//input[@name='password']")
+                .resolvedXPath("//input[@id='password']")
                 .build()
                 .toString();
 
@@ -122,7 +122,7 @@ public class ExecutionResultBuilderTest {
         Assert.assertTrue(text.contains("keywordName='input'"));
         Assert.assertTrue(text.contains("objectName='txtPassword'"));
         Assert.assertTrue(text.contains("application='BRS'"));
-        Assert.assertTrue(text.contains("resolvedXpath='//input[@id='password']'"));
+        Assert.assertTrue(text.contains("resolvedXPath='//input[@id='password']'"));
     }
 
     private ResolvedStepContext resolvedStep() {

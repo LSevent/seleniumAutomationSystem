@@ -229,10 +229,10 @@ public class FunctionResolverTest {
             FunctionResolver resolver,
             String application,
             String keyword,
-            String resolvedXpath,
+            String resolvedXPath,
             String resolvedValue
     ) {
-        StepContextHolder.set(step(application, keyword, resolvedXpath, resolvedValue));
+        StepContextHolder.set(step(application, keyword, resolvedXPath, resolvedValue));
         try {
             return resolver.execute(application, keyword);
         } finally {
@@ -243,7 +243,7 @@ public class FunctionResolverTest {
     private ResolvedStepContext step(
             String application,
             String keyword,
-            String resolvedXpath,
+            String resolvedXPath,
             String resolvedValue
     ) {
         return ResolvedStepContext.builder()
@@ -256,13 +256,13 @@ public class FunctionResolverTest {
                 .excelRow(3)
                 .stepNumber(1)
                 .keyword(keyword)
-                .objectName(resolvedXpath == null || resolvedXpath.isBlank() ? "" : "testObject")
+                .objectName(resolvedXPath == null || resolvedXPath.isBlank() ? "" : "testObject")
                 .application(application)
                 .description("Resolver keyword test")
                 .rawValue(resolvedValue)
                 .resolvedValue(resolvedValue)
-                .rawXPath(resolvedXpath)
-                .resolvedXPath(resolvedXpath)
+                .rawXPath(resolvedXPath)
+                .resolvedXPath(resolvedXPath)
                 .executedBy("")
                 .build();
     }

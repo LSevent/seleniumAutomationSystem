@@ -175,7 +175,7 @@ public class FinalTemplateValidationTest {
                 TestObject testObject = objectRepositoryReader.getObject(objectKey[0], objectKey[1]);
                 Assert.assertEquals(testObject.getApplication(), objectKey[0]);
                 Assert.assertEquals(testObject.getObjectName(), objectKey[1]);
-                Assert.assertEquals(testObject.getXpath(), expectedObject.getValue());
+                Assert.assertEquals(testObject.getXPath(), expectedObject.getValue());
             }
 
             Scenario localScenario = new Scenario("1", true, "Local Keyword Test", "Local keyword execution test", 2);
@@ -184,8 +184,8 @@ public class FinalTemplateValidationTest {
                             "BOOKING_DATA.ROOM_NAME", "BRS", "Select room", 12, 4),
                     localScenario
             );
-            Assert.assertEquals(roomObject.getRawXpath(), "//button[contains(text(),'{ROOM_NAME}')]");
-            Assert.assertEquals(roomObject.getResolvedXpath(), "//button[contains(text(),'Meeting Room A')]");
+            Assert.assertEquals(roomObject.getRawXPath(), "//button[contains(text(),'{ROOM_NAME}')]");
+            Assert.assertEquals(roomObject.getResolvedXPath(), "//button[contains(text(),'Meeting Room A')]");
 
             Scenario cancelScenario = new Scenario("3", false, "Cancel Booking", "Cancel booking example", 4);
             ResolvedObject cancelObject = objectRepositoryReader.resolveObject(
@@ -193,8 +193,8 @@ public class FinalTemplateValidationTest {
                             "BOOKING_DATA.BOOKING_ID", "BRS", "Cancel booking", 8, 1),
                     cancelScenario
             );
-            Assert.assertEquals(cancelObject.getRawXpath(), "//button[@data-booking='{BOOKING_ID}']");
-            Assert.assertEquals(cancelObject.getResolvedXpath(), "//button[@data-booking='BOOK-003']");
+            Assert.assertEquals(cancelObject.getRawXPath(), "//button[@data-booking='{BOOKING_ID}']");
+            Assert.assertEquals(cancelObject.getResolvedXPath(), "//button[@data-booking='BOOK-003']");
         }
     }
 

@@ -34,7 +34,7 @@ public class ObjectRepositoryValidationTest {
     }
 
     @Test
-    public void missingXpathHeaderShouldFailClearly() throws IOException {
+    public void missingXPathHeaderShouldFailClearly() throws IOException {
         Path workbookPath = workbook("missing-xpath-header.xlsx",
                 sheet("OBJECT_REPOSITORY", new String[]{"Application", "Object"}, new Object[][]{{"BRS", "btnLogin"}}));
 
@@ -62,7 +62,7 @@ public class ObjectRepositoryValidationTest {
     }
 
     @Test
-    public void blankXpathShouldFailClearly() throws IOException {
+    public void blankXPathShouldFailClearly() throws IOException {
         assertRepositoryFails("blank-xpath.xlsx",
                 new Object[][]{{"BRS", "btnLogin", "", "Login"}},
                 "XPath is required in OBJECT_REPOSITORY row 2.");

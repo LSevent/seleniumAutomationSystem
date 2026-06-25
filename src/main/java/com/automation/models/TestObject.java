@@ -24,7 +24,7 @@ public class TestObject {
         return objectName;
     }
 
-    public String getXpath() {
+    public String getXPath() {
         return xpath;
     }
 

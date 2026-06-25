@@ -100,7 +100,7 @@ public class PreRunValidator {
             addStepError(errors, dataReferenceError, step);
         }
 
-        validateDynamicXpath(step, errors);
+        validateDynamicXPath(step, errors);
         if (keyword.isBlank()) {
             return;
         }
@@ -114,10 +114,10 @@ public class PreRunValidator {
                     requireValue(step, keyword, errors);
             case "click", "verifydisplayed", "clear", "gettext", "waitvisible", "waitclickable",
                     "scrolltoelement", "safeclick", "pressenter", "isdisplayed", "isnotdisplayed" ->
-                    requireObjectAndXpath(step, keyword, errors);
+                    requireObjectAndXPath(step, keyword, errors);
             case "input", "verifytext", "verifytextcontains", "selectroombyname",
                     "verifybookingcreated", "verifyemployeevisible" -> {
-                requireObjectAndXpath(step, keyword, errors);
+                requireObjectAndXPath(step, keyword, errors);
                 requireValue(step, keyword, errors);
             }
             default -> {
@@ -126,7 +126,7 @@ public class PreRunValidator {
         }
     }
 
-    private void requireObjectAndXpath(
+    private void requireObjectAndXPath(
             ResolvedStepContext step,
             String keyword,
             List<ValidationError> errors
@@ -153,7 +153,7 @@ public class PreRunValidator {
         }
     }
 
-    private void validateDynamicXpath(ResolvedStepContext step, List<ValidationError> errors) {
+    private void validateDynamicXPath(ResolvedStepContext step, List<ValidationError> errors) {
         List<String> placeholders = xpathResolver.extractPlaceholders(step.getRawXPath());
         if (placeholders.size() > 1) {
             addStepError(errors, "Multiple XPath placeholders are not supported.", step);

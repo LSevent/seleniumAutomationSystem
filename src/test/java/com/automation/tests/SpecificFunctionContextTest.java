@@ -19,11 +19,11 @@ public class SpecificFunctionContextTest {
     }
 
     @Test
-    public void brsNoArgClickShouldWinOverBaseAndUseResolvedXpath() {
+    public void brsNoArgClickShouldWinOverBaseAndUseResolvedXPath() {
         FakeWebDriver driver = new FakeWebDriver();
-        String resolvedXpath = "//button[@id='resolved-login']";
-        driver.addElement(resolvedXpath, "Login");
-        ResolvedStepContext step = step("BRS", "click", "btnLogin", resolvedXpath, "");
+        String resolvedXPath = "//button[@id='resolved-login']";
+        driver.addElement(resolvedXPath, "Login");
+        ResolvedStepContext step = step("BRS", "click", "btnLogin", resolvedXPath, "");
         StepContextHolder.set(step);
 
         KeywordExecutionResult result = new FunctionResolver(driver.driver()).execute(
@@ -33,20 +33,20 @@ public class SpecificFunctionContextTest {
 
         Assert.assertEquals(result.getSourceType(), KeywordSourceType.SPECIFIC);
         Assert.assertEquals(result.getExecutedByClass(), "com.automation.functions.BRS.SpecificFunction");
-        Assert.assertTrue(driver.element(resolvedXpath).isClicked());
+        Assert.assertTrue(driver.element(resolvedXPath).isClicked());
         Assert.assertSame(StepContextHolder.get(), step);
     }
 
     @Test
-    public void hrisNoArgKeywordShouldReadResolvedXpathAndValue() {
+    public void hrisNoArgKeywordShouldReadResolvedXPathAndValue() {
         FakeWebDriver driver = new FakeWebDriver();
-        String resolvedXpath = "//div[@id='resolved-employee']";
-        driver.addElement(resolvedXpath, "Employee Alice is active");
+        String resolvedXPath = "//div[@id='resolved-employee']";
+        driver.addElement(resolvedXPath, "Employee Alice is active");
         ResolvedStepContext step = step(
                 "HRIS",
                 "verifyEmployeeVisible",
                 "employeeCard",
-                resolvedXpath,
+                resolvedXPath,
                 "Alice"
         );
         StepContextHolder.set(step);
@@ -73,7 +73,7 @@ public class SpecificFunctionContextTest {
             String application,
             String keyword,
             String objectName,
-            String resolvedXpath,
+            String resolvedXPath,
             String resolvedValue
     ) {
         return ResolvedStepContext.builder()
@@ -91,8 +91,8 @@ public class SpecificFunctionContextTest {
                 .description("Application-specific keyword")
                 .rawValue(resolvedValue)
                 .resolvedValue(resolvedValue)
-                .rawXPath(resolvedXpath)
-                .resolvedXPath(resolvedXpath)
+                .rawXPath(resolvedXPath)
+                .resolvedXPath(resolvedXPath)
                 .executedBy("")
                 .build();
     }

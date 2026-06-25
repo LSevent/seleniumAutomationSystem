@@ -51,7 +51,7 @@ public class ObjectRepositoryReaderTest {
 
             TestObject testObject = objectRepositoryReader.getObject("BRS", "btnLogin");
 
-            Assert.assertEquals(testObject.getXpath(), "//button[@id='login']");
+            Assert.assertEquals(testObject.getXPath(), "//button[@id='login']");
         }
     }
 
@@ -69,7 +69,7 @@ public class ObjectRepositoryReaderTest {
 
             Assert.assertEquals(testObject.getApplication(), "BRS");
             Assert.assertEquals(testObject.getObjectName(), "btnLogin");
-            Assert.assertEquals(testObject.getXpath(), "//button[@id='login']");
+            Assert.assertEquals(testObject.getXPath(), "//button[@id='login']");
             Assert.assertEquals(testObject.getDescription(), "");
         }
     }
@@ -84,11 +84,11 @@ public class ObjectRepositoryReaderTest {
             TestObject brsUsernameField = objectRepositoryReader.getObject("BRS", "txtUsername");
             TestObject hrisUsernameField = objectRepositoryReader.getObject("HRIS", "txtUsername");
 
-            Assert.assertEquals(brsLoginButton.getXpath(), "//button[@id='login']");
-            Assert.assertEquals(hrisLoginButton.getXpath(), "//button[@id='login']");
+            Assert.assertEquals(brsLoginButton.getXPath(), "//button[@id='login']");
+            Assert.assertEquals(hrisLoginButton.getXPath(), "//button[@id='login']");
             Assert.assertEquals(brsLoginButton.getApplication(), "BRS");
             Assert.assertEquals(hrisLoginButton.getApplication(), "HRIS");
-            Assert.assertNotEquals(brsUsernameField.getXpath(), hrisUsernameField.getXpath());
+            Assert.assertNotEquals(brsUsernameField.getXPath(), hrisUsernameField.getXPath());
         }
     }
 
@@ -99,7 +99,7 @@ public class ObjectRepositoryReaderTest {
 
             TestObject testObject = objectRepositoryReader.getObject(" brs ", " BTNLOGIN ");
 
-            Assert.assertEquals(testObject.getXpath(), "//button[@id='login']");
+            Assert.assertEquals(testObject.getXPath(), "//button[@id='login']");
         }
     }
 
@@ -113,9 +113,9 @@ public class ObjectRepositoryReaderTest {
                     scenario("1")
             );
 
-            Assert.assertEquals(resolvedObject.getRawXpath(), "//button[contains(text(),'{ROOM_NAME}')]");
+            Assert.assertEquals(resolvedObject.getRawXPath(), "//button[contains(text(),'{ROOM_NAME}')]");
             Assert.assertEquals(resolvedObject.getResolvedValue(), "Meeting Room A");
-            Assert.assertEquals(resolvedObject.getResolvedXpath(), "//button[contains(text(),'Meeting Room A')]");
+            Assert.assertEquals(resolvedObject.getResolvedXPath(), "//button[contains(text(),'Meeting Room A')]");
         }
     }
 
@@ -124,12 +124,12 @@ public class ObjectRepositoryReaderTest {
         try (ExcelReader excelReader = new ExcelReader(TEMPLATE_FILE.toString())) {
             ObjectRepositoryReader objectRepositoryReader = objectRepositoryReader(excelReader);
 
-            String resolvedXpath = objectRepositoryReader.resolveXPath(
+            String resolvedXPath = objectRepositoryReader.resolveXPath(
                     step("2", "BRS", "btnRoomByName", "BOOKING_DATA.ROOM_NAME"),
                     scenario("2")
             );
 
-            Assert.assertEquals(resolvedXpath, "//button[contains(text(),'Meeting Room B')]");
+            Assert.assertEquals(resolvedXPath, "//button[contains(text(),'Meeting Room B')]");
         }
     }
 
@@ -145,7 +145,7 @@ public class ObjectRepositoryReaderTest {
 
             Assert.assertEquals(resolvedObject.getRawValue(), "Meeting Room A");
             Assert.assertEquals(resolvedObject.getResolvedValue(), "Meeting Room A");
-            Assert.assertEquals(resolvedObject.getResolvedXpath(), "//button[contains(text(),'Meeting Room A')]");
+            Assert.assertEquals(resolvedObject.getResolvedXPath(), "//button[contains(text(),'Meeting Room A')]");
         }
     }
 
@@ -159,8 +159,8 @@ public class ObjectRepositoryReaderTest {
                     scenario("1")
             );
 
-            Assert.assertEquals(resolvedObject.getRawXpath(), "//button[@id='login']");
-            Assert.assertEquals(resolvedObject.getResolvedXpath(), "//button[@id='login']");
+            Assert.assertEquals(resolvedObject.getRawXPath(), "//button[@id='login']");
+            Assert.assertEquals(resolvedObject.getResolvedXPath(), "//button[@id='login']");
         }
     }
 
@@ -355,7 +355,7 @@ public class ObjectRepositoryReaderTest {
 
             Assert.assertEquals(roomSelectionStep.getValue(), "BOOKING_DATA.ROOM_NAME");
             Assert.assertEquals(resolvedObject.getResolvedValue(), "Meeting Room A");
-            Assert.assertEquals(resolvedObject.getResolvedXpath(), "//button[contains(text(),'Meeting Room A')]");
+            Assert.assertEquals(resolvedObject.getResolvedXPath(), "//button[contains(text(),'Meeting Room A')]");
         }
     }
 

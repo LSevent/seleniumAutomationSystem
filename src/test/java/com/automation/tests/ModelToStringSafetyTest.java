@@ -66,7 +66,7 @@ public class ModelToStringSafetyTest {
         Assert.assertTrue(text.contains("keywordName='input'"));
         Assert.assertTrue(text.contains("objectName='txtPassword'"));
         Assert.assertTrue(text.contains("application='BRS'"));
-        Assert.assertTrue(text.contains("resolvedXpath='//input[@id='password']'"));
+        Assert.assertTrue(text.contains("resolvedXPath='//input[@id='password']'"));
     }
 
     @Test
@@ -86,7 +86,7 @@ public class ModelToStringSafetyTest {
         assertDoesNotExposeSecrets(text);
         Assert.assertTrue(text.contains("originalObjectName='txtPassword'"));
         Assert.assertTrue(text.contains("application='BRS'"));
-        Assert.assertTrue(text.contains("resolvedXpath='//input[@id='password']'"));
+        Assert.assertTrue(text.contains("resolvedXPath='//input[@id='password']'"));
         Assert.assertTrue(text.contains("excelRowNumber=12"));
     }
 

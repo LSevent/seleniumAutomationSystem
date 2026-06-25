@@ -97,8 +97,8 @@ public class ExecutionPlanBuilder {
             try {
                 ResolvedObject resolvedObject = objectRepositoryReader.resolveObject(step, scenario);
                 if (resolvedObject != null) {
-                    rawXPath = safe(resolvedObject.getRawXpath());
-                    resolvedXPath = safe(resolvedObject.getResolvedXpath());
+                    rawXPath = safe(resolvedObject.getRawXPath());
+                    resolvedXPath = safe(resolvedObject.getResolvedXPath());
                     resolvedValue = safe(resolvedObject.getResolvedValue());
                 }
             } catch (RuntimeException exception) {

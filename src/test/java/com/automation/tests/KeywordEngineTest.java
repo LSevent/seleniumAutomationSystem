@@ -49,15 +49,15 @@ public class KeywordEngineTest {
 
             Assert.assertTrue(result.isSuccess(), result.getMessage());
             Assert.assertEquals(result.getResolvedValue(), "brs_admin");
-            Assert.assertEquals(result.getRawXpath(), "//input[@id='username']");
-            Assert.assertEquals(result.getResolvedXpath(), "//input[@id='username']");
+            Assert.assertEquals(result.getRawXPath(), "//input[@id='username']");
+            Assert.assertEquals(result.getResolvedXPath(), "//input[@id='username']");
             Assert.assertEquals(result.getExecutionSource(), KeywordSourceType.BASE.name());
             Assert.assertEquals(fakeDriver.element("//input[@id='username']").getValue(), "brs_admin");
         }
     }
 
     @Test
-    public void executeStepShouldResolveDynamicXpathPlaceholder() {
+    public void executeStepShouldResolveDynamicXPathPlaceholder() {
         FakeWebDriver fakeDriver = localPageDriver();
         try (ExcelReader excelReader = new ExcelReader(workbookPath.toString())) {
             Scenario scenario = activeScenario(excelReader);
@@ -68,7 +68,7 @@ public class KeywordEngineTest {
 
             Assert.assertTrue(result.isSuccess(), result.getMessage());
             Assert.assertEquals(result.getResolvedValue(), "Meeting Room A");
-            Assert.assertEquals(result.getResolvedXpath(), "//button[contains(text(),'Meeting Room A')]");
+            Assert.assertEquals(result.getResolvedXPath(), "//button[contains(text(),'Meeting Room A')]");
             Assert.assertEquals(result.getExecutionSource(), KeywordSourceType.SPECIFIC.name());
             Assert.assertTrue(fakeDriver.element("//button[contains(text(),'Meeting Room A')]").isClicked());
         }
@@ -103,7 +103,7 @@ public class KeywordEngineTest {
             Assert.assertTrue(result.isSuccess(), result.getMessage());
             Assert.assertEquals(result.getObjectName(), "");
             Assert.assertEquals(result.getResolvedValue(), baseUrl);
-            Assert.assertEquals(result.getResolvedXpath(), "");
+            Assert.assertEquals(result.getResolvedXPath(), "");
             Assert.assertEquals(fakeDriver.getCurrentUrl(), baseUrl);
         }
     }

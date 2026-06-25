@@ -91,7 +91,7 @@ public class ExecutionPlanBuilderTest {
     }
 
     @Test
-    public void mismatchedDynamicXpathPlaceholderShouldFailWithStepContext() throws IOException {
+    public void mismatchedDynamicXPathPlaceholderShouldFailWithStepContext() throws IOException {
         Path workbookPath = ValidationWorkbookFactory.createWorkbook(
                 TEMP_DIR.resolve("mismatched-placeholder.xlsx"),
                 scenarios(new Object[][]{{1, "Y", "Booking Flow", "Create booking"}}),

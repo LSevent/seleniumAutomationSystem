@@ -106,13 +106,13 @@ public class ObjectRepositoryReader {
         TestObject testObject = getObject(step.getApplication(), step.getObject());
         String rawValue = step.getValue() == null ? "" : step.getValue().trim();
         String resolvedValue = resolveStepValue(rawValue, scenario);
-        String resolvedXpath = resolveXpath(testObject.getXpath(), testObject.getObjectName(), rawValue, resolvedValue);
+        String resolvedXPath = resolveXPath(testObject.getXPath(), testObject.getObjectName(), rawValue, resolvedValue);
 
         return new ResolvedObject(
                 step.getObject(),
                 step.getApplication(),
-                testObject.getXpath(),
-                resolvedXpath,
+                testObject.getXPath(),
+                resolvedXPath,
                 rawValue,
                 resolvedValue,
                 testObject.getExcelRowNumber()
@@ -121,7 +121,7 @@ public class ObjectRepositoryReader {
 
     public String resolveXPath(TestStep step, Scenario scenario) {
         ResolvedObject resolvedObject = resolveObject(step, scenario);
-        return resolvedObject == null ? "" : resolvedObject.getResolvedXpath();
+        return resolvedObject == null ? "" : resolvedObject.getResolvedXPath();
     }
 
     public void validateObjectRepository() {
@@ -231,10 +231,10 @@ public class ObjectRepositoryReader {
                 : rawValue;
     }
 
-    private String resolveXpath(String rawXpath, String objectName, String rawValue, String resolvedValue) {
-        List<String> placeholders = xpathResolver.extractPlaceholders(rawXpath);
+    private String resolveXPath(String rawXPath, String objectName, String rawValue, String resolvedValue) {
+        List<String> placeholders = xpathResolver.extractPlaceholders(rawXPath);
         if (placeholders.isEmpty()) {
-            return rawXpath;
+            return rawXPath;
         }
         if (placeholders.size() > 1) {
             throw new FrameworkException("Multiple XPath placeholders are not supported in Phase 11 for object " + objectName + ".");
@@ -260,11 +260,11 @@ public class ObjectRepositoryReader {
             throw new FrameworkException("XPath placeholder " + placeholder + " could not be resolved for object " + objectName + ".");
         }
 
-        String resolvedXpath = xpathResolver.replacePlaceholder(rawXpath, placeholderName, resolvedValue);
-        if (xpathResolver.hasPlaceholder(resolvedXpath)) {
+        String resolvedXPath = xpathResolver.replacePlaceholder(rawXPath, placeholderName, resolvedValue);
+        if (xpathResolver.hasPlaceholder(resolvedXPath)) {
             throw new FrameworkException("XPath placeholder " + placeholder + " could not be resolved for object " + objectName + ".");
         }
-        return resolvedXpath;
+        return resolvedXPath;
     }
 
     private static int toExcelRowNumber(int rowIndex) {
