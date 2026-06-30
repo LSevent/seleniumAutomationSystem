@@ -162,10 +162,10 @@ C:/Automation/BRS/Reports/Screenshots
 
 `Final Excel Template.xlsx` is the user-facing sample workbook.
 
-You can override Excel settings from Maven:
+You can override Excel settings when running the configured Excel runner:
 
 ```bash
-mvn test -Dexcel.scenarioFilePath="C:/Automation/scenarios/BookingRoomScenarios.xlsx" -Dreport.outputDirectory="C:/Automation/reports"
+mvn test -DsuiteXmlFile=src/test/resources/excel-runner.xml -Dexcel.scenarioFilePath="C:/Automation/scenarios/BookingRoomScenarios.xlsx" -Dreport.outputDirectory="C:/Automation/reports"
 ```
 
 ## Excel Template Format
@@ -423,22 +423,43 @@ Keyword 'approveBooking' not found in SpecificFunction for application 'BRS' or 
 
 ## How To Run
 
-Run the full suite:
+Run framework regression tests:
 
 ```bash
 mvn clean test
 ```
 
-Run the configured TestNG suite explicitly:
+This runs Java regression tests for the framework itself. It does not run the real configured Excel workbook.
+
+Run the configured Excel workbook:
 
 ```bash
-mvn test -DsuiteXmlFile=src/test/resources/testng.xml
+mvn test -DsuiteXmlFile=src/test/resources/excel-runner.xml
 ```
 
-Run with a different Excel workbook:
+PowerShell users can quote the Maven property if the shell splits the `.xml` path:
+
+```powershell
+mvn test "-DsuiteXmlFile=src/test/resources/excel-runner.xml"
+```
+
+This runs the workbook configured in:
+
+```text
+src/test/resources/excelConfig.properties
+```
+
+Run the configured Excel workbook with overrides:
 
 ```bash
-mvn test -Dexcel.scenarioFilePath="C:/Automation/scenarios/BookingRoomScenarios.xlsx"
+mvn test -DsuiteXmlFile=src/test/resources/excel-runner.xml -Dexcel.scenarioFilePath="C:/Automation/BRS/Booking Room System.xlsx" -Dreport.outputDirectory="C:/Automation/BRS/Reports"
+```
+
+Configured Excel execution generates:
+
+```text
+[report.outputDirectory]/Report-[Excel file name without extension].html
+[report.outputDirectory]/Screenshots
 ```
 
 Run tests in parallel by editing:
@@ -456,7 +477,7 @@ The suite currently uses:
 ## Current Limitations
 
 - The final template is a sample. Real application URLs, objects, and data must be updated before production use.
-- The default Excel config points to the stable test workbook, not the final user template.
+- The configured Excel runner depends on the configured workbook path, browser, and target application being available locally.
 - Excel execution stops on the first failed step in the current scenario flow.
 - Retry logic is not implemented.
 - Parallel Excel scenario execution is not implemented.
