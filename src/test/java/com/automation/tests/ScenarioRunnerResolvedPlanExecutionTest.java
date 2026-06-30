@@ -73,7 +73,7 @@ public class ScenarioRunnerResolvedPlanExecutionTest {
                     runtimeStarted,
                     objectResolutionCount
             );
-            ExcelExecutionConfig executionConfig = executionConfig(workbookPath, "resolved-plan-report.html");
+            ExcelExecutionConfig executionConfig = executionConfig(workbookPath);
             ScenarioRunner runner = new ScenarioRunner(
                     new ScenarioReader(excelReader),
                     new StepReader(excelReader),
@@ -141,7 +141,7 @@ public class ScenarioRunnerResolvedPlanExecutionTest {
                                 objectRepositoryReader,
                                 new KeywordResolver(driver().driver()),
                                 new ExcelReportConfig(false, true, true),
-                                executionConfig(invalidWorkbook, "invalid-report.html")
+                                executionConfig(invalidWorkbook)
                         );
                     }
             );
@@ -182,7 +182,7 @@ public class ScenarioRunnerResolvedPlanExecutionTest {
         try (ExcelReader excelReader = new ExcelReader(inactiveWorkbook.toString())) {
             DataReader dataReader = new DataReader(excelReader);
             ObjectRepositoryReader objectRepositoryReader = new ObjectRepositoryReader(excelReader, dataReader);
-            ExcelExecutionConfig executionConfig = executionConfig(inactiveWorkbook, "inactive-report.html");
+            ExcelExecutionConfig executionConfig = executionConfig(inactiveWorkbook);
             ScenarioRunner runner = new ScenarioRunner(
                     new ScenarioReader(excelReader),
                     new StepReader(excelReader),
@@ -210,17 +210,12 @@ public class ScenarioRunnerResolvedPlanExecutionTest {
         }
     }
 
-    private ExcelExecutionConfig executionConfig(Path scenarioFile, String reportName) {
+    private ExcelExecutionConfig executionConfig(Path scenarioFile) {
         Properties properties = new Properties();
         properties.setProperty(ExcelExecutionConfig.SCENARIO_FILE_PATH_KEY, scenarioFile.toString());
         properties.setProperty(
                 ExcelExecutionConfig.REPORT_OUTPUT_DIRECTORY_KEY,
                 TEMP_DIR.resolve("reports").toString()
-        );
-        properties.setProperty(ExcelExecutionConfig.REPORT_FILE_NAME_KEY, reportName);
-        properties.setProperty(
-                ExcelExecutionConfig.SCREENSHOT_OUTPUT_DIRECTORY_KEY,
-                TEMP_DIR.resolve("screenshots").toString()
         );
         return ExcelExecutionConfig.fromProperties(properties, Map.of());
     }

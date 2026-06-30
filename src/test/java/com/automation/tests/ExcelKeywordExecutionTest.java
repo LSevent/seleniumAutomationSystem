@@ -80,8 +80,6 @@ public class ExcelKeywordExecutionTest {
         Properties properties = new Properties();
         properties.setProperty(ExcelExecutionConfig.SCENARIO_FILE_PATH_KEY, scenarioFilePath.toString());
         properties.setProperty(ExcelExecutionConfig.REPORT_OUTPUT_DIRECTORY_KEY, TEMP_DIR.resolve("reports").toString());
-        properties.setProperty(ExcelExecutionConfig.REPORT_FILE_NAME_KEY, "ExcelAutomationReport.html");
-        properties.setProperty(ExcelExecutionConfig.SCREENSHOT_OUTPUT_DIRECTORY_KEY, TEMP_DIR.resolve("reports").resolve("screenshots").toString());
         return ExcelExecutionConfig.fromProperties(properties, Map.of());
     }
 

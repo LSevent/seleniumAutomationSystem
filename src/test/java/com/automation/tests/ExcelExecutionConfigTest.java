@@ -21,10 +21,10 @@ public class ExcelExecutionConfigTest {
                 Map.of()
         );
 
-        Assert.assertTrue(config.getScenarioFilePath().endsWith(Path.of("src", "test", "resources", "testdata", "Template Testing.xlsx")));
-        Assert.assertEquals(config.getReportFileName(), "ExcelAutomationReport.html");
-        Assert.assertTrue(config.getReportFilePath().endsWith(Path.of("test-output", "reports", "ExcelAutomationReport.html")));
-        Assert.assertTrue(config.getScreenshotOutputDirectory().endsWith(Path.of("test-output", "screenshots")));
+        Assert.assertEquals(config.getScenarioFilePath(), Path.of("C:/Automation/BRS/Booking Room System.xlsx").toAbsolutePath().normalize());
+        Assert.assertEquals(config.getReportFileName(), "Report-Booking Room System.html");
+        Assert.assertEquals(config.getReportFilePath(), Path.of("C:/Automation/BRS/Reports/Report-Booking Room System.html").toAbsolutePath().normalize());
+        Assert.assertEquals(config.getScreenshotOutputDirectory(), Path.of("C:/Automation/BRS/Reports/Screenshots").toAbsolutePath().normalize());
     }
 
     @Test
@@ -122,42 +122,123 @@ public class ExcelExecutionConfigTest {
     }
 
     @Test
-    public void screenshotDirectoryShouldDefaultToReportDirectoryScreenshotsWhenBlank() throws IOException {
+    public void screenshotDirectoryShouldBeDerivedFromReportDirectory() throws IOException {
         Path scenarioFile = createFile("default-screenshot-dir.xlsx");
         Path reportDirectory = TEMP_DIR.resolve("report-with-default-screenshots");
         Properties properties = properties(scenarioFile.toString());
         properties.setProperty(ExcelExecutionConfig.REPORT_OUTPUT_DIRECTORY_KEY, reportDirectory.toString());
-        properties.setProperty(ExcelExecutionConfig.SCREENSHOT_OUTPUT_DIRECTORY_KEY, " ");
 
         ExcelExecutionConfig config = ExcelExecutionConfig.fromProperties(properties, Map.of());
 
         Assert.assertEquals(
                 config.getScreenshotOutputDirectory(),
-                reportDirectory.resolve("screenshots").toAbsolutePath().normalize()
+                reportDirectory.resolve("Screenshots").toAbsolutePath().normalize()
         );
     }
 
     @Test
-    public void reportFileNameShouldDefaultWhenBlank() throws IOException {
-        Path scenarioFile = createFile("default-report-name.xlsx");
+    public void changingReportDirectoryShouldChangeScreenshotDirectory() throws IOException {
+        Path scenarioFile = createFile("changed-report-directory.xlsx");
+        Path reportDirectory = TEMP_DIR.resolve("changed-report-dir");
         Properties properties = properties(scenarioFile.toString());
-        properties.setProperty(ExcelExecutionConfig.REPORT_FILE_NAME_KEY, " ");
+        properties.setProperty(ExcelExecutionConfig.REPORT_OUTPUT_DIRECTORY_KEY, reportDirectory.toString());
 
         ExcelExecutionConfig config = ExcelExecutionConfig.fromProperties(properties, Map.of());
 
-        Assert.assertEquals(config.getReportFileName(), "ExcelAutomationReport.html");
+        Assert.assertEquals(
+                config.getScreenshotOutputDirectory(),
+                reportDirectory.resolve("Screenshots").toAbsolutePath().normalize()
+        );
     }
 
     @Test
-    public void reportFileNameShouldAppendHtmlWhenMissingExtension() throws IOException {
-        Path scenarioFile = createFile("append-report-extension.xlsx");
+    public void reportFileNameShouldBeDerivedFromScenarioFileName() throws IOException {
+        Path scenarioFile = createFile("Booking Room System.xlsx");
         Properties properties = properties(scenarioFile.toString());
-        properties.setProperty(ExcelExecutionConfig.REPORT_FILE_NAME_KEY, "BookingRoomReport");
 
         ExcelExecutionConfig config = ExcelExecutionConfig.fromProperties(properties, Map.of());
 
-        Assert.assertEquals(config.getReportFileName(), "BookingRoomReport.html");
-        Assert.assertTrue(config.getReportFilePath().endsWith(Path.of("BookingRoomReport.html")));
+        Assert.assertEquals(config.getReportFileName(), "Report-Booking Room System.html");
+        Assert.assertTrue(config.getReportFilePath().endsWith(Path.of("Report-Booking Room System.html")));
+    }
+
+    @Test
+    public void reportFileNameShouldRemoveFinalExtensionOnly() {
+        Properties properties = properties("C:/Automation/BRS/LoginScenarios.xlsm");
+
+        ExcelExecutionConfig config = ExcelExecutionConfig.fromProperties(properties, Map.of());
+
+        Assert.assertEquals(config.getReportFileName(), "Report-LoginScenarios.html");
+    }
+
+    @Test
+    public void reportFileNameShouldSupportWindowsUnixAndRelativePaths() {
+        Assert.assertEquals(
+                ExcelExecutionConfig.fromProperties(properties("C:\\Automation\\BRS\\Booking Room System.xlsx"), Map.of()).getReportFileName(),
+                "Report-Booking Room System.html"
+        );
+        Assert.assertEquals(
+                ExcelExecutionConfig.fromProperties(properties("/automation/brs/Regression_Test.xlsx"), Map.of()).getReportFileName(),
+                "Report-Regression_Test.html"
+        );
+    }
+
+    @Test
+    public void legacyReportFileNamePropertyShouldBeIgnored() throws IOException {
+        Path scenarioFile = createFile("ignored-report-name.xlsx");
+        Properties properties = properties(scenarioFile.toString());
+        properties.setProperty("report.fileName", "ManualReport.html");
+
+        ExcelExecutionConfig config = ExcelExecutionConfig.fromProperties(properties, Map.of());
+
+        Assert.assertEquals(config.getReportFileName(), "Report-ignored-report-name.html");
+    }
+
+    @Test
+    public void legacyScreenshotDirectoryPropertyShouldBeIgnored() throws IOException {
+        Path scenarioFile = createFile("ignored-screenshot-dir.xlsx");
+        Path reportDirectory = TEMP_DIR.resolve("report-dir-for-ignored-screenshots");
+        Properties properties = properties(scenarioFile.toString());
+        properties.setProperty(ExcelExecutionConfig.REPORT_OUTPUT_DIRECTORY_KEY, reportDirectory.toString());
+        properties.setProperty("screenshot.outputDirectory", TEMP_DIR.resolve("manual-screenshots").toString());
+
+        ExcelExecutionConfig config = ExcelExecutionConfig.fromProperties(properties, Map.of());
+
+        Assert.assertEquals(
+                config.getScreenshotOutputDirectory(),
+                reportDirectory.resolve("Screenshots").toAbsolutePath().normalize()
+        );
+    }
+
+    @Test
+    public void legacyReportFileNameSystemPropertyShouldBeIgnored() throws IOException {
+        Path scenarioFile = createFile("ignored-report-override.xlsx");
+        Properties properties = properties(scenarioFile.toString());
+
+        ExcelExecutionConfig config = ExcelExecutionConfig.fromProperties(
+                properties,
+                Map.of("report.fileName", "ManualReport.html")
+        );
+
+        Assert.assertEquals(config.getReportFileName(), "Report-ignored-report-override.html");
+    }
+
+    @Test
+    public void legacyScreenshotDirectorySystemPropertyShouldBeIgnored() throws IOException {
+        Path scenarioFile = createFile("ignored-screenshot-override.xlsx");
+        Path reportDirectory = TEMP_DIR.resolve("report-dir-for-ignored-screenshot-override");
+        Properties properties = properties(scenarioFile.toString());
+        properties.setProperty(ExcelExecutionConfig.REPORT_OUTPUT_DIRECTORY_KEY, reportDirectory.toString());
+
+        ExcelExecutionConfig config = ExcelExecutionConfig.fromProperties(
+                properties,
+                Map.of("screenshot.outputDirectory", TEMP_DIR.resolve("manual-screenshots").toString())
+        );
+
+        Assert.assertEquals(
+                config.getScreenshotOutputDirectory(),
+                reportDirectory.resolve("Screenshots").toAbsolutePath().normalize()
+        );
     }
 
     @Test
@@ -177,8 +258,6 @@ public class ExcelExecutionConfigTest {
         Properties properties = new Properties();
         properties.setProperty(ExcelExecutionConfig.SCENARIO_FILE_PATH_KEY, scenarioFilePath);
         properties.setProperty(ExcelExecutionConfig.REPORT_OUTPUT_DIRECTORY_KEY, TEMP_DIR.resolve("reports").toString());
-        properties.setProperty(ExcelExecutionConfig.REPORT_FILE_NAME_KEY, "ExcelAutomationReport.html");
-        properties.setProperty(ExcelExecutionConfig.SCREENSHOT_OUTPUT_DIRECTORY_KEY, TEMP_DIR.resolve("screenshots").toString());
         return properties;
     }
 

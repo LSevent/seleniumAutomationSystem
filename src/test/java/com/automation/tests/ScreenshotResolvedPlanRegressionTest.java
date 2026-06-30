@@ -100,7 +100,7 @@ public class ScreenshotResolvedPlanRegressionTest {
         Assert.assertTrue(reportHtml.contains("Evidence Gallery"));
         Assert.assertTrue(reportHtml.contains("Failure Details"));
         Assert.assertTrue(reportHtml.contains("Error Message"));
-        Assert.assertTrue(reportHtml.contains("screenshots/"));
+        Assert.assertTrue(reportHtml.contains("Screenshots/"));
     }
 
     private List<ExecutionResult> run(
@@ -141,11 +141,6 @@ public class ScreenshotResolvedPlanRegressionTest {
         properties.setProperty(
                 ExcelExecutionConfig.REPORT_OUTPUT_DIRECTORY_KEY,
                 reportDirectory.toString()
-        );
-        properties.setProperty(ExcelExecutionConfig.REPORT_FILE_NAME_KEY, name + "-report.html");
-        properties.setProperty(
-                ExcelExecutionConfig.SCREENSHOT_OUTPUT_DIRECTORY_KEY,
-                reportDirectory.resolve("screenshots").toString()
         );
         return ExcelExecutionConfig.fromProperties(properties, Map.of());
     }

@@ -46,8 +46,8 @@ public class ExcelExecutionReportTest {
                 TEMP_DIR.resolve("excel-execution-report-test.xlsx"),
                 baseUrl
         );
-        screenshotDirectory = TEMP_DIR.resolve("reports").resolve("screenshots").toAbsolutePath().normalize();
         executionConfig = executionConfig(workbookPath);
+        screenshotDirectory = executionConfig.getScreenshotOutputDirectory();
     }
 
     @Test(priority = 1)
@@ -116,7 +116,7 @@ public class ExcelExecutionReportTest {
             Assert.assertTrue(reportHtml.contains("SpecificFunction.click"));
             Assert.assertTrue(reportHtml.contains("Manual screenshot"));
             Assert.assertTrue(reportHtml.contains("Evidence Gallery"));
-            Assert.assertTrue(reportHtml.contains("screenshots/"));
+            Assert.assertTrue(reportHtml.contains("Screenshots/"));
             Assert.assertTrue(reportHtml.contains("After input title"));
             Assert.assertTrue(reportHtml.contains("After select room"));
             Assert.assertTrue(reportHtml.contains("After submit"));
@@ -273,8 +273,6 @@ public class ExcelExecutionReportTest {
         Properties properties = new Properties();
         properties.setProperty(ExcelExecutionConfig.SCENARIO_FILE_PATH_KEY, scenarioFilePath.toString());
         properties.setProperty(ExcelExecutionConfig.REPORT_OUTPUT_DIRECTORY_KEY, TEMP_DIR.resolve("reports").toString());
-        properties.setProperty(ExcelExecutionConfig.REPORT_FILE_NAME_KEY, "ExcelAutomationReport.html");
-        properties.setProperty(ExcelExecutionConfig.SCREENSHOT_OUTPUT_DIRECTORY_KEY, screenshotDirectory.toString());
         return ExcelExecutionConfig.fromProperties(properties, java.util.Map.of());
     }
 

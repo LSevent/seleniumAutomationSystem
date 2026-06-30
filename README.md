@@ -134,16 +134,33 @@ Excel execution configuration lives in:
 src/test/resources/excelConfig.properties
 ```
 
-Default values keep the test suite stable inside the repository:
+Only these Excel execution values are manually configured:
 
 ```properties
-excel.scenarioFilePath=src/test/resources/testdata/Template Testing.xlsx
-report.outputDirectory=test-output/reports
-report.fileName=ExcelAutomationReport.html
-screenshot.outputDirectory=test-output/screenshots
+excel.scenarioFilePath=C:/Automation/BRS/Booking Room System.xlsx
+report.outputDirectory=C:/Automation/BRS/Reports
 ```
 
-`Final Excel Template.xlsx` is the user-facing sample workbook. The default config stays pointed at `Template Testing.xlsx` because that file is the stable automated-test workbook.
+The report file name is derived from the Excel scenario file name:
+
+```text
+Report-[Excel file name without extension].html
+```
+
+The screenshot folder is derived from the report output directory:
+
+```text
+[report.outputDirectory]/Screenshots
+```
+
+For example, the config above generates:
+
+```text
+C:/Automation/BRS/Reports/Report-Booking Room System.html
+C:/Automation/BRS/Reports/Screenshots
+```
+
+`Final Excel Template.xlsx` is the user-facing sample workbook.
 
 You can override Excel settings from Maven:
 
@@ -331,20 +348,20 @@ Keyword = screenshot
 Value = After select room
 ```
 
-Screenshots are saved under the configured screenshot directory. The default is:
+Screenshots are saved under the automatically derived screenshot directory:
 
 ```text
-test-output/screenshots
+[report.outputDirectory]/Screenshots
 ```
 
 Manual screenshots and failure screenshots are attached as evidence in the Excel HTML report.
 
 ## HTML Report
 
-Excel execution generates a dedicated report at the configured report directory and file name. The default is:
+Excel execution generates a dedicated report in the configured report directory. The file name is derived from the Excel workbook name:
 
 ```text
-test-output/reports/ExcelAutomationReport.html
+[report.outputDirectory]/Report-[Excel file name without extension].html
 ```
 
 This report is separate from the generic TestNG method-level ExtentReport.

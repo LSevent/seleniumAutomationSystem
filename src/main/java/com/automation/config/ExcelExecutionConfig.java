@@ -16,10 +16,7 @@ public class ExcelExecutionConfig {
     public static final String CONFIG_FILE_NAME = "excelConfig.properties";
     public static final String SCENARIO_FILE_PATH_KEY = "excel.scenarioFilePath";
     public static final String REPORT_OUTPUT_DIRECTORY_KEY = "report.outputDirectory";
-    public static final String REPORT_FILE_NAME_KEY = "report.fileName";
-    public static final String SCREENSHOT_OUTPUT_DIRECTORY_KEY = "screenshot.outputDirectory";
     public static final String DEFAULT_REPORT_OUTPUT_DIRECTORY = "test-output/reports";
-    public static final String DEFAULT_REPORT_FILE_NAME = "ExcelAutomationReport.html";
 
     private static final Logger LOGGER = LogManager.getLogger(ExcelExecutionConfig.class);
 
@@ -76,23 +73,9 @@ public class ExcelExecutionConfig {
                 REPORT_OUTPUT_DIRECTORY_KEY,
                 DEFAULT_REPORT_OUTPUT_DIRECTORY
         );
-        String reportFileName = normalizeReportFileName(valueFor(
-                safeProperties,
-                overrideResolver,
-                REPORT_FILE_NAME_KEY,
-                DEFAULT_REPORT_FILE_NAME
-        ));
+        String reportFileName = deriveReportFileName(scenarioFileValue);
         Path reportOutputDirectory = resolvePath(reportOutputValue);
-
-        String screenshotOutputValue = valueFor(
-                safeProperties,
-                overrideResolver,
-                SCREENSHOT_OUTPUT_DIRECTORY_KEY,
-                ""
-        );
-        Path screenshotOutputDirectory = screenshotOutputValue.isBlank()
-                ? reportOutputDirectory.resolve("screenshots").toAbsolutePath().normalize()
-                : resolvePath(screenshotOutputValue);
+        Path screenshotOutputDirectory = reportOutputDirectory.resolve("Screenshots").toAbsolutePath().normalize();
 
         return new ExcelExecutionConfig(
                 resolvePath(scenarioFileValue),
@@ -209,11 +192,22 @@ public class ExcelExecutionConfig {
         return defaultValue == null ? "" : defaultValue;
     }
 
-    private static String normalizeReportFileName(String fileName) {
-        String normalizedFileName = clean(fileName).isBlank() ? DEFAULT_REPORT_FILE_NAME : clean(fileName);
-        return normalizedFileName.toLowerCase().endsWith(".html")
-                ? normalizedFileName
-                : normalizedFileName + ".html";
+    private static String deriveReportFileName(String scenarioFilePath) {
+        String baseFileName = extractBaseFileName(scenarioFilePath);
+        if (baseFileName.isBlank()) {
+            throw new FrameworkException("Excel scenario file name is required to derive the report file name.");
+        }
+        return "Report-" + baseFileName + ".html";
+    }
+
+    private static String extractBaseFileName(String scenarioFilePath) {
+        String cleanedPath = clean(scenarioFilePath);
+        int lastForwardSlash = cleanedPath.lastIndexOf('/');
+        int lastBackwardSlash = cleanedPath.lastIndexOf('\\');
+        int lastSeparator = Math.max(lastForwardSlash, lastBackwardSlash);
+        String fileName = lastSeparator >= 0 ? cleanedPath.substring(lastSeparator + 1) : cleanedPath;
+        int lastDot = fileName.lastIndexOf('.');
+        return lastDot > 0 ? fileName.substring(0, lastDot) : fileName;
     }
 
     private static Path resolvePath(String value) {
