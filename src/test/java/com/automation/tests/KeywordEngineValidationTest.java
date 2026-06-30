@@ -1,6 +1,6 @@
 package com.automation.tests;
 
-import com.automation.engine.FunctionResolver;
+import com.automation.engine.KeywordResolver;
 import com.automation.engine.KeywordEngine;
 import com.automation.excel.DataReader;
 import com.automation.excel.ExcelReader;
@@ -69,7 +69,7 @@ public class KeywordEngineValidationTest {
     }
 
     @Test
-    public void functionResolutionErrorShouldIncludeStepContext() {
+    public void keywordResolutionErrorShouldIncludeStepContext() {
         try (ExcelReader excelReader = new ExcelReader(workbookPath.toString())) {
             ExecutionResult result = engine(excelReader).executeStep(
                     scenario(),
@@ -106,7 +106,7 @@ public class KeywordEngineValidationTest {
         return new KeywordEngine(
                 dataReader,
                 objectRepositoryReader,
-                new FunctionResolver(fakeWebDriver.driver()),
+                new KeywordResolver(fakeWebDriver.driver()),
                 new ExcelReportConfig(false, true, true)
         );
     }

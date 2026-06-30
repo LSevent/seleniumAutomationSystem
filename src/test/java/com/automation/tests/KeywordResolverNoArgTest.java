@@ -2,7 +2,7 @@ package com.automation.tests;
 
 import com.automation.base.BaseFunction;
 import com.automation.context.StepContextHolder;
-import com.automation.engine.FunctionResolver;
+import com.automation.engine.KeywordResolver;
 import com.automation.exceptions.FrameworkException;
 import com.automation.models.KeywordExecutionResult;
 import com.automation.models.KeywordSourceType;
@@ -16,7 +16,7 @@ import java.lang.reflect.Modifier;
 import java.util.Set;
 
 @Test(singleThreaded = true)
-public class FunctionResolverNoArgTest {
+public class KeywordResolverNoArgTest {
 
     @AfterMethod(alwaysRun = true)
     public void cleanUp() {
@@ -35,7 +35,7 @@ public class FunctionResolverNoArgTest {
         );
         StepContextHolder.set(step);
 
-        KeywordExecutionResult result = new FunctionResolver(driver().driver()).execute(
+        KeywordExecutionResult result = new KeywordResolver(driver().driver()).execute(
                 step.getApplication(),
                 step.getKeyword()
         );
@@ -64,7 +64,7 @@ public class FunctionResolverNoArgTest {
         );
         StepContextHolder.set(step);
 
-        KeywordExecutionResult result = new FunctionResolver(driver.driver()).execute(
+        KeywordExecutionResult result = new KeywordResolver(driver.driver()).execute(
                 step.getApplication(),
                 step.getKeyword()
         );
@@ -83,7 +83,7 @@ public class FunctionResolverNoArgTest {
         ResolvedStepContext step = step("BRS", "click", "btnLogin", resolvedXPath, "");
         StepContextHolder.set(step);
 
-        KeywordExecutionResult result = new FunctionResolver(driver.driver()).execute(
+        KeywordExecutionResult result = new KeywordResolver(driver.driver()).execute(
                 step.getApplication(),
                 step.getKeyword()
         );
@@ -110,7 +110,7 @@ public class FunctionResolverNoArgTest {
         );
         StepContextHolder.set(step);
 
-        KeywordExecutionResult result = new FunctionResolver(driver.driver()).execute(
+        KeywordExecutionResult result = new KeywordResolver(driver.driver()).execute(
                 step.getApplication(),
                 step.getKeyword()
         );
@@ -128,7 +128,7 @@ public class FunctionResolverNoArgTest {
         ResolvedStepContext step = step("NO_SPECIFIC", "input", "txtUsername", resolvedXPath, "resolved_user");
         StepContextHolder.set(step);
 
-        KeywordExecutionResult result = new FunctionResolver(driver.driver()).execute(
+        KeywordExecutionResult result = new KeywordResolver(driver.driver()).execute(
                 step.getApplication(),
                 step.getKeyword()
         );
@@ -171,7 +171,7 @@ public class FunctionResolverNoArgTest {
 
         FrameworkException exception = Assert.expectThrows(
                 FrameworkException.class,
-                () -> new FunctionResolver(driver().driver()).execute(
+                () -> new KeywordResolver(driver().driver()).execute(
                         step.getApplication(),
                         step.getKeyword()
                 )
@@ -193,7 +193,7 @@ public class FunctionResolverNoArgTest {
 
     @Test
     public void resolverShouldNeitherInstallNorReplaceStepContext() {
-        FunctionResolver resolver = new FunctionResolver(driver().driver());
+        KeywordResolver resolver = new KeywordResolver(driver().driver());
 
         Assert.assertTrue(StepContextHolder.current().isEmpty());
         FrameworkException missingContext = Assert.expectThrows(

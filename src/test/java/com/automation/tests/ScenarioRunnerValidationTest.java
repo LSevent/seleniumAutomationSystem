@@ -1,6 +1,6 @@
 package com.automation.tests;
 
-import com.automation.engine.FunctionResolver;
+import com.automation.engine.KeywordResolver;
 import com.automation.engine.KeywordEngine;
 import com.automation.engine.ScenarioRunner;
 import com.automation.excel.DataReader;
@@ -69,7 +69,7 @@ public class ScenarioRunnerValidationTest {
                         return new KeywordEngine(
                                 dataReader,
                                 objectRepositoryReader,
-                                new FunctionResolver(fakeWebDriver.driver())
+                                new KeywordResolver(fakeWebDriver.driver())
                         );
                     }
             );
@@ -86,8 +86,8 @@ public class ScenarioRunnerValidationTest {
         FakeWebDriver fakeWebDriver = new FakeWebDriver();
         DataReader dataReader = new DataReader(excelReader);
         ObjectRepositoryReader objectRepositoryReader = new ObjectRepositoryReader(excelReader, dataReader);
-        FunctionResolver functionResolver = new FunctionResolver(fakeWebDriver.driver());
-        KeywordEngine keywordEngine = new KeywordEngine(dataReader, objectRepositoryReader, functionResolver);
+        KeywordResolver keywordResolver = new KeywordResolver(fakeWebDriver.driver());
+        KeywordEngine keywordEngine = new KeywordEngine(dataReader, objectRepositoryReader, keywordResolver);
         return new ScenarioRunner(new ScenarioReader(excelReader), new StepReader(excelReader), keywordEngine);
     }
 }

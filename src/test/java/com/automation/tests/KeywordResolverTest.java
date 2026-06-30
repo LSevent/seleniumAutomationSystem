@@ -1,7 +1,7 @@
 package com.automation.tests;
 
 import com.automation.context.StepContextHolder;
-import com.automation.engine.FunctionResolver;
+import com.automation.engine.KeywordResolver;
 import com.automation.models.KeywordExecutionResult;
 import com.automation.models.KeywordSourceType;
 import com.automation.models.ResolvedKeyword;
@@ -27,7 +27,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class FunctionResolverTest {
+public class KeywordResolverTest {
 
     private static final String USERNAME_XPATH = "//input[@id='username']";
     private static final String LOGIN_BUTTON_XPATH = "//button[@id='loginButton']";
@@ -42,7 +42,7 @@ public class FunctionResolverTest {
 
     @Test
     public void shouldResolveUppercaseSpecificFunctionClassForKnownApplications() {
-        FunctionResolver resolver = new FunctionResolver(testDriver().driver());
+        KeywordResolver resolver = new KeywordResolver(testDriver().driver());
 
         assertSpecificClass(resolver.resolve("brs", "waitForApplicationReady"), "BRS");
         assertSpecificClass(resolver.resolve("Brs", "waitForApplicationReady"), "BRS");
@@ -53,7 +53,7 @@ public class FunctionResolverTest {
     @Test
     public void shouldFallbackToBaseFunctionWhenSpecificFunctionDoesNotOverrideKeyword() {
         FakeDriver fakeDriver = testDriver();
-        FunctionResolver resolver = new FunctionResolver(fakeDriver.driver());
+        KeywordResolver resolver = new KeywordResolver(fakeDriver.driver());
 
         KeywordExecutionResult result = execute(resolver, "BRS", "input", USERNAME_XPATH, "brs_user");
 
@@ -65,7 +65,7 @@ public class FunctionResolverTest {
     @Test
     public void shouldPrioritizeSpecificFunctionWhenKeywordExistsInSpecificAndBase() {
         FakeDriver fakeDriver = testDriver();
-        FunctionResolver resolver = new FunctionResolver(fakeDriver.driver());
+        KeywordResolver resolver = new KeywordResolver(fakeDriver.driver());
 
         KeywordExecutionResult result = execute(resolver, "BRS", "click", LOGIN_BUTTON_XPATH, "");
 
@@ -77,7 +77,7 @@ public class FunctionResolverTest {
     @Test
     public void shouldExecuteBrsSpecificKeyword() {
         FakeDriver fakeDriver = testDriver();
-        FunctionResolver resolver = new FunctionResolver(fakeDriver.driver());
+        KeywordResolver resolver = new KeywordResolver(fakeDriver.driver());
 
         KeywordExecutionResult result = execute(
                 resolver,
@@ -93,7 +93,7 @@ public class FunctionResolverTest {
 
     @Test
     public void shouldExecuteBaseFunctionVerifyTextThroughResolver() {
-        FunctionResolver resolver = new FunctionResolver(testDriver().driver());
+        KeywordResolver resolver = new KeywordResolver(testDriver().driver());
 
         KeywordExecutionResult result = execute(
                 resolver,
@@ -109,7 +109,7 @@ public class FunctionResolverTest {
 
     @Test
     public void shouldExecuteValueOnlyKeywordThroughResolver() {
-        FunctionResolver resolver = new FunctionResolver(testDriver().driver());
+        KeywordResolver resolver = new KeywordResolver(testDriver().driver());
 
         KeywordExecutionResult result = execute(resolver, "BRS", "verifyTitleContains", "", "Dashboard");
 
@@ -119,7 +119,7 @@ public class FunctionResolverTest {
 
     @Test
     public void shouldFallbackToBaseFunctionForUnknownApplicationWhenKeywordExists() {
-        FunctionResolver resolver = new FunctionResolver(testDriver().driver());
+        KeywordResolver resolver = new KeywordResolver(testDriver().driver());
 
         KeywordExecutionResult result = execute(
                 resolver,
@@ -135,7 +135,7 @@ public class FunctionResolverTest {
 
     @Test
     public void shouldFailClearlyForUnknownApplicationAndUnknownKeyword() {
-        FunctionResolver resolver = new FunctionResolver(testDriver().driver());
+        KeywordResolver resolver = new KeywordResolver(testDriver().driver());
 
         IllegalArgumentException exception = Assert.expectThrows(
                 IllegalArgumentException.class,
@@ -149,7 +149,7 @@ public class FunctionResolverTest {
 
     @Test
     public void shouldFailClearlyWhenKeywordDoesNotExistInSpecificOrBase() {
-        FunctionResolver resolver = new FunctionResolver(testDriver().driver());
+        KeywordResolver resolver = new KeywordResolver(testDriver().driver());
 
         IllegalArgumentException exception = Assert.expectThrows(
                 IllegalArgumentException.class,
@@ -163,7 +163,7 @@ public class FunctionResolverTest {
 
     @Test
     public void screenshotShouldNotResolveAsNormalKeyword() {
-        FunctionResolver resolver = new FunctionResolver(testDriver().driver());
+        KeywordResolver resolver = new KeywordResolver(testDriver().driver());
 
         IllegalArgumentException exception = Assert.expectThrows(
                 IllegalArgumentException.class,
@@ -178,7 +178,7 @@ public class FunctionResolverTest {
 
     @Test
     public void shouldFailClearlyForBlankApplication() {
-        FunctionResolver resolver = new FunctionResolver(testDriver().driver());
+        KeywordResolver resolver = new KeywordResolver(testDriver().driver());
 
         IllegalArgumentException exception = Assert.expectThrows(
                 IllegalArgumentException.class,
@@ -190,7 +190,7 @@ public class FunctionResolverTest {
 
     @Test
     public void shouldFailClearlyForBlankKeyword() {
-        FunctionResolver resolver = new FunctionResolver(testDriver().driver());
+        KeywordResolver resolver = new KeywordResolver(testDriver().driver());
 
         IllegalArgumentException exception = Assert.expectThrows(
                 IllegalArgumentException.class,
@@ -202,7 +202,7 @@ public class FunctionResolverTest {
 
     @Test
     public void shouldExecuteOtherApplicationSpecificFunctions() {
-        FunctionResolver resolver = new FunctionResolver(testDriver().driver());
+        KeywordResolver resolver = new KeywordResolver(testDriver().driver());
 
         KeywordExecutionResult hrisResult = execute(
                 resolver,
@@ -226,7 +226,7 @@ public class FunctionResolverTest {
     }
 
     private KeywordExecutionResult execute(
-            FunctionResolver resolver,
+            KeywordResolver resolver,
             String application,
             String keyword,
             String resolvedXPath,
@@ -290,7 +290,7 @@ public class FunctionResolverTest {
 
         private FakeDriver() {
             this.proxy = (WebDriver) java.lang.reflect.Proxy.newProxyInstance(
-                    FunctionResolverTest.class.getClassLoader(),
+                    KeywordResolverTest.class.getClassLoader(),
                     new Class[]{WebDriver.class, JavascriptExecutor.class},
                     this
             );
@@ -390,7 +390,7 @@ public class FunctionResolverTest {
         private FakeElement(String text) {
             this.text = text;
             this.proxy = (WebElement) java.lang.reflect.Proxy.newProxyInstance(
-                    FunctionResolverTest.class.getClassLoader(),
+                    KeywordResolverTest.class.getClassLoader(),
                     new Class[]{WebElement.class},
                     this
             );

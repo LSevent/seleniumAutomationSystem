@@ -1,7 +1,7 @@
 package com.automation.tests;
 
 import com.automation.context.StepContextHolder;
-import com.automation.engine.FunctionResolver;
+import com.automation.engine.KeywordResolver;
 import com.automation.engine.KeywordEngine;
 import com.automation.excel.DataReader;
 import com.automation.excel.ExcelReader;
@@ -89,7 +89,7 @@ public class KeywordEngineReportMappingTest {
         );
     }
 
-    private static class MappingResolver extends FunctionResolver {
+    private static class MappingResolver extends KeywordResolver {
 
         private MappingResolver(FakeWebDriver driver) {
             super(driver.driver());

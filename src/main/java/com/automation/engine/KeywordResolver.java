@@ -19,16 +19,16 @@ import java.lang.reflect.Modifier;
 import java.util.Locale;
 import java.util.Optional;
 
-public class FunctionResolver {
+public class KeywordResolver {
 
-    private static final Logger LOGGER = LogManager.getLogger(FunctionResolver.class);
+    private static final Logger LOGGER = LogManager.getLogger(KeywordResolver.class);
     private static final String SPECIFIC_FUNCTION_PACKAGE_PREFIX = "com.automation.functions.";
     private static final String SPECIFIC_FUNCTION_CLASS_SUFFIX = ".SpecificFunction";
 
     private final WebDriver driver;
     private final BaseFunction baseFunction;
 
-    public FunctionResolver(WebDriver driver) {
+    public KeywordResolver(WebDriver driver) {
         if (driver == null) {
             throw new IllegalArgumentException("WebDriver must not be null.");
         }

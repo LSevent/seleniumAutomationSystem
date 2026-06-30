@@ -2,7 +2,7 @@ package com.automation.tests;
 
 import com.automation.config.ExcelExecutionConfig;
 import com.automation.context.StepContextHolder;
-import com.automation.engine.FunctionResolver;
+import com.automation.engine.KeywordResolver;
 import com.automation.engine.KeywordEngine;
 import com.automation.excel.DataReader;
 import com.automation.excel.ExcelReader;
@@ -195,11 +195,11 @@ public class KeywordEngineResolvedContextTest {
         Assert.assertTrue(StepContextHolder.current().isEmpty());
     }
 
-    private KeywordEngine engine(FunctionResolver resolver) {
+    private KeywordEngine engine(KeywordResolver resolver) {
         return engine(resolver, null);
     }
 
-    private KeywordEngine engine(FunctionResolver resolver, ScreenshotService screenshotService) {
+    private KeywordEngine engine(KeywordResolver resolver, ScreenshotService screenshotService) {
         excelReader = new ExcelReader(TEMPLATE_FILE.toString());
         DataReader dataReader = new DataReader(excelReader);
         ObjectRepositoryReader objectRepositoryReader = new ObjectRepositoryReader(excelReader, dataReader);
@@ -241,7 +241,7 @@ public class KeywordEngineResolvedContextTest {
                 .build();
     }
 
-    private static class ObservingResolver extends FunctionResolver {
+    private static class ObservingResolver extends KeywordResolver {
 
         private final boolean fail;
         private ResolvedStepContext observedContext;

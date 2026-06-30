@@ -1,7 +1,7 @@
 package com.automation.tests;
 
 import com.automation.config.ExcelExecutionConfig;
-import com.automation.engine.FunctionResolver;
+import com.automation.engine.KeywordResolver;
 import com.automation.engine.KeywordEngine;
 import com.automation.engine.ScenarioRunner;
 import com.automation.excel.DataReader;
@@ -242,8 +242,8 @@ public class ExcelExecutionReportTest {
     private ScenarioRunner scenarioRunner(ExcelReader excelReader, FakeWebDriver fakeDriver, ExcelReportConfig reportConfig) {
         DataReader dataReader = new DataReader(excelReader);
         ObjectRepositoryReader objectRepositoryReader = new ObjectRepositoryReader(excelReader, dataReader);
-        FunctionResolver functionResolver = new FunctionResolver(fakeDriver.driver());
-        KeywordEngine keywordEngine = new KeywordEngine(dataReader, objectRepositoryReader, functionResolver, reportConfig, executionConfig);
+        KeywordResolver keywordResolver = new KeywordResolver(fakeDriver.driver());
+        KeywordEngine keywordEngine = new KeywordEngine(dataReader, objectRepositoryReader, keywordResolver, reportConfig, executionConfig);
         ExcelExecutionReporter reporter = new ExcelExecutionReporter(fakeDriver.driver(), reportConfig, executionConfig);
         return new ScenarioRunner(new ScenarioReader(excelReader), new StepReader(excelReader), keywordEngine, reporter);
     }
@@ -251,8 +251,8 @@ public class ExcelExecutionReportTest {
     private KeywordEngine keywordEngine(ExcelReader excelReader, FakeWebDriver fakeDriver, ExcelReportConfig reportConfig) {
         DataReader dataReader = new DataReader(excelReader);
         ObjectRepositoryReader objectRepositoryReader = new ObjectRepositoryReader(excelReader, dataReader);
-        FunctionResolver functionResolver = new FunctionResolver(fakeDriver.driver());
-        return new KeywordEngine(dataReader, objectRepositoryReader, functionResolver, reportConfig, executionConfig);
+        KeywordResolver keywordResolver = new KeywordResolver(fakeDriver.driver());
+        return new KeywordEngine(dataReader, objectRepositoryReader, keywordResolver, reportConfig, executionConfig);
     }
 
     private Set<String> screenshotFilesStartingWith(String prefix) throws IOException {

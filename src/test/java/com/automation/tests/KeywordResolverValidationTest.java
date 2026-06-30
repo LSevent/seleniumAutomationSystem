@@ -1,7 +1,7 @@
 package com.automation.tests;
 
 import com.automation.context.StepContextHolder;
-import com.automation.engine.FunctionResolver;
+import com.automation.engine.KeywordResolver;
 import com.automation.models.KeywordExecutionResult;
 import com.automation.models.KeywordSourceType;
 import com.automation.models.ResolvedStepContext;
@@ -10,7 +10,7 @@ import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
-public class FunctionResolverValidationTest {
+public class KeywordResolverValidationTest {
 
     private static final String BUTTON_XPATH = "//button[@id='login']";
     private static final String MESSAGE_XPATH = "//div[@id='message']";
@@ -22,7 +22,7 @@ public class FunctionResolverValidationTest {
 
     @Test
     public void blankKeywordShouldFailClearly() {
-        FunctionResolver resolver = new FunctionResolver(driver().driver());
+        KeywordResolver resolver = new KeywordResolver(driver().driver());
 
         IllegalArgumentException exception = Assert.expectThrows(
                 IllegalArgumentException.class,
@@ -34,7 +34,7 @@ public class FunctionResolverValidationTest {
 
     @Test
     public void unknownKeywordShouldFailClearly() {
-        FunctionResolver resolver = new FunctionResolver(driver().driver());
+        KeywordResolver resolver = new KeywordResolver(driver().driver());
 
         IllegalArgumentException exception = Assert.expectThrows(
                 IllegalArgumentException.class,
@@ -48,7 +48,7 @@ public class FunctionResolverValidationTest {
 
     @Test
     public void unknownApplicationShouldFallbackToBaseFunctionWhenKeywordExists() {
-        FunctionResolver resolver = new FunctionResolver(driver().driver());
+        KeywordResolver resolver = new KeywordResolver(driver().driver());
 
         KeywordExecutionResult result = execute(resolver, "UNKNOWN", "verifyText", MESSAGE_XPATH, "Ready");
 
@@ -58,7 +58,7 @@ public class FunctionResolverValidationTest {
 
     @Test
     public void unknownApplicationAndUnknownKeywordShouldFailClearly() {
-        FunctionResolver resolver = new FunctionResolver(driver().driver());
+        KeywordResolver resolver = new KeywordResolver(driver().driver());
 
         IllegalArgumentException exception = Assert.expectThrows(
                 IllegalArgumentException.class,
@@ -71,8 +71,8 @@ public class FunctionResolverValidationTest {
     }
 
     @Test
-    public void executionFailureShouldNameKeywordAndFunctionClass() {
-        FunctionResolver resolver = new FunctionResolver(driver().driver());
+    public void executionFailureShouldNameKeywordAndExecutingClass() {
+        KeywordResolver resolver = new KeywordResolver(driver().driver());
 
         AssertionError error = Assert.expectThrows(
                 AssertionError.class,
@@ -92,7 +92,7 @@ public class FunctionResolverValidationTest {
     }
 
     private KeywordExecutionResult execute(
-            FunctionResolver resolver,
+            KeywordResolver resolver,
             String application,
             String keyword,
             String resolvedXPath,

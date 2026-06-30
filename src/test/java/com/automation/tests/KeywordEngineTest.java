@@ -1,6 +1,6 @@
 package com.automation.tests;
 
-import com.automation.engine.FunctionResolver;
+import com.automation.engine.KeywordResolver;
 import com.automation.engine.KeywordEngine;
 import com.automation.excel.DataReader;
 import com.automation.excel.ExcelReader;
@@ -166,8 +166,8 @@ public class KeywordEngineTest {
     private KeywordEngine keywordEngine(ExcelReader excelReader, FakeWebDriver fakeDriver) {
         DataReader dataReader = new DataReader(excelReader);
         ObjectRepositoryReader objectRepositoryReader = new ObjectRepositoryReader(excelReader, dataReader);
-        FunctionResolver functionResolver = new FunctionResolver(fakeDriver.driver());
-        return new KeywordEngine(dataReader, objectRepositoryReader, functionResolver);
+        KeywordResolver keywordResolver = new KeywordResolver(fakeDriver.driver());
+        return new KeywordEngine(dataReader, objectRepositoryReader, keywordResolver);
     }
 
     private Scenario activeScenario(ExcelReader excelReader) {

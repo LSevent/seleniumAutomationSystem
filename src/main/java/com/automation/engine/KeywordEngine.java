@@ -30,7 +30,7 @@ public class KeywordEngine {
 
     private final DataReader dataReader;
     private final ObjectRepositoryReader objectRepositoryReader;
-    private final FunctionResolver functionResolver;
+    private final KeywordResolver keywordResolver;
     private final WebDriver driver;
     private final ExcelReportConfig reportConfig;
     private final ExcelExecutionConfig executionConfig;
@@ -39,34 +39,34 @@ public class KeywordEngine {
     public KeywordEngine(
             DataReader dataReader,
             ObjectRepositoryReader objectRepositoryReader,
-            FunctionResolver functionResolver
+            KeywordResolver keywordResolver
     ) {
-        this(dataReader, objectRepositoryReader, functionResolver, ExcelReportConfig.fromConfig());
+        this(dataReader, objectRepositoryReader, keywordResolver, ExcelReportConfig.fromConfig());
     }
 
     public KeywordEngine(
             DataReader dataReader,
             ObjectRepositoryReader objectRepositoryReader,
-            FunctionResolver functionResolver,
+            KeywordResolver keywordResolver,
             ExcelReportConfig reportConfig
     ) {
-        this(dataReader, objectRepositoryReader, functionResolver, reportConfig, ExcelExecutionConfig.load());
+        this(dataReader, objectRepositoryReader, keywordResolver, reportConfig, ExcelExecutionConfig.load());
     }
 
     public KeywordEngine(
             DataReader dataReader,
             ObjectRepositoryReader objectRepositoryReader,
-            FunctionResolver functionResolver,
+            KeywordResolver keywordResolver,
             ExcelReportConfig reportConfig,
             ExcelExecutionConfig executionConfig
     ) {
-        this(dataReader, objectRepositoryReader, functionResolver, reportConfig, executionConfig, null);
+        this(dataReader, objectRepositoryReader, keywordResolver, reportConfig, executionConfig, null);
     }
 
     public KeywordEngine(
             DataReader dataReader,
             ObjectRepositoryReader objectRepositoryReader,
-            FunctionResolver functionResolver,
+            KeywordResolver keywordResolver,
             ExcelReportConfig reportConfig,
             ExcelExecutionConfig executionConfig,
             ScreenshotService screenshotService
@@ -77,13 +77,13 @@ public class KeywordEngine {
         if (objectRepositoryReader == null) {
             throw new IllegalArgumentException("ObjectRepositoryReader must not be null.");
         }
-        if (functionResolver == null) {
-            throw new IllegalArgumentException("FunctionResolver must not be null.");
+        if (keywordResolver == null) {
+            throw new IllegalArgumentException("KeywordResolver must not be null.");
         }
         this.dataReader = dataReader;
         this.objectRepositoryReader = objectRepositoryReader;
-        this.functionResolver = functionResolver;
-        this.driver = functionResolver.getDriver();
+        this.keywordResolver = keywordResolver;
+        this.driver = keywordResolver.getDriver();
         this.reportConfig = reportConfig == null ? ExcelReportConfig.fromConfig() : reportConfig;
         this.executionConfig = executionConfig == null ? ExcelExecutionConfig.load() : executionConfig;
         this.screenshotService = screenshotService == null
@@ -209,7 +209,7 @@ public class KeywordEngine {
 
     private ExecutionResult executeResolvedKeyword(ResolvedStepContext step) {
         try {
-            KeywordExecutionResult keywordResult = functionResolver.execute(
+            KeywordExecutionResult keywordResult = keywordResolver.execute(
                     step.getApplication(),
                     step.getKeyword()
             );
@@ -403,7 +403,7 @@ public class KeywordEngine {
         TestStep step = context.getTestStep();
         StepContextHolder.set(resolvedStep(context));
         try {
-            KeywordExecutionResult keywordResult = functionResolver.execute(
+            KeywordExecutionResult keywordResult = keywordResolver.execute(
                     step.getApplication(),
                     step.getKeyword()
             );

@@ -1,7 +1,7 @@
 package com.automation.tests;
 
 import com.automation.context.StepContextHolder;
-import com.automation.engine.FunctionResolver;
+import com.automation.engine.KeywordResolver;
 import com.automation.models.KeywordExecutionResult;
 import com.automation.models.KeywordSourceType;
 import com.automation.models.ResolvedStepContext;
@@ -26,7 +26,7 @@ public class SpecificFunctionContextTest {
         ResolvedStepContext step = step("BRS", "click", "btnLogin", resolvedXPath, "");
         StepContextHolder.set(step);
 
-        KeywordExecutionResult result = new FunctionResolver(driver.driver()).execute(
+        KeywordExecutionResult result = new KeywordResolver(driver.driver()).execute(
                 step.getApplication(),
                 step.getKeyword()
         );
@@ -51,7 +51,7 @@ public class SpecificFunctionContextTest {
         );
         StepContextHolder.set(step);
 
-        KeywordExecutionResult result = new FunctionResolver(driver.driver()).execute(
+        KeywordExecutionResult result = new KeywordResolver(driver.driver()).execute(
                 step.getApplication(),
                 step.getKeyword()
         );

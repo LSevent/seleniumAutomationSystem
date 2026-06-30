@@ -1,7 +1,7 @@
 package com.automation.tests;
 
 import com.automation.config.ExcelExecutionConfig;
-import com.automation.engine.FunctionResolver;
+import com.automation.engine.KeywordResolver;
 import com.automation.engine.KeywordEngine;
 import com.automation.engine.ScenarioRunner;
 import com.automation.excel.DataReader;
@@ -115,7 +115,7 @@ public class ScreenshotResolvedPlanRegressionTest {
             KeywordEngine keywordEngine = new KeywordEngine(
                     dataReader,
                     objectRepositoryReader,
-                    new FunctionResolver(driver.driver()),
+                    new KeywordResolver(driver.driver()),
                     reportConfig,
                     executionConfig
             );

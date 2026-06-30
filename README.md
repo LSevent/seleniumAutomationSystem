@@ -76,7 +76,7 @@ src
 6. `DataReader` resolves step `Value` cells that use `SHEET_NAME.COLUMN_NAME`.
 7. `ObjectRepositoryReader` resolves step `Object` names into XPath values for the current application.
 8. `KeywordEngine` executes the step. The special `screenshot` keyword is handled by the engine for reporting evidence.
-9. `FunctionResolver` looks for the keyword in application-specific `SpecificFunction` first, then `BaseFunction`.
+9. `KeywordResolver` looks for the keyword in application-specific `SpecificFunction` first, then `BaseFunction`.
 10. `ScenarioRunner` collects step results and sends them to `ExcelExecutionReporter`.
 
 ## Pre-run Validation
@@ -97,11 +97,11 @@ Model `toString()` methods avoid exposing raw or resolved Excel values in logs a
 
 `ExecutionResult` and `TestStep` support builder-based construction. Builders are preferred for readability and to avoid parameter-order mistakes, while existing runtime behavior remains unchanged.
 
-SpecificFunction keywords also use no-argument context-based execution for application-specific behavior. `BaseFunction` remains the home for common reusable keywords, while `FunctionResolver` checks `SpecificFunction` before `BaseFunction`.
+SpecificFunction keywords also use no-argument context-based execution for application-specific behavior. `BaseFunction` remains the home for common reusable keywords, while `KeywordResolver` checks `SpecificFunction` before `BaseFunction`.
 
 The framework resolves an Excel keyword into a `ResolvedKeyword`; `KeywordExecutionResult` represents the result of invoking that resolved keyword method, and `KeywordSourceType` identifies whether the keyword came from `SpecificFunction` or `BaseFunction`.
 
-`KeywordEngine` centrally logs keyword start, completion, skip, and failure events using the resolved step context, with sensitive values masked. Internal function helpers are limited to shared context access, validation, waiting, and reusable custom-function support; they are not Excel-facing keyword entry points.
+`KeywordEngine` centrally logs keyword start, completion, skip, and failure events using the resolved step context, with sensitive values masked. Internal helper methods are limited to shared context access, validation, waiting, and reusable custom keyword support; they are not Excel-facing keyword entry points.
 
 Excel execution now builds and validates a resolved execution plan before runtime startup. Runtime execution uses each `ResolvedStepContext` as its source of truth; `KeywordEngine` sets `StepContextHolder` for the step and clears it afterward, and report rows are populated from the same resolved step data.
 
@@ -192,7 +192,7 @@ Scenario sheets must use this header:
 Testcase | Run | Keyword | Object | Value | Application | Description
 ```
 
-`Keyword` is the preferred step header and is used by `Final Excel Template.xlsx`. Older workbooks may continue to use `Function` as a legacy alias. Internally this value is named `keyword`; `KeywordEngine` and `FunctionResolver` use it to select and execute the matching keyword method.
+`Keyword` is the preferred step header and is used by `Final Excel Template.xlsx`. Older workbooks may continue to use `Function` as a legacy alias. Internally this value is named `keyword`; `KeywordEngine` and `KeywordResolver` use it to select and execute the matching keyword method.
 
 Rules:
 

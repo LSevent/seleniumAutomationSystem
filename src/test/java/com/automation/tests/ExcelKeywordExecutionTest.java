@@ -1,7 +1,7 @@
 package com.automation.tests;
 
 import com.automation.config.ExcelExecutionConfig;
-import com.automation.engine.FunctionResolver;
+import com.automation.engine.KeywordResolver;
 import com.automation.engine.KeywordEngine;
 import com.automation.engine.ScenarioRunner;
 import com.automation.excel.DataReader;
@@ -71,8 +71,8 @@ public class ExcelKeywordExecutionTest {
         StepReader stepReader = new StepReader(excelReader);
         DataReader dataReader = new DataReader(excelReader);
         ObjectRepositoryReader objectRepositoryReader = new ObjectRepositoryReader(excelReader, dataReader);
-        FunctionResolver functionResolver = new FunctionResolver(fakeDriver.driver());
-        KeywordEngine keywordEngine = new KeywordEngine(dataReader, objectRepositoryReader, functionResolver, null, executionConfig);
+        KeywordResolver keywordResolver = new KeywordResolver(fakeDriver.driver());
+        KeywordEngine keywordEngine = new KeywordEngine(dataReader, objectRepositoryReader, keywordResolver, null, executionConfig);
         return new ScenarioRunner(scenarioReader, stepReader, keywordEngine);
     }
 
