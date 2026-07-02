@@ -86,14 +86,16 @@ public class ExecutionPlanBuilder {
         String rawValue = safe(step.getValue());
         String resolvedValue;
         try {
-            resolvedValue = dataReader.resolveValue(rawValue, scenario);
+            resolvedValue = step.isFlowDirective()
+                    ? rawValue
+                    : dataReader.resolveValue(rawValue, scenario);
         } catch (RuntimeException exception) {
             throw resolutionFailure("Value could not be resolved while building the execution plan.", scenario, testcase, step, exception);
         }
 
         String rawXPath = "";
         String resolvedXPath = "";
-        if (!isBlank(step.getObject())) {
+        if (!step.isFlowDirective() && !isBlank(step.getObject())) {
             try {
                 ResolvedObject resolvedObject = objectRepositoryReader.resolveObject(step, scenario);
                 if (resolvedObject != null) {
@@ -124,6 +126,7 @@ public class ExecutionPlanBuilder {
                 .rawXPath(rawXPath)
                 .resolvedXPath(resolvedXPath)
                 .executedBy("")
+                .flowDirective(step.getFlowDirective())
                 .build();
     }
 

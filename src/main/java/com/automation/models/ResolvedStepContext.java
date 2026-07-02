@@ -19,6 +19,7 @@ public final class ResolvedStepContext {
     private final String rawXPath;
     private final String resolvedXPath;
     private final String executedBy;
+    private final FlowDirectiveType flowDirective;
 
     public static Builder builder() {
         return new Builder();
@@ -42,6 +43,9 @@ public final class ResolvedStepContext {
         this.rawXPath = builder.rawXPath;
         this.resolvedXPath = builder.resolvedXPath;
         this.executedBy = builder.executedBy;
+        this.flowDirective = builder.flowDirective == null
+                ? FlowDirectiveType.fromKeyword(builder.keyword)
+                : builder.flowDirective;
     }
 
     public String getScenarioNo() {
@@ -112,6 +116,18 @@ public final class ResolvedStepContext {
         return executedBy;
     }
 
+    public FlowDirectiveType getFlowDirective() {
+        return flowDirective;
+    }
+
+    public boolean isFlowDirective() {
+        return flowDirective != null && flowDirective != FlowDirectiveType.NONE;
+    }
+
+    public boolean isConditionalDirective() {
+        return flowDirective != null && flowDirective.isConditional();
+    }
+
     public String xpath() {
         return resolvedXPath;
     }
@@ -174,6 +190,7 @@ public final class ResolvedStepContext {
                 ", rawXPath='" + rawXPath + '\'' +
                 ", resolvedXPath='" + resolvedXPath + '\'' +
                 ", executedBy='" + executedBy + '\'' +
+                ", flowDirective=" + flowDirective +
                 '}';
     }
 
@@ -196,6 +213,7 @@ public final class ResolvedStepContext {
         private String rawXPath;
         private String resolvedXPath;
         private String executedBy;
+        private FlowDirectiveType flowDirective;
 
         private Builder() {
         }
@@ -282,6 +300,11 @@ public final class ResolvedStepContext {
 
         public Builder executedBy(String executedBy) {
             this.executedBy = executedBy;
+            return this;
+        }
+
+        public Builder flowDirective(FlowDirectiveType flowDirective) {
+            this.flowDirective = flowDirective;
             return this;
         }
 

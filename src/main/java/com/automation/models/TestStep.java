@@ -17,6 +17,7 @@ public class TestStep {
     private final String description;
     private final int excelRowNumber;
     private final int stepOrder;
+    private final FlowDirectiveType flowDirective;
 
     public TestStep(
             String scenarioNo,
@@ -42,6 +43,7 @@ public class TestStep {
         this.description = description;
         this.excelRowNumber = excelRowNumber;
         this.stepOrder = stepOrder;
+        this.flowDirective = FlowDirectiveType.fromKeyword(keyword);
     }
 
     private TestStep(Builder builder) {
@@ -56,6 +58,9 @@ public class TestStep {
         this.description = builder.description;
         this.excelRowNumber = builder.excelRowNumber;
         this.stepOrder = builder.stepOrder;
+        this.flowDirective = builder.flowDirective == null
+                ? FlowDirectiveType.fromKeyword(builder.keyword)
+                : builder.flowDirective;
     }
 
     public String getScenarioNo() {
@@ -102,6 +107,18 @@ public class TestStep {
         return stepOrder;
     }
 
+    public FlowDirectiveType getFlowDirective() {
+        return flowDirective;
+    }
+
+    public boolean isFlowDirective() {
+        return flowDirective != null && flowDirective != FlowDirectiveType.NONE;
+    }
+
+    public boolean isConditionalDirective() {
+        return flowDirective != null && flowDirective.isConditional();
+    }
+
     @Override
     public String toString() {
         return "TestStep{" +
@@ -115,6 +132,7 @@ public class TestStep {
                 ", description='" + description + '\'' +
                 ", excelRowNumber=" + excelRowNumber +
                 ", stepOrder=" + stepOrder +
+                ", flowDirective=" + flowDirective +
                 '}';
     }
 
@@ -131,6 +149,7 @@ public class TestStep {
         private String description;
         private int excelRowNumber;
         private int stepOrder;
+        private FlowDirectiveType flowDirective;
 
         private Builder() {
         }
@@ -191,6 +210,11 @@ public class TestStep {
 
         public Builder stepOrder(int stepOrder) {
             this.stepOrder = stepOrder;
+            return this;
+        }
+
+        public Builder flowDirective(FlowDirectiveType flowDirective) {
+            this.flowDirective = flowDirective;
             return this;
         }
 

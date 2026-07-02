@@ -1,11 +1,14 @@
 package com.automation.excel;
 
 import com.automation.exceptions.FrameworkException;
+import com.automation.models.FlowDirectiveType;
 import com.automation.models.Scenario;
 import com.automation.models.TestCaseBlock;
 import com.automation.models.TestStep;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Deque;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -37,6 +40,7 @@ public class StepReader {
         validateRequiredHeaders(scenario.getAction());
 
         List<TestCaseBlock> testCases = parseTestCases(scenario);
+        validateConditionalBlocks(scenario.getAction(), testCases);
         validateDuplicateTestcaseNames(scenario.getAction(), testCases);
         validateActiveTestCasesHaveSteps(scenario.getAction(), testCases);
         return testCases;
@@ -125,6 +129,7 @@ public class StepReader {
                 .description(rowData.description())
                 .excelRowNumber(excelRowNumber)
                 .stepOrder(stepOrder)
+                .flowDirective(FlowDirectiveType.fromKeyword(rowData.keyword()))
                 .build();
     }
 
@@ -171,6 +176,122 @@ public class StepReader {
                 throw new FrameworkException("Active testcase '" + testCase.getTestcaseName() + "' has no steps. Sheet: " + sheetName + ". Row: " + testCase.getExcelRowNumber() + ".");
             }
         }
+    }
+
+    private void validateConditionalBlocks(String sheetName, List<TestCaseBlock> testCases) {
+        for (TestCaseBlock testCase : testCases) {
+            if (testCase.isRun()) {
+                validateConditionalBlocks(sheetName, testCase);
+            }
+        }
+    }
+
+    private void validateConditionalBlocks(String sheetName, TestCaseBlock testCase) {
+        Deque<ConditionalBlock> openBlocks = new ArrayDeque<>();
+        for (TestStep step : testCase.getSteps()) {
+            FlowDirectiveType directive = step.getFlowDirective();
+            if (directive == null || !directive.isConditional()) {
+                continue;
+            }
+
+            switch (directive) {
+                case IF_EQUALS -> openBlocks.push(new ConditionalBlock(step.getExcelRowNumber()));
+                case ELSE_IF_EQUALS -> validateElseIf(sheetName, testCase, step, openBlocks);
+                case ELSE -> validateElse(sheetName, testCase, step, openBlocks);
+                case END_IF -> validateEndIf(sheetName, testCase, step, openBlocks);
+                default -> {
+                    // Not a conditional directive.
+                }
+            }
+        }
+
+        if (!openBlocks.isEmpty()) {
+            ConditionalBlock block = openBlocks.peek();
+            throw conditionalBlockError(
+                    "Conditional block starting with 'ifEquals' is missing 'endIf'.",
+                    sheetName,
+                    testCase,
+                    block.startRow()
+            );
+        }
+    }
+
+    private void validateElseIf(
+            String sheetName,
+            TestCaseBlock testCase,
+            TestStep step,
+            Deque<ConditionalBlock> openBlocks
+    ) {
+        ConditionalBlock currentBlock = requireOpenConditionalBlock("elseIfEquals", sheetName, testCase, step, openBlocks);
+        if (currentBlock.hasElse()) {
+            throw conditionalBlockError(
+                    "Conditional directive 'elseIfEquals' cannot appear after 'else' in the same conditional block.",
+                    sheetName,
+                    testCase,
+                    step.getExcelRowNumber()
+            );
+        }
+    }
+
+    private void validateElse(
+            String sheetName,
+            TestCaseBlock testCase,
+            TestStep step,
+            Deque<ConditionalBlock> openBlocks
+    ) {
+        ConditionalBlock currentBlock = requireOpenConditionalBlock("else", sheetName, testCase, step, openBlocks);
+        if (currentBlock.hasElse()) {
+            throw conditionalBlockError(
+                    "Conditional directive 'else' appears more than once in the same conditional block.",
+                    sheetName,
+                    testCase,
+                    step.getExcelRowNumber()
+            );
+        }
+        currentBlock.markElseSeen();
+    }
+
+    private void validateEndIf(
+            String sheetName,
+            TestCaseBlock testCase,
+            TestStep step,
+            Deque<ConditionalBlock> openBlocks
+    ) {
+        requireOpenConditionalBlock("endIf", sheetName, testCase, step, openBlocks);
+        openBlocks.pop();
+    }
+
+    private ConditionalBlock requireOpenConditionalBlock(
+            String directive,
+            String sheetName,
+            TestCaseBlock testCase,
+            TestStep step,
+            Deque<ConditionalBlock> openBlocks
+    ) {
+        if (openBlocks.isEmpty()) {
+            throw conditionalBlockError(
+                    "Conditional directive '" + directive + "' found without an open 'ifEquals'.",
+                    sheetName,
+                    testCase,
+                    step.getExcelRowNumber()
+            );
+        }
+        return openBlocks.peek();
+    }
+
+    private FrameworkException conditionalBlockError(
+            String message,
+            String sheetName,
+            TestCaseBlock testCase,
+            int excelRowNumber
+    ) {
+        return new FrameworkException(
+                message
+                        + " Sheet: " + sheetName
+                        + ". Testcase: " + testCase.getTestcaseName()
+                        + ". Row: " + excelRowNumber
+                        + "."
+        );
     }
 
     private RowData readRow(String sheetName, int rowIndex) {
@@ -262,6 +383,28 @@ public class StepReader {
                     && value.isBlank()
                     && application.isBlank()
                     && description.isBlank();
+        }
+    }
+
+    private static final class ConditionalBlock {
+
+        private final int startRow;
+        private boolean hasElse;
+
+        private ConditionalBlock(int startRow) {
+            this.startRow = startRow;
+        }
+
+        private int startRow() {
+            return startRow;
+        }
+
+        private boolean hasElse() {
+            return hasElse;
+        }
+
+        private void markElseSeen() {
+            hasElse = true;
         }
     }
 }

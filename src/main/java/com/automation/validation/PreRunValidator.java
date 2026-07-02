@@ -2,6 +2,7 @@ package com.automation.validation;
 
 import com.automation.exceptions.ErrorContext;
 import com.automation.exceptions.FrameworkException;
+import com.automation.models.FlowDirectiveType;
 import com.automation.models.ResolvedScenarioContext;
 import com.automation.models.ResolvedStepContext;
 import com.automation.models.ResolvedTestcaseContext;
@@ -95,6 +96,12 @@ public class PreRunValidator {
             addStepError(errors, "Application is required for active step.", step);
         }
 
+        FlowDirectiveType flowDirective = step.getFlowDirective();
+        if (flowDirective != null && flowDirective.isConditional()) {
+            validateConditionalDirective(step, flowDirective, errors);
+            return;
+        }
+
         String dataReferenceError = dataReferenceError(step.getRawValue());
         if (!dataReferenceError.isBlank()) {
             addStepError(errors, dataReferenceError, step);
@@ -123,6 +130,17 @@ public class PreRunValidator {
             default -> {
                 // Phase 13B intentionally validates only the simple keyword rules above.
             }
+        }
+    }
+
+    private void validateConditionalDirective(
+            ResolvedStepContext step,
+            FlowDirectiveType flowDirective,
+            List<ValidationError> errors
+    ) {
+        if ((flowDirective == FlowDirectiveType.IF_EQUALS || flowDirective == FlowDirectiveType.ELSE_IF_EQUALS)
+                && isBlank(step.getRawValue())) {
+            addStepError(errors, "Value condition is required for keyword '" + step.getKeyword() + "'.", step);
         }
     }
 

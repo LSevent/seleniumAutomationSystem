@@ -7,6 +7,7 @@ import com.automation.excel.ObjectRepositoryReader;
 import com.automation.excel.ScenarioReader;
 import com.automation.excel.StepReader;
 import com.automation.exceptions.FrameworkException;
+import com.automation.models.FlowDirectiveType;
 import com.automation.models.ResolvedScenarioContext;
 import com.automation.models.ResolvedStepContext;
 import com.automation.models.ResolvedTestcaseContext;
@@ -118,6 +119,50 @@ public class ExecutionPlanBuilderTest {
         Assert.assertTrue(exception.getMessage().contains("Keyword: click."));
         Assert.assertTrue(exception.getMessage().contains("Object: btnRoomByName."));
         Assert.assertTrue(exception.getMessage().contains("Application: BRS."));
+    }
+
+    @Test
+    public void conditionalDirectiveRowsShouldBePreservedWithoutObjectOrValueResolution() throws IOException {
+        Path workbookPath = ValidationWorkbookFactory.createWorkbook(
+                TEMP_DIR.resolve("conditional-directives-preserved.xlsx"),
+                scenarios(new Object[][]{{1, "Y", "Booking Flow", "Create booking"}}),
+                scenarioSheet("Booking Flow", new Object[][]{
+                        {"Create Booking", "Y", "", "", "", "BRS", "Active testcase"},
+                        {"", "", "ifEquals", "", "BOOKING_DATA.SCHEDULE_TYPE = Single Meeting", "", "Single meeting condition"},
+                        {"", "", "click", "btnSubmitBooking", "", "", "Submit booking"},
+                        {"", "", "endIf", "", "", "", "End condition"}
+                }),
+                sheet("BOOKING_DATA", new String[]{"NO", "SCHEDULE_TYPE"}, new Object[][]{{1, "Single Meeting"}}),
+                objectRepository(new Object[][]{
+                        {"BRS", "btnSubmitBooking", "//button[@id='submitBooking']", "Submit"}
+                })
+        );
+
+        try (ExcelReader excelReader = new ExcelReader(workbookPath.toString())) {
+            ResolvedTestcaseContext testcase = builder(excelReader)
+                    .build()
+                    .get(0)
+                    .getTestcases()
+                    .get(0);
+
+            Assert.assertEquals(testcase.getSteps().size(), 3);
+
+            ResolvedStepContext ifStep = testcase.getSteps().get(0);
+            Assert.assertEquals(ifStep.getKeyword(), "ifEquals");
+            Assert.assertEquals(ifStep.getFlowDirective(), FlowDirectiveType.IF_EQUALS);
+            Assert.assertEquals(ifStep.getRawValue(), "BOOKING_DATA.SCHEDULE_TYPE = Single Meeting");
+            Assert.assertEquals(ifStep.getResolvedValue(), "BOOKING_DATA.SCHEDULE_TYPE = Single Meeting");
+            Assert.assertEquals(ifStep.getRawXPath(), "");
+            Assert.assertEquals(ifStep.getResolvedXPath(), "");
+
+            ResolvedStepContext clickStep = testcase.getSteps().get(1);
+            Assert.assertEquals(clickStep.getKeyword(), "click");
+            Assert.assertEquals(clickStep.getFlowDirective(), FlowDirectiveType.NONE);
+            Assert.assertEquals(clickStep.getResolvedXPath(), "//button[@id='submitBooking']");
+
+            ResolvedStepContext endStep = testcase.getSteps().get(2);
+            Assert.assertEquals(endStep.getFlowDirective(), FlowDirectiveType.END_IF);
+        }
     }
 
     private ExecutionPlanBuilder builder(ExcelReader excelReader) {

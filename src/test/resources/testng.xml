@@ -14,6 +14,7 @@
             <class name="com.automation.tests.ScenarioReaderValidationTest"/>
             <class name="com.automation.tests.StepReaderTest"/>
             <class name="com.automation.tests.StepReaderValidationTest"/>
+            <class name="com.automation.tests.StepReaderConditionalBlockTest"/>
             <class name="com.automation.tests.DataReaderTest"/>
             <class name="com.automation.tests.DataReaderValidationTest"/>
             <class name="com.automation.tests.ObjectRepositoryReaderTest"/>

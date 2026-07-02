@@ -22,6 +22,9 @@ public class PreRunValidatorTest {
                 step("click", "btnLogin", "", "", "//button[@id='login']", "//button[@id='login']", "BRS"),
                 step("verifyText", "message", "DATA.MESSAGE", "Success", "//div[@id='message']", "//div[@id='message']", "BRS"),
                 step("verifyDisplayed", "dashboard", "", "", "//h1", "//h1", "BRS"),
+                step("ifEquals", "", "BOOKING_DATA.SCHEDULE_TYPE = Single Meeting", "BOOKING_DATA.SCHEDULE_TYPE = Single Meeting", "", "", "BRS"),
+                step("else", "", "", "", "", "", "BRS"),
+                step("endIf", "", "", "", "", "", "BRS"),
                 step("screenshot", "", "", "", "", "", "BRS")
         ));
     }
@@ -147,6 +150,23 @@ public class PreRunValidatorTest {
     @Test
     public void screenshotWithoutObjectShouldPass() {
         validator.validate(plan(step("screenshot", "", "", "", "", "", "BRS")));
+    }
+
+    @Test
+    public void conditionalDirectivesShouldNotRequireObjectOrXPath() {
+        validator.validate(plan(
+                step("ifEquals", "", "BOOKING_DATA.SCHEDULE_TYPE = Single Meeting", "BOOKING_DATA.SCHEDULE_TYPE = Single Meeting", "", "", "BRS"),
+                step("elseIfEquals", "", "BOOKING_DATA.SCHEDULE_TYPE = Repeating Meeting", "BOOKING_DATA.SCHEDULE_TYPE = Repeating Meeting", "", "", "BRS"),
+                step("else", "", "", "", "", "", "BRS"),
+                step("endIf", "", "", "", "", "", "BRS")
+        ));
+    }
+
+    @Test
+    public void conditionalComparisonDirectivesShouldRequireValueCondition() {
+        FrameworkException exception = validationFailure(step("ifEquals", "", "", "", "", "", "BRS"));
+
+        assertContainsContext(exception, "Value condition is required for keyword 'ifEquals'.", "ifEquals", "", "BRS");
     }
 
     @Test
