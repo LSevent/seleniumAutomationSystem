@@ -170,6 +170,27 @@ public class PreRunValidatorTest {
     }
 
     @Test
+    public void conditionalComparisonDirectivesShouldRequireValidConditionExpression() {
+        FrameworkException exception = validationFailure(step(
+                "ifEquals",
+                "",
+                "BOOKING_DATA.SCHEDULE_TYPE",
+                "Single Meeting",
+                "",
+                "",
+                "BRS"
+        ));
+
+        assertContainsContext(
+                exception,
+                "Invalid condition expression: BOOKING_DATA.SCHEDULE_TYPE. Expected format: ACTUAL = EXPECTED.",
+                "ifEquals",
+                "",
+                "BRS"
+        );
+    }
+
+    @Test
     public void inactiveScenarioAndTestcaseOutsideResolvedPlanShouldNotBlockValidation() {
         validator.validate(plan(step("click", "btnLogin", "", "", "//button", "//button", "BRS")));
     }

@@ -5,7 +5,9 @@ import com.automation.excel.ObjectRepositoryReader;
 import com.automation.excel.ScenarioReader;
 import com.automation.excel.StepReader;
 import com.automation.exceptions.FrameworkException;
+import com.automation.models.ConditionExpression;
 import com.automation.models.ExecutionResult;
+import com.automation.models.FlowDirectiveType;
 import com.automation.models.ResolvedScenarioContext;
 import com.automation.models.ResolvedStepContext;
 import com.automation.models.ResolvedTestcaseContext;
@@ -17,7 +19,9 @@ import com.automation.validation.PreRunValidator;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Deque;
 import java.util.List;
 import java.util.function.Supplier;
 
@@ -139,8 +143,16 @@ public class ScenarioRunner {
             );
             startTestcaseReport(testcase);
 
+            ConditionalFlowController conditionalFlowController = new ConditionalFlowController();
             for (ResolvedStepContext step : resolvedTestcase.getSteps()) {
-                ExecutionResult result = keywordEngine().execute(step);
+                ExecutionResult result;
+                if (step.isConditionalDirective()) {
+                    result = executeConditionalDirective(conditionalFlowController, step);
+                } else if (!conditionalFlowController.shouldExecuteCurrentStep()) {
+                    result = skippedByConditionalFlow(step);
+                } else {
+                    result = keywordEngine().execute(step);
+                }
                 results.add(result);
                 logStepReport(result);
                 if (!result.isSuccess()) {
@@ -314,5 +326,186 @@ public class ScenarioRunner {
             }
         }
         return keywordEngine;
+    }
+
+    private ExecutionResult executeConditionalDirective(
+            ConditionalFlowController conditionalFlowController,
+            ResolvedStepContext step
+    ) {
+        try {
+            ConditionalFlowDecision decision = conditionalFlowController.apply(step);
+            if (decision.active()) {
+                return ExecutionResult.success(
+                        step,
+                        ScenarioRunner.class.getName(),
+                        "FLOW",
+                        decision.message()
+                );
+            }
+            return ExecutionResult.skipped(
+                    step,
+                    ScenarioRunner.class.getName(),
+                    "FLOW",
+                    "",
+                    decision.message()
+            );
+        } catch (RuntimeException exception) {
+            return ExecutionResult.failure(
+                    step,
+                    ScenarioRunner.class.getName(),
+                    "FLOW",
+                    "Conditional flow failed at step row " + step.getExcelRow() + "."
+                            + System.lineSeparator()
+                            + "Cause: " + exception.getMessage()
+            );
+        }
+    }
+
+    private ExecutionResult skippedByConditionalFlow(ResolvedStepContext step) {
+        return ExecutionResult.skipped(
+                step,
+                ScenarioRunner.class.getName(),
+                "FLOW",
+                "",
+                "Skipped because the active conditional branch does not include this step."
+        );
+    }
+
+    private static final class ConditionalFlowController {
+
+        private final Deque<ConditionalBlockState> blocks = new ArrayDeque<>();
+
+        private ConditionalFlowDecision apply(ResolvedStepContext step) {
+            FlowDirectiveType directive = step.getFlowDirective();
+            if (directive == null || !directive.isConditional()) {
+                return new ConditionalFlowDecision(shouldExecuteCurrentStep(), "Not a conditional directive.");
+            }
+
+            return switch (directive) {
+                case IF_EQUALS -> applyIfEquals(step);
+                case ELSE_IF_EQUALS -> applyElseIfEquals(step);
+                case ELSE -> applyElse(step);
+                case END_IF -> applyEndIf();
+                default -> new ConditionalFlowDecision(shouldExecuteCurrentStep(), "Not a conditional directive.");
+            };
+        }
+
+        private boolean shouldExecuteCurrentStep() {
+            return blocks.stream().allMatch(ConditionalBlockState::isCurrentBranchActive);
+        }
+
+        private ConditionalFlowDecision applyIfEquals(ResolvedStepContext step) {
+            boolean parentActive = shouldExecuteCurrentStep();
+            boolean matched = parentActive && conditionMatches(step);
+            blocks.push(new ConditionalBlockState(parentActive, matched, matched));
+            return new ConditionalFlowDecision(
+                    matched,
+                    matched
+                            ? "Condition matched. Entering ifEquals branch."
+                            : "Condition did not match. Skipping ifEquals branch."
+            );
+        }
+
+        private ConditionalFlowDecision applyElseIfEquals(ResolvedStepContext step) {
+            ConditionalBlockState block = requireOpenBlock("elseIfEquals");
+            if (!block.isParentActive()) {
+                block.deactivateCurrentBranch();
+                return new ConditionalFlowDecision(false, "Parent conditional branch is inactive. Skipping elseIfEquals branch.");
+            }
+            if (block.hasMatchedBranch()) {
+                block.deactivateCurrentBranch();
+                return new ConditionalFlowDecision(false, "A previous conditional branch already matched. Skipping elseIfEquals branch.");
+            }
+
+            boolean matched = conditionMatches(step);
+            block.setCurrentBranchActive(matched);
+            if (matched) {
+                block.markMatched();
+            }
+            return new ConditionalFlowDecision(
+                    matched,
+                    matched
+                            ? "Condition matched. Entering elseIfEquals branch."
+                            : "Condition did not match. Skipping elseIfEquals branch."
+            );
+        }
+
+        private ConditionalFlowDecision applyElse(ResolvedStepContext step) {
+            ConditionalBlockState block = requireOpenBlock("else");
+            if (!block.isParentActive()) {
+                block.deactivateCurrentBranch();
+                return new ConditionalFlowDecision(false, "Parent conditional branch is inactive. Skipping else branch.");
+            }
+            if (block.hasMatchedBranch()) {
+                block.deactivateCurrentBranch();
+                return new ConditionalFlowDecision(false, "A previous conditional branch already matched. Skipping else branch.");
+            }
+
+            block.setCurrentBranchActive(true);
+            block.markMatched();
+            return new ConditionalFlowDecision(true, "Entering else branch.");
+        }
+
+        private ConditionalFlowDecision applyEndIf() {
+            requireOpenBlock("endIf");
+            blocks.pop();
+            return new ConditionalFlowDecision(true, "Ended conditional block.");
+        }
+
+        private ConditionalBlockState requireOpenBlock(String directive) {
+            if (blocks.isEmpty()) {
+                throw new FrameworkException("Conditional directive '" + directive + "' found without an open 'ifEquals'.");
+            }
+            return blocks.peek();
+        }
+
+        private boolean conditionMatches(ResolvedStepContext step) {
+            ConditionExpression condition = ConditionExpression.parse(step.getResolvedValue());
+            return safe(condition.getLeftOperand()).equalsIgnoreCase(safe(condition.getRightOperand()));
+        }
+
+        private static String safe(String value) {
+            return value == null ? "" : value.trim();
+        }
+    }
+
+    private static final class ConditionalBlockState {
+
+        private final boolean parentActive;
+        private boolean matchedBranch;
+        private boolean currentBranchActive;
+
+        private ConditionalBlockState(boolean parentActive, boolean matchedBranch, boolean currentBranchActive) {
+            this.parentActive = parentActive;
+            this.matchedBranch = matchedBranch;
+            this.currentBranchActive = currentBranchActive;
+        }
+
+        private boolean isParentActive() {
+            return parentActive;
+        }
+
+        private boolean hasMatchedBranch() {
+            return matchedBranch;
+        }
+
+        private void markMatched() {
+            matchedBranch = true;
+        }
+
+        private boolean isCurrentBranchActive() {
+            return currentBranchActive;
+        }
+
+        private void setCurrentBranchActive(boolean currentBranchActive) {
+            this.currentBranchActive = currentBranchActive;
+        }
+
+        private void deactivateCurrentBranch() {
+            currentBranchActive = false;
+        }
+    }
+
+    private record ConditionalFlowDecision(boolean active, String message) {
     }
 }

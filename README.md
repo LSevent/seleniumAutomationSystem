@@ -307,6 +307,39 @@ The `screenshot` keyword is special. It is handled by `KeywordEngine`, not by `B
 | --- | --- | --- | --- |
 | `screenshot` | No | Optional | Captures a manual screenshot when `report.manualScreenshotEnabled=true`. `Value` is used as the screenshot label when provided. |
 
+Conditional flow directives are handled by `ScenarioRunner`, not by `BaseFunction` or `SpecificFunction`.
+
+| Keyword | Object required | Value required | Purpose |
+| --- | --- | --- | --- |
+| `ifEquals` | No | Yes | Starts a conditional block when the left side equals the right side. |
+| `elseIfEquals` | No | Yes | Adds another conditional branch when earlier branches did not match. |
+| `else` | No | No | Adds a fallback branch when no earlier branch matched. |
+| `endIf` | No | No | Ends the current conditional block. |
+
+Condition syntax:
+
+```text
+ACTUAL = EXPECTED
+```
+
+The left or right side may be a data reference. Values are resolved before runtime and compared after trimming, ignoring case.
+
+Example conditional block:
+
+```text
+Keyword       | Object              | Value                                           | Description
+select        | sltScheduleType     | BOOKING_DATA.SCHEDULE_TYPE                      | Select schedule type
+ifEquals      |                     | BOOKING_DATA.SCHEDULE_TYPE = Single Meeting     | Single meeting branch
+input         | txtMeetingDate      | BOOKING_DATA.MEETING_DATE                       | Input meeting date
+input         | txtStartTime        | BOOKING_DATA.START_TIME                         | Input start time
+elseIfEquals  |                     | BOOKING_DATA.SCHEDULE_TYPE = Repeating Meeting  | Repeating meeting branch
+input         | txtStartDate        | BOOKING_DATA.START_DATE                         | Input start date
+input         | txtEndDate          | BOOKING_DATA.END_DATE                           | Input end date
+else          |                     |                                                 | Fallback branch
+screenshot    |                     | Unknown schedule type                           | Capture unexpected condition
+endIf         |                     |                                                 | End schedule condition
+```
+
 Example scenario steps:
 
 ```text

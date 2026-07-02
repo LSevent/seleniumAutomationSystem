@@ -2,6 +2,7 @@ package com.automation.validation;
 
 import com.automation.exceptions.ErrorContext;
 import com.automation.exceptions.FrameworkException;
+import com.automation.models.ConditionExpression;
 import com.automation.models.FlowDirectiveType;
 import com.automation.models.ResolvedScenarioContext;
 import com.automation.models.ResolvedStepContext;
@@ -141,6 +142,23 @@ public class PreRunValidator {
         if ((flowDirective == FlowDirectiveType.IF_EQUALS || flowDirective == FlowDirectiveType.ELSE_IF_EQUALS)
                 && isBlank(step.getRawValue())) {
             addStepError(errors, "Value condition is required for keyword '" + step.getKeyword() + "'.", step);
+            return;
+        }
+
+        if (flowDirective == FlowDirectiveType.IF_EQUALS || flowDirective == FlowDirectiveType.ELSE_IF_EQUALS) {
+            try {
+                ConditionExpression condition = ConditionExpression.parse(step.getRawValue());
+                String leftReferenceError = dataReferenceError(condition.getLeftOperand());
+                if (!leftReferenceError.isBlank()) {
+                    addStepError(errors, leftReferenceError, step);
+                }
+                String rightReferenceError = dataReferenceError(condition.getRightOperand());
+                if (!rightReferenceError.isBlank()) {
+                    addStepError(errors, rightReferenceError, step);
+                }
+            } catch (FrameworkException exception) {
+                addStepError(errors, exception.getMessage(), step);
+            }
         }
     }
 

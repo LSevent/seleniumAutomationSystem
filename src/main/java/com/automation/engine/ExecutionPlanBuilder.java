@@ -6,6 +6,8 @@ import com.automation.excel.ScenarioReader;
 import com.automation.excel.StepReader;
 import com.automation.exceptions.ErrorContext;
 import com.automation.exceptions.FrameworkException;
+import com.automation.models.ConditionExpression;
+import com.automation.models.FlowDirectiveType;
 import com.automation.models.ResolvedObject;
 import com.automation.models.ResolvedScenarioContext;
 import com.automation.models.ResolvedStepContext;
@@ -87,7 +89,7 @@ public class ExecutionPlanBuilder {
         String resolvedValue;
         try {
             resolvedValue = step.isFlowDirective()
-                    ? rawValue
+                    ? resolveFlowDirectiveValue(step, scenario)
                     : dataReader.resolveValue(rawValue, scenario);
         } catch (RuntimeException exception) {
             throw resolutionFailure("Value could not be resolved while building the execution plan.", scenario, testcase, step, exception);
@@ -128,6 +130,19 @@ public class ExecutionPlanBuilder {
                 .executedBy("")
                 .flowDirective(step.getFlowDirective())
                 .build();
+    }
+
+    private String resolveFlowDirectiveValue(TestStep step, Scenario scenario) {
+        if (step.getFlowDirective() == null
+                || !(step.getFlowDirective().startsConditionalBlock()
+                || step.getFlowDirective() == FlowDirectiveType.ELSE_IF_EQUALS)) {
+            return safe(step.getValue());
+        }
+
+        ConditionExpression condition = ConditionExpression.parse(step.getValue());
+        String leftValue = dataReader.resolveValue(condition.getLeftOperand(), scenario);
+        String rightValue = dataReader.resolveValue(condition.getRightOperand(), scenario);
+        return safe(leftValue) + " = " + safe(rightValue);
     }
 
     private FrameworkException resolutionFailure(

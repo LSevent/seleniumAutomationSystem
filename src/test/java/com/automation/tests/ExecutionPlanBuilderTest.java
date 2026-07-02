@@ -151,7 +151,7 @@ public class ExecutionPlanBuilderTest {
             Assert.assertEquals(ifStep.getKeyword(), "ifEquals");
             Assert.assertEquals(ifStep.getFlowDirective(), FlowDirectiveType.IF_EQUALS);
             Assert.assertEquals(ifStep.getRawValue(), "BOOKING_DATA.SCHEDULE_TYPE = Single Meeting");
-            Assert.assertEquals(ifStep.getResolvedValue(), "BOOKING_DATA.SCHEDULE_TYPE = Single Meeting");
+            Assert.assertEquals(ifStep.getResolvedValue(), "Single Meeting = Single Meeting");
             Assert.assertEquals(ifStep.getRawXPath(), "");
             Assert.assertEquals(ifStep.getResolvedXPath(), "");
 
