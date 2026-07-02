@@ -15,6 +15,7 @@
             <class name="com.automation.tests.StepReaderTest"/>
             <class name="com.automation.tests.StepReaderValidationTest"/>
             <class name="com.automation.tests.StepReaderConditionalBlockTest"/>
+            <class name="com.automation.tests.StepReaderLoopBlockTest"/>
             <class name="com.automation.tests.DataReaderTest"/>
             <class name="com.automation.tests.DataReaderValidationTest"/>
             <class name="com.automation.tests.ObjectRepositoryReaderTest"/>
@@ -33,6 +34,7 @@
             <class name="com.automation.tests.ScenarioRunnerValidationTest"/>
             <class name="com.automation.tests.ScenarioRunnerResolvedPlanExecutionTest"/>
             <class name="com.automation.tests.ScenarioRunnerConditionalExecutionTest"/>
+            <class name="com.automation.tests.ScenarioRunnerForEachDataRowExecutionTest"/>
             <class name="com.automation.tests.ScreenshotResolvedPlanRegressionTest"/>
             <class name="com.automation.tests.StepContextLeakRegressionTest"/>
             <class name="com.automation.tests.SensitiveDataMaskerTest"/>

@@ -340,6 +340,34 @@ screenshot    |                     | Unknown schedule type                     
 endIf         |                     |                                                 | End schedule condition
 ```
 
+Data-row loop directives are also handled by `ScenarioRunner`, not by `BaseFunction` or `SpecificFunction`.
+
+| Keyword | Object required | Value required | Purpose |
+| --- | --- | --- | --- |
+| `forEachDataRow` | No | Yes | Repeats the enclosed steps for every row in the named data sheet whose `NO` matches the active scenario `NO`. |
+| `endForEachDataRow` | No | No | Ends the current data-row loop. |
+
+Loop `Value` is the data sheet name. A leading `#` is accepted for readability, so both `BOOKING_DATA` and `#BOOKING_DATA` are valid.
+
+Inside the loop, data references for the loop sheet use the current loop row. Other data references still resolve normally.
+
+Example data-row loop:
+
+```text
+Keyword            | Object            | Value                                           | Description
+forEachDataRow     |                   | #BOOKING_DATA                                   | Repeat for each booking row
+select             | sltScheduleType   | BOOKING_DATA.SCHEDULE_TYPE                      | Select schedule type
+ifEquals           |                   | BOOKING_DATA.SCHEDULE_TYPE = Single Meeting     | Single meeting branch
+input              | txtMeetingDate    | BOOKING_DATA.MEETING_DATE                       | Input meeting date
+elseIfEquals       |                   | BOOKING_DATA.SCHEDULE_TYPE = Repeating Meeting  | Repeating meeting branch
+input              | txtStartDate      | BOOKING_DATA.START_DATE                         | Input start date
+input              | txtEndDate        | BOOKING_DATA.END_DATE                           | Input end date
+endIf              |                   |                                                 | End schedule condition
+select             | sltGuestType      | BOOKING_DATA.GUEST_TYPE                         | Select guest type
+input              | txtGuestQty       | BOOKING_DATA.GUEST_QTY                          | Input guest quantity
+endForEachDataRow  |                   |                                                 | End booking loop
+```
+
 Example scenario steps:
 
 ```text

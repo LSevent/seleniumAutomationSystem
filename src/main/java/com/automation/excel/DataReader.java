@@ -4,6 +4,7 @@ import com.automation.exceptions.FrameworkException;
 import com.automation.models.DataReference;
 import com.automation.models.Scenario;
 
+import java.util.List;
 import java.util.Map;
 
 public class DataReader {
@@ -103,6 +104,26 @@ public class DataReader {
         return resolveValue(rawValue, scenario.getNo());
     }
 
+    public String resolveValue(
+            String rawValue,
+            Scenario scenario,
+            String overrideSheetName,
+            Map<String, String> overrideDataRow
+    ) {
+        if (rawValue == null || rawValue.isBlank()) {
+            return "";
+        }
+        if (!isDataReference(rawValue)) {
+            return rawValue;
+        }
+
+        DataReference dataReference = parseReference(rawValue);
+        if (sameSheet(dataReference.getSheetName(), overrideSheetName) && overrideDataRow != null) {
+            return resolveValueFromRow(dataReference, overrideDataRow);
+        }
+        return resolveValue(rawValue, scenario);
+    }
+
     public Map<String, String> getDataRow(String sheetName, String scenarioNo) {
         if (sheetName == null || sheetName.isBlank()) {
             throw new FrameworkException("Data sheet name must not be null or blank.");
@@ -122,6 +143,47 @@ public class DataReader {
                 .filter(rowData -> scenarioNo.trim().equals(rowData.getOrDefault(actualDataKeyHeader, "").trim()))
                 .findFirst()
                 .orElseThrow(() -> new FrameworkException("Data row not found in sheet " + dataSheetName + " for NO = " + scenarioNo.trim() + "."));
+    }
+
+    public List<Map<String, String>> getDataRows(String sheetName, String scenarioNo) {
+        if (sheetName == null || sheetName.isBlank()) {
+            throw new FrameworkException("Data sheet name must not be null or blank.");
+        }
+        if (scenarioNo == null || scenarioNo.isBlank()) {
+            throw new FrameworkException("Scenario NO is required to resolve data sheet " + sheetName.trim() + ".");
+        }
+
+        String dataSheetName = sheetName.trim();
+        if (!excelReader.isSheetExists(dataSheetName)) {
+            throw new FrameworkException("Data sheet not found: " + dataSheetName + ".");
+        }
+        int dataKeyColumnIndex = findRequiredColumnIndex(dataSheetName, DATA_KEY_COLUMN);
+        String actualDataKeyHeader = excelReader.getCellValue(dataSheetName, 0, dataKeyColumnIndex).trim();
+
+        List<Map<String, String>> rows = excelReader.getAllRowsDataByHeader(dataSheetName).stream()
+                .filter(rowData -> scenarioNo.trim().equals(rowData.getOrDefault(actualDataKeyHeader, "").trim()))
+                .toList();
+
+        if (rows.isEmpty()) {
+            throw new FrameworkException("Data rows not found in sheet " + dataSheetName + " for NO = " + scenarioNo.trim() + ".");
+        }
+        return List.copyOf(rows);
+    }
+
+    private String resolveValueFromRow(DataReference dataReference, Map<String, String> dataRow) {
+        if (!excelReader.isSheetExists(dataReference.getSheetName())) {
+            throw new FrameworkException("Data sheet not found: " + dataReference.getSheetName() + ". Referenced by value " + dataReference.getRawReference() + ".");
+        }
+
+        int columnIndex = findRequiredColumnIndex(dataReference.getSheetName(), dataReference.getColumnName());
+        String actualHeader = excelReader.getCellValue(dataReference.getSheetName(), 0, columnIndex).trim();
+        return dataRow.getOrDefault(actualHeader, "");
+    }
+
+    private boolean sameSheet(String left, String right) {
+        return left != null
+                && right != null
+                && left.trim().equalsIgnoreCase(right.trim());
     }
 
     private boolean containsBracketNotation(String value) {

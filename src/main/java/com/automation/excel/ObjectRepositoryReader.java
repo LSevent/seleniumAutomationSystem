@@ -106,15 +106,36 @@ public class ObjectRepositoryReader {
         TestObject testObject = getObject(step.getApplication(), step.getObject());
         String rawValue = step.getValue() == null ? "" : step.getValue().trim();
         String resolvedValue = resolveStepValue(rawValue, scenario);
-        String resolvedXPath = resolveXPath(testObject.getXPath(), testObject.getObjectName(), rawValue, resolvedValue);
 
+        return resolveObject(step, rawValue, resolvedValue, testObject);
+    }
+
+    public ResolvedObject resolveObject(TestStep step, String rawValue, String resolvedValue) {
+        if (step == null) {
+            throw new IllegalArgumentException("TestStep must not be null.");
+        }
+        if (step.getObject() == null || step.getObject().isBlank()) {
+            return null;
+        }
+        if (step.getApplication() == null || step.getApplication().isBlank()) {
+            throw new FrameworkException("Application is required to resolve object '" + step.getObject().trim() + "'.");
+        }
+
+        TestObject testObject = getObject(step.getApplication(), step.getObject());
+        return resolveObject(step, rawValue, resolvedValue, testObject);
+    }
+
+    private ResolvedObject resolveObject(TestStep step, String rawValue, String resolvedValue, TestObject testObject) {
+        String safeRawValue = rawValue == null ? "" : rawValue.trim();
+        String safeResolvedValue = resolvedValue == null ? "" : resolvedValue.trim();
+        String resolvedXPath = resolveXPath(testObject.getXPath(), testObject.getObjectName(), safeRawValue, safeResolvedValue);
         return new ResolvedObject(
                 step.getObject(),
                 step.getApplication(),
                 testObject.getXPath(),
                 resolvedXPath,
-                rawValue,
-                resolvedValue,
+                safeRawValue,
+                safeResolvedValue,
                 testObject.getExcelRowNumber()
         );
     }

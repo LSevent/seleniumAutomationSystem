@@ -128,6 +128,10 @@ public final class ResolvedStepContext {
         return flowDirective != null && flowDirective.isConditional();
     }
 
+    public boolean isLoopDirective() {
+        return flowDirective != null && flowDirective.isLoop();
+    }
+
     public String xpath() {
         return resolvedXPath;
     }

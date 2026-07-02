@@ -316,5 +316,14 @@ public class ScenarioRunnerResolvedPlanExecutionTest {
             resolutionCount.incrementAndGet();
             return super.resolveObject(step, scenario);
         }
+
+        @Override
+        public ResolvedObject resolveObject(TestStep step, String rawValue, String resolvedValue) {
+            if (runtimeStarted.get()) {
+                throw new AssertionError("Runtime attempted to re-resolve an object or XPath.");
+            }
+            resolutionCount.incrementAndGet();
+            return super.resolveObject(step, rawValue, resolvedValue);
+        }
     }
 }

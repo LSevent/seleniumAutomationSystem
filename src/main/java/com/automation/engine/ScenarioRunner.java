@@ -150,6 +150,8 @@ public class ScenarioRunner {
                     result = executeConditionalDirective(conditionalFlowController, step);
                 } else if (!conditionalFlowController.shouldExecuteCurrentStep()) {
                     result = skippedByConditionalFlow(step);
+                } else if (step.isLoopDirective()) {
+                    result = executeLoopDirective(step);
                 } else {
                     result = keywordEngine().execute(step);
                 }
@@ -369,6 +371,26 @@ public class ScenarioRunner {
                 "",
                 "Skipped because the active conditional branch does not include this step."
         );
+    }
+
+    private ExecutionResult executeLoopDirective(ResolvedStepContext step) {
+        return ExecutionResult.success(
+                step,
+                ScenarioRunner.class.getName(),
+                "FLOW",
+                loopDirectiveMessage(step)
+        );
+    }
+
+    private String loopDirectiveMessage(ResolvedStepContext step) {
+        String iteration = step.getResolvedValue() == null || step.getResolvedValue().isBlank()
+                ? ""
+                : " " + step.getResolvedValue() + ".";
+        return switch (step.getFlowDirective()) {
+            case FOR_EACH_DATA_ROW -> "Starting data row loop." + iteration;
+            case END_FOR_EACH_DATA_ROW -> "Ended data row loop." + iteration;
+            default -> "Loop directive processed.";
+        };
     }
 
     private static final class ConditionalFlowController {

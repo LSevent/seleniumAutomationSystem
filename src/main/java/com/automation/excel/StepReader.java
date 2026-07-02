@@ -40,7 +40,7 @@ public class StepReader {
         validateRequiredHeaders(scenario.getAction());
 
         List<TestCaseBlock> testCases = parseTestCases(scenario);
-        validateConditionalBlocks(scenario.getAction(), testCases);
+        validateFlowBlocks(scenario.getAction(), testCases);
         validateDuplicateTestcaseNames(scenario.getAction(), testCases);
         validateActiveTestCasesHaveSteps(scenario.getAction(), testCases);
         return testCases;
@@ -178,37 +178,39 @@ public class StepReader {
         }
     }
 
-    private void validateConditionalBlocks(String sheetName, List<TestCaseBlock> testCases) {
+    private void validateFlowBlocks(String sheetName, List<TestCaseBlock> testCases) {
         for (TestCaseBlock testCase : testCases) {
             if (testCase.isRun()) {
-                validateConditionalBlocks(sheetName, testCase);
+                validateFlowBlocks(sheetName, testCase);
             }
         }
     }
 
-    private void validateConditionalBlocks(String sheetName, TestCaseBlock testCase) {
-        Deque<ConditionalBlock> openBlocks = new ArrayDeque<>();
+    private void validateFlowBlocks(String sheetName, TestCaseBlock testCase) {
+        Deque<FlowBlock> openBlocks = new ArrayDeque<>();
         for (TestStep step : testCase.getSteps()) {
             FlowDirectiveType directive = step.getFlowDirective();
-            if (directive == null || !directive.isConditional()) {
+            if (directive == null || !directive.isFlowDirective()) {
                 continue;
             }
 
             switch (directive) {
-                case IF_EQUALS -> openBlocks.push(new ConditionalBlock(step.getExcelRowNumber()));
+                case IF_EQUALS -> openBlocks.push(FlowBlock.conditional(step.getExcelRowNumber()));
                 case ELSE_IF_EQUALS -> validateElseIf(sheetName, testCase, step, openBlocks);
                 case ELSE -> validateElse(sheetName, testCase, step, openBlocks);
                 case END_IF -> validateEndIf(sheetName, testCase, step, openBlocks);
+                case FOR_EACH_DATA_ROW -> openBlocks.push(FlowBlock.loop(step.getExcelRowNumber()));
+                case END_FOR_EACH_DATA_ROW -> validateEndForEachDataRow(sheetName, testCase, step, openBlocks);
                 default -> {
-                    // Not a conditional directive.
+                    // Not a flow directive.
                 }
             }
         }
 
         if (!openBlocks.isEmpty()) {
-            ConditionalBlock block = openBlocks.peek();
-            throw conditionalBlockError(
-                    "Conditional block starting with 'ifEquals' is missing 'endIf'.",
+            FlowBlock block = openBlocks.peek();
+            throw flowBlockError(
+                    block.missingEndMessage(),
                     sheetName,
                     testCase,
                     block.startRow()
@@ -220,11 +222,11 @@ public class StepReader {
             String sheetName,
             TestCaseBlock testCase,
             TestStep step,
-            Deque<ConditionalBlock> openBlocks
+            Deque<FlowBlock> openBlocks
     ) {
-        ConditionalBlock currentBlock = requireOpenConditionalBlock("elseIfEquals", sheetName, testCase, step, openBlocks);
+        FlowBlock currentBlock = requireOpenConditionalBlock("elseIfEquals", sheetName, testCase, step, openBlocks);
         if (currentBlock.hasElse()) {
-            throw conditionalBlockError(
+            throw flowBlockError(
                     "Conditional directive 'elseIfEquals' cannot appear after 'else' in the same conditional block.",
                     sheetName,
                     testCase,
@@ -237,11 +239,11 @@ public class StepReader {
             String sheetName,
             TestCaseBlock testCase,
             TestStep step,
-            Deque<ConditionalBlock> openBlocks
+            Deque<FlowBlock> openBlocks
     ) {
-        ConditionalBlock currentBlock = requireOpenConditionalBlock("else", sheetName, testCase, step, openBlocks);
+        FlowBlock currentBlock = requireOpenConditionalBlock("else", sheetName, testCase, step, openBlocks);
         if (currentBlock.hasElse()) {
-            throw conditionalBlockError(
+            throw flowBlockError(
                     "Conditional directive 'else' appears more than once in the same conditional block.",
                     sheetName,
                     testCase,
@@ -255,31 +257,77 @@ public class StepReader {
             String sheetName,
             TestCaseBlock testCase,
             TestStep step,
-            Deque<ConditionalBlock> openBlocks
+            Deque<FlowBlock> openBlocks
     ) {
         requireOpenConditionalBlock("endIf", sheetName, testCase, step, openBlocks);
         openBlocks.pop();
     }
 
-    private ConditionalBlock requireOpenConditionalBlock(
+    private void validateEndForEachDataRow(
+            String sheetName,
+            TestCaseBlock testCase,
+            TestStep step,
+            Deque<FlowBlock> openBlocks
+    ) {
+        requireOpenLoopBlock("endForEachDataRow", sheetName, testCase, step, openBlocks);
+        openBlocks.pop();
+    }
+
+    private FlowBlock requireOpenConditionalBlock(
             String directive,
             String sheetName,
             TestCaseBlock testCase,
             TestStep step,
-            Deque<ConditionalBlock> openBlocks
+            Deque<FlowBlock> openBlocks
     ) {
         if (openBlocks.isEmpty()) {
-            throw conditionalBlockError(
+            throw flowBlockError(
                     "Conditional directive '" + directive + "' found without an open 'ifEquals'.",
                     sheetName,
                     testCase,
                     step.getExcelRowNumber()
             );
         }
-        return openBlocks.peek();
+        FlowBlock block = openBlocks.peek();
+        if (!block.isConditional()) {
+            throw flowBlockError(
+                    "Conditional directive '" + directive + "' cannot close or branch a 'forEachDataRow' block before 'endForEachDataRow'.",
+                    sheetName,
+                    testCase,
+                    step.getExcelRowNumber()
+            );
+        }
+        return block;
     }
 
-    private FrameworkException conditionalBlockError(
+    private FlowBlock requireOpenLoopBlock(
+            String directive,
+            String sheetName,
+            TestCaseBlock testCase,
+            TestStep step,
+            Deque<FlowBlock> openBlocks
+    ) {
+        if (openBlocks.isEmpty()) {
+            throw flowBlockError(
+                    "Loop directive '" + directive + "' found without an open 'forEachDataRow'.",
+                    sheetName,
+                    testCase,
+                    step.getExcelRowNumber()
+            );
+        }
+        FlowBlock block = openBlocks.peek();
+        if (!block.isLoop()) {
+            throw flowBlockError(
+                    "Loop directive '" + directive + "' cannot close an 'ifEquals' block before 'endIf'.",
+                    sheetName,
+                    testCase,
+                    step.getExcelRowNumber()
+            );
+        }
+        return block;
+    }
+
+    private FrameworkException flowBlockError(
             String message,
             String sheetName,
             TestCaseBlock testCase,
@@ -386,17 +434,35 @@ public class StepReader {
         }
     }
 
-    private static final class ConditionalBlock {
+    private static final class FlowBlock {
 
+        private final FlowBlockKind kind;
         private final int startRow;
         private boolean hasElse;
 
-        private ConditionalBlock(int startRow) {
+        private FlowBlock(FlowBlockKind kind, int startRow) {
+            this.kind = kind;
             this.startRow = startRow;
+        }
+
+        private static FlowBlock conditional(int startRow) {
+            return new FlowBlock(FlowBlockKind.CONDITIONAL, startRow);
+        }
+
+        private static FlowBlock loop(int startRow) {
+            return new FlowBlock(FlowBlockKind.LOOP, startRow);
         }
 
         private int startRow() {
             return startRow;
+        }
+
+        private boolean isConditional() {
+            return kind == FlowBlockKind.CONDITIONAL;
+        }
+
+        private boolean isLoop() {
+            return kind == FlowBlockKind.LOOP;
         }
 
         private boolean hasElse() {
@@ -406,5 +472,17 @@ public class StepReader {
         private void markElseSeen() {
             hasElse = true;
         }
+
+        private String missingEndMessage() {
+            if (isLoop()) {
+                return "Loop block starting with 'forEachDataRow' is missing 'endForEachDataRow'.";
+            }
+            return "Conditional block starting with 'ifEquals' is missing 'endIf'.";
+        }
+    }
+
+    private enum FlowBlockKind {
+        CONDITIONAL,
+        LOOP
     }
 }

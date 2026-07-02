@@ -119,6 +119,10 @@ public class TestStep {
         return flowDirective != null && flowDirective.isConditional();
     }
 
+    public boolean isLoopDirective() {
+        return flowDirective != null && flowDirective.isLoop();
+    }
+
     @Override
     public String toString() {
         return "TestStep{" +

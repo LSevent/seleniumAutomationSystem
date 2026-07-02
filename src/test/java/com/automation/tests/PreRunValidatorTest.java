@@ -25,6 +25,8 @@ public class PreRunValidatorTest {
                 step("ifEquals", "", "BOOKING_DATA.SCHEDULE_TYPE = Single Meeting", "BOOKING_DATA.SCHEDULE_TYPE = Single Meeting", "", "", "BRS"),
                 step("else", "", "", "", "", "", "BRS"),
                 step("endIf", "", "", "", "", "", "BRS"),
+                step("forEachDataRow", "", "BOOKING_DATA", "BOOKING_DATA row 1 of 2", "", "", "BRS"),
+                step("endForEachDataRow", "", "", "BOOKING_DATA row 1 of 2", "", "", "BRS"),
                 step("screenshot", "", "", "", "", "", "BRS")
         ));
     }
@@ -188,6 +190,21 @@ public class PreRunValidatorTest {
                 "",
                 "BRS"
         );
+    }
+
+    @Test
+    public void loopDirectivesShouldNotRequireObjectOrXPath() {
+        validator.validate(plan(
+                step("forEachDataRow", "", "BOOKING_DATA", "BOOKING_DATA row 1 of 2", "", "", "BRS"),
+                step("endForEachDataRow", "", "", "BOOKING_DATA row 1 of 2", "", "", "BRS")
+        ));
+    }
+
+    @Test
+    public void forEachDataRowShouldRequireDataSheetName() {
+        FrameworkException exception = validationFailure(step("forEachDataRow", "", "", "", "", "", "BRS"));
+
+        assertContainsContext(exception, "Data sheet name is required for keyword 'forEachDataRow'.", "forEachDataRow", "", "BRS");
     }
 
     @Test

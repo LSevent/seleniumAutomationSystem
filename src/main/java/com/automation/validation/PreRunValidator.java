@@ -98,8 +98,12 @@ public class PreRunValidator {
         }
 
         FlowDirectiveType flowDirective = step.getFlowDirective();
-        if (flowDirective != null && flowDirective.isConditional()) {
-            validateConditionalDirective(step, flowDirective, errors);
+        if (flowDirective != null && flowDirective.isFlowDirective()) {
+            if (flowDirective.isConditional()) {
+                validateConditionalDirective(step, flowDirective, errors);
+            } else if (flowDirective.isLoop()) {
+                validateLoopDirective(step, flowDirective, errors);
+            }
             return;
         }
 
@@ -159,6 +163,16 @@ public class PreRunValidator {
             } catch (FrameworkException exception) {
                 addStepError(errors, exception.getMessage(), step);
             }
+        }
+    }
+
+    private void validateLoopDirective(
+            ResolvedStepContext step,
+            FlowDirectiveType flowDirective,
+            List<ValidationError> errors
+    ) {
+        if (flowDirective == FlowDirectiveType.FOR_EACH_DATA_ROW && isBlank(step.getRawValue())) {
+            addStepError(errors, "Data sheet name is required for keyword '" + step.getKeyword() + "'.", step);
         }
     }
 
