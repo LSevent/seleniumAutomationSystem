@@ -124,7 +124,7 @@ public final class ExcelKeywordTestWorkbookFactory {
                             {"Open Local Page", "Yes", "", "", "", "BRS", "Open local test page"},
                             {"", "", "openUrl", "", "CONFIG.BASE_URL", "", "Open local HTML"},
                             {testcaseName, "Yes", "", "", "", "BRS", "Failing testcase"},
-                            {"", "", "unknownKeyword", "", "", "", "Unsupported keyword"}
+                            {"", "", "click", "btnMissingElement", "", "", "Click missing element"}
                     }
             );
             createSheet(
@@ -140,7 +140,8 @@ public final class ExcelKeywordTestWorkbookFactory {
                     "OBJECT_REPOSITORY",
                     new String[]{"Application", "Object", "XPath", "Description"},
                     new Object[][]{
-                            {"BRS", "btnLogin", "//button[@id='loginButton']", "Login button"}
+                            {"BRS", "btnLogin", "//button[@id='loginButton']", "Login button"},
+                            {"BRS", "btnMissingElement", "//button[@id='missingElement']", "Missing element button"}
                     }
             );
             workbook.write(outputStream);

@@ -83,7 +83,7 @@ src
 
 Before browser keyword execution starts, the framework builds a resolved execution plan for active scenarios and active testcases. The plan resolves data references, object repository references, raw and resolved XPath values, and dynamic XPath placeholders.
 
-Pre-run validation checks data references, object and XPath availability, and simple keyword requirements such as the value required by `openUrl` and the XPath/value required by `input`. This catches Excel mistakes before Selenium steps begin. Inactive scenarios and inactive testcases are not included in the resolved plan and do not block execution.
+Pre-run validation checks data references, object and XPath availability, unknown keyword names, and simple keyword requirements such as the value required by `openUrl` and the XPath/value required by `input`. This catches Excel mistakes before Selenium steps begin. Inactive scenarios and inactive testcases are not included in the resolved plan and do not block execution.
 
 ## Step Execution Context
 

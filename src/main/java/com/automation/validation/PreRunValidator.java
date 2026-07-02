@@ -1,5 +1,6 @@
 package com.automation.validation;
 
+import com.automation.base.BaseFunction;
 import com.automation.exceptions.ErrorContext;
 import com.automation.exceptions.FrameworkException;
 import com.automation.models.ConditionExpression;
@@ -9,6 +10,8 @@ import com.automation.models.ResolvedStepContext;
 import com.automation.models.ResolvedTestcaseContext;
 import com.automation.utils.XPathResolver;
 
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -16,6 +19,8 @@ import java.util.Locale;
 public class PreRunValidator {
 
     private static final String DATA_REFERENCE_FORMAT = "SHEET_NAME.COLUMN_NAME";
+    private static final String SPECIFIC_FUNCTION_PACKAGE_PREFIX = "com.automation.functions.";
+    private static final String SPECIFIC_FUNCTION_CLASS_SUFFIX = ".SpecificFunction";
 
     private final XPathResolver xpathResolver = new XPathResolver();
 
@@ -107,6 +112,8 @@ public class PreRunValidator {
             return;
         }
 
+        validateKeywordIsKnown(step, keyword, errors);
+
         String dataReferenceError = dataReferenceError(step.getRawValue());
         if (!dataReferenceError.isBlank()) {
             addStepError(errors, dataReferenceError, step);
@@ -136,6 +143,32 @@ public class PreRunValidator {
                 // Phase 13B intentionally validates only the simple keyword rules above.
             }
         }
+    }
+
+    private void validateKeywordIsKnown(
+            ResolvedStepContext step,
+            String keyword,
+            List<ValidationError> errors
+    ) {
+        if (keyword.isBlank() || isBlank(step.getApplication()) || isScreenshotKeyword(keyword)) {
+            return;
+        }
+        if (hasNoArgumentKeywordMethod(BaseFunction.class, keyword)) {
+            return;
+        }
+
+        Class<?> specificFunctionClass = loadSpecificFunctionClass(step.getApplication());
+        if (specificFunctionClass != null && hasNoArgumentKeywordMethod(specificFunctionClass, keyword)) {
+            return;
+        }
+
+        addStepError(
+                errors,
+                "Unknown keyword '" + keyword + "' for application '" + safe(step.getApplication()) + "'. "
+                        + "Add a public no-argument method named '" + keyword + "' to "
+                        + "SpecificFunction for application '" + safe(step.getApplication()) + "' or BaseFunction.",
+                step
+        );
     }
 
     private void validateConditionalDirective(
@@ -314,6 +347,35 @@ public class PreRunValidator {
 
     private String safe(String value) {
         return value == null ? "" : value.trim();
+    }
+
+    private boolean isScreenshotKeyword(String keyword) {
+        return "screenshot".equalsIgnoreCase(safe(keyword));
+    }
+
+    private Class<?> loadSpecificFunctionClass(String application) {
+        try {
+            return Class.forName(
+                    SPECIFIC_FUNCTION_PACKAGE_PREFIX
+                            + safe(application).toUpperCase(Locale.ROOT)
+                            + SPECIFIC_FUNCTION_CLASS_SUFFIX,
+                    false,
+                    Thread.currentThread().getContextClassLoader()
+            );
+        } catch (ClassNotFoundException exception) {
+            return null;
+        }
+    }
+
+    private boolean hasNoArgumentKeywordMethod(Class<?> type, String keyword) {
+        for (Method method : type.getDeclaredMethods()) {
+            if (method.getName().equals(keyword)
+                    && Modifier.isPublic(method.getModifiers())
+                    && method.getParameterCount() == 0) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private record ValidationError(

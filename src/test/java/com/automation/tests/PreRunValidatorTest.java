@@ -155,6 +155,35 @@ public class PreRunValidatorTest {
     }
 
     @Test
+    public void unknownKeywordShouldFailBeforeRuntime() {
+        FrameworkException exception = validationFailure(step("approveBooking", "", "", "", "", "", "BRS"));
+
+        assertContainsContext(
+                exception,
+                "Unknown keyword 'approveBooking' for application 'BRS'.",
+                "approveBooking",
+                "",
+                "BRS"
+        );
+        Assert.assertTrue(exception.getMessage().contains(
+                "Add a public no-argument method named 'approveBooking' to SpecificFunction for application 'BRS' or BaseFunction."
+        ));
+    }
+
+    @Test
+    public void applicationSpecificKeywordShouldPassKnownKeywordValidation() {
+        validator.validate(plan(step(
+                "selectRoomByName",
+                "btnRoomByName",
+                "BOOKING_DATA.ROOM_NAME",
+                "Meeting Room A",
+                "//button[contains(text(),'{ROOM_NAME}')]",
+                "//button[contains(text(),'Meeting Room A')]",
+                "BRS"
+        )));
+    }
+
+    @Test
     public void conditionalDirectivesShouldNotRequireObjectOrXPath() {
         validator.validate(plan(
                 step("ifEquals", "", "BOOKING_DATA.SCHEDULE_TYPE = Single Meeting", "BOOKING_DATA.SCHEDULE_TYPE = Single Meeting", "", "", "BRS"),
