@@ -1,38 +1,27 @@
 package com.automation.base;
 
-import com.automation.context.StepContextHolder;
 import com.automation.drivers.DriverFactory;
-import com.automation.exceptions.ErrorContext;
-import com.automation.models.ResolvedStepContext;
 import com.automation.utils.JavaScriptUtil;
-import com.automation.utils.WaitUtil;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.openqa.selenium.By;
 import org.openqa.selenium.ElementClickInterceptedException;
 import org.openqa.selenium.Keys;
-import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.StaleElementReferenceException;
 import org.openqa.selenium.TimeoutException;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebDriverException;
 import org.openqa.selenium.WebElement;
 
-public class BaseFunction {
+public class BaseFunction extends KeywordSupport {
 
     private static final Logger LOGGER = LogManager.getLogger(BaseFunction.class);
-
-    private final WebDriver driver;
 
     public BaseFunction() {
         this(DriverFactory.getDriver());
     }
 
     public BaseFunction(WebDriver driver) {
-        if (driver == null) {
-            throw new IllegalArgumentException("WebDriver must not be null.");
-        }
-        this.driver = driver;
+        super(driver);
     }
 
     public void openUrl() {
@@ -172,71 +161,6 @@ public class BaseFunction {
             fallbackException.addSuppressed(originalException);
             throw new AssertionError("Safe click failed for XPath: " + xpath, fallbackException);
         }
-    }
-
-    private WebElement waitForVisibleElement(String xpath, String keyword) {
-        try {
-            return WaitUtil.waitForVisible(driver, By.xpath(xpath.trim()));
-        } catch (NoSuchElementException | TimeoutException | StaleElementReferenceException exception) {
-            throw new AssertionError("Element not found for keyword " + keyword + ". XPath: " + xpath, exception);
-        }
-    }
-
-    private WebElement waitForClickableElement(String xpath, String keyword) {
-        try {
-            return WaitUtil.waitForClickable(driver, By.xpath(xpath.trim()));
-        } catch (NoSuchElementException | TimeoutException | StaleElementReferenceException exception) {
-            throw new AssertionError("Element not found for keyword " + keyword + ". XPath: " + xpath, exception);
-        }
-    }
-
-    protected ResolvedStepContext currentStep() {
-        return StepContextHolder.get();
-    }
-
-    protected String xpath() {
-        return currentStep().xpath();
-    }
-
-    protected String value() {
-        return currentStep().value();
-    }
-
-    protected String rawValue() {
-        return currentStep().rawValue();
-    }
-
-    protected String objectName() {
-        return currentStep().objectName();
-    }
-
-    protected String application() {
-        return currentStep().application();
-    }
-
-    private String withStepContext(String message, ResolvedStepContext step) {
-        String context = stepContext(step);
-        return context.isBlank() ? message : message + System.lineSeparator() + context;
-    }
-
-    private String withCurrentStepContext(String message) {
-        return withStepContext(message, currentStep());
-    }
-
-    private String stepContext(ResolvedStepContext step) {
-        if (step == null) {
-            return "";
-        }
-        return new ErrorContext()
-                .scenarioNo(step.getScenarioNo())
-                .scenarioAction(step.getScenarioAction())
-                .sheet(step.getSheetName())
-                .testcase(step.getTestcaseName())
-                .row(step.getExcelRow())
-                .keyword(step.getKeyword())
-                .object(step.getObjectName())
-                .application(step.getApplication())
-                .render();
     }
 
 }
