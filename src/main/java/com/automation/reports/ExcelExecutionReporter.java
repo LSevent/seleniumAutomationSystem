@@ -268,8 +268,19 @@ public class ExcelExecutionReporter {
                 safe(result.getResolvedXPath()),
                 executedBy(result),
                 safe(result.getStatus()),
-                safe(evidence)
+                stepDetails(result, evidence)
         };
+    }
+
+    private String stepDetails(ExecutionResult result, String evidence) {
+        String safeEvidence = safe(evidence);
+        if (!safeEvidence.isBlank()) {
+            return safeEvidence;
+        }
+        if (isFlowResult(result)) {
+            return safe(result.getMessage());
+        }
+        return "";
     }
 
     private String maskedRawValue(ExecutionResult result) {
@@ -317,6 +328,9 @@ public class ExcelExecutionReporter {
     }
 
     private String executedBy(ExecutionResult result) {
+        if (isFlowResult(result)) {
+            return "Flow";
+        }
         String executedByClass = safe(result.getExecutedByClass());
         if (executedByClass.isBlank()) {
             return "";
@@ -326,6 +340,10 @@ public class ExcelExecutionReporter {
             return simpleName;
         }
         return simpleName + "." + result.getKeywordName();
+    }
+
+    private boolean isFlowResult(ExecutionResult result) {
+        return result != null && "FLOW".equalsIgnoreCase(safe(result.getExecutionSource()));
     }
 
     private String stepTableHtml(List<String[]> rows) {

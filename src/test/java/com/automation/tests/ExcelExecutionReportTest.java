@@ -16,6 +16,7 @@ import com.automation.reports.ExcelExecutionReporter;
 import com.automation.reports.ExcelReportConfig;
 import com.automation.tests.support.ExcelKeywordTestWorkbookFactory;
 import com.automation.tests.support.FakeWebDriver;
+import com.automation.tests.support.ValidationWorkbookFactory;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -27,6 +28,11 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
 import java.util.Set;
+
+import static com.automation.tests.support.ValidationWorkbookFactory.objectRepository;
+import static com.automation.tests.support.ValidationWorkbookFactory.scenarioSheet;
+import static com.automation.tests.support.ValidationWorkbookFactory.scenarios;
+import static com.automation.tests.support.ValidationWorkbookFactory.sheet;
 
 @Test(singleThreaded = true)
 public class ExcelExecutionReportTest {
@@ -237,6 +243,62 @@ public class ExcelExecutionReportTest {
             Assert.assertEquals(result.getStatus(), ExecutionResult.STATUS_SKIP);
             Assert.assertEquals(result.getEvidence(), "Manual screenshot skipped because report.manualScreenshotEnabled=false.");
         }
+    }
+
+    @Test(priority = 5)
+    public void flowRowsShouldShowReadableFlowDetails() throws IOException {
+        Path flowWorkbook = ValidationWorkbookFactory.createWorkbook(
+                TEMP_DIR.resolve("flow-report-details.xlsx"),
+                scenarios(new Object[][]{{1, "Y", "Flow Report", "Flow report detail test"}}),
+                scenarioSheet("Flow Report", new Object[][]{
+                        {"Create Booking", "Y", "", "", "", "BRS", "Active testcase"},
+                        {"", "", "ifEquals", "", "CONFIG.RUN_BOOKINGS = Yes", "", "Run booking loop condition"},
+                        {"", "", "forEachDataRow", "", "BOOKING_DATA", "", "Start booking-data loop"},
+                        {"", "", "input", "txtBookingTitle", "BOOKING_DATA.BOOKING_TITLE", "", "Input booking title"},
+                        {"", "", "endForEachDataRow", "", "", "", "End booking-data loop"},
+                        {"", "", "else", "", "", "", "Loop skipped fallback"},
+                        {"", "", "click", "btnSkippedLoopFallback", "", "", "Fallback when loop skipped"},
+                        {"", "", "endIf", "", "", "", "End condition"},
+                        {"", "", "click", "btnAfterFlow", "", "", "After conditional loop"}
+                }),
+                sheet("CONFIG", new String[]{"NO", "RUN_BOOKINGS"}, new Object[][]{
+                        {1, "Yes"}
+                }),
+                sheet("BOOKING_DATA", new String[]{"NO", "BOOKING_TITLE"}, new Object[][]{
+                        {1, "Weekly Meeting"},
+                        {1, "Daily Standup"}
+                }),
+                objectRepository(new Object[][]{
+                        {"BRS", "txtBookingTitle", "//input[@id='bookingTitle']", "Booking title"},
+                        {"BRS", "btnSkippedLoopFallback", "//button[@id='fallback']", "Loop skipped fallback"},
+                        {"BRS", "btnAfterFlow", "//button[@id='after-flow']", "After flow"}
+                })
+        );
+
+        executionConfig = executionConfig(flowWorkbook);
+        FakeWebDriver fakeDriver = localPageDriver();
+        fakeDriver.addElement("//button[@id='fallback']", "Fallback");
+        fakeDriver.addElement("//button[@id='after-flow']", "After flow");
+
+        try (ExcelReader excelReader = new ExcelReader(flowWorkbook.toString())) {
+            ScenarioRunner runner = scenarioRunner(
+                    excelReader,
+                    fakeDriver,
+                    new ExcelReportConfig(false, true, true)
+            );
+
+            List<ExecutionResult> results = runner.runActiveScenarios();
+
+            Assert.assertTrue(results.stream().allMatch(ExecutionResult::isSuccess), failureMessages(results));
+        }
+
+        String reportHtml = Files.readString(Path.of(ExcelExecutionReporter.getReportFilePath()));
+        Assert.assertTrue(reportHtml.contains(">Flow<"), "Flow rows should show a readable executor.");
+        Assert.assertTrue(reportHtml.contains("Condition matched. Entering ifEquals branch."));
+        Assert.assertTrue(reportHtml.contains("Starting data row loop. BOOKING_DATA row 1 of 2."));
+        Assert.assertTrue(reportHtml.contains("Ended data row loop. BOOKING_DATA row 2 of 2."));
+        Assert.assertTrue(reportHtml.contains("A previous conditional branch already matched. Skipping else branch."));
+        Assert.assertTrue(reportHtml.contains("Skipped because the active conditional branch does not include this step."));
     }
 
     private ScenarioRunner scenarioRunner(ExcelReader excelReader, FakeWebDriver fakeDriver, ExcelReportConfig reportConfig) {

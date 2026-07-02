@@ -353,6 +353,8 @@ Inside the loop, data references for the loop sheet use the current loop row. Ot
 
 Loops and conditionals can be combined. You may put `ifEquals` blocks inside `forEachDataRow`, or put a `forEachDataRow` block inside an `ifEquals` / `else` branch. Close nested blocks in reverse order: for example, close an inner `endIf` before the outer `endForEachDataRow`.
 
+Flow directive rows are shown in the execution report with readable details, such as whether a condition matched, which loop iteration started or ended, or why a row was skipped by an inactive branch.
+
 Example data-row loop:
 
 ```text
