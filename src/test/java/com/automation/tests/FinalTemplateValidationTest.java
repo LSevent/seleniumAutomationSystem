@@ -27,8 +27,12 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class FinalTemplateValidationTest {
+
+    private static final Pattern DATA_REFERENCE_PATTERN = Pattern.compile("\\b([A-Z][A-Z0-9_]*)\\.([A-Z][A-Z0-9_]*)\\b");
 
     private static final Path FINAL_TEMPLATE = Path.of(
             "src",
@@ -78,7 +82,17 @@ public class FinalTemplateValidationTest {
             "BOOKING_DATA.BOOKING_TITLE",
             "BOOKING_DATA.ROOM_NAME",
             "BOOKING_DATA.EXPECTED_MESSAGE",
-            "BOOKING_DATA.BOOKING_ID"
+            "BOOKING_DATA.BOOKING_ID",
+            "BOOKING_DATA.SCHEDULE_TYPE",
+            "BOOKING_DATA.MEETING_DATE",
+            "BOOKING_DATA.START_DATE",
+            "BOOKING_DATA.END_DATE",
+            "BOOKING_DATA.START_TIME",
+            "BOOKING_DATA.DURATION",
+            "BOOKING_DATA.FINISH_TIME",
+            "BOOKING_DATA.RECURRENCE",
+            "BOOKING_DATA.GUEST_TYPE",
+            "BOOKING_DATA.GUEST_QTY"
     );
     private static final Map<String, String> EXPECTED_OBJECTS = Map.ofEntries(
             Map.entry("BRS::txtUsername", "//input[@id='username']"),
@@ -89,6 +103,15 @@ public class FinalTemplateValidationTest {
             Map.entry("BRS::btnRoomByName", "//button[contains(text(),'{ROOM_NAME}')]"),
             Map.entry("BRS::lblSuccessMessage", "//div[@id='message']"),
             Map.entry("BRS::btnCancelBooking", "//button[@data-booking='{BOOKING_ID}']"),
+            Map.entry("BRS::txtMeetingDate", "//input[@id='meetingDate']"),
+            Map.entry("BRS::txtStartDate", "//input[@id='startDate']"),
+            Map.entry("BRS::txtEndDate", "//input[@id='endDate']"),
+            Map.entry("BRS::txtStartTime", "//input[@id='startTime']"),
+            Map.entry("BRS::txtDuration", "//input[@id='duration']"),
+            Map.entry("BRS::txtFinishTime", "//input[@id='finishTime']"),
+            Map.entry("BRS::txtRecurrence", "//input[@id='recurrence']"),
+            Map.entry("BRS::txtGuestType", "//input[@id='guestType']"),
+            Map.entry("BRS::txtGuestQty", "//input[@id='guestQty']"),
             Map.entry("HRIS::txtUsername", "//input[@id='employeeId']"),
             Map.entry("HRIS::txtPassword", "//input[@id='password']"),
             Map.entry("HRIS::btnLogin", "//button[@id='loginButton']")
@@ -141,6 +164,31 @@ public class FinalTemplateValidationTest {
     }
 
     @Test
+    public void finalTemplateShouldIncludeLoopAndConditionExample() {
+        try (ExcelReader excelReader = new ExcelReader(FINAL_TEMPLATE.toString())) {
+            ScenarioReader scenarioReader = new ScenarioReader(excelReader);
+            StepReader stepReader = new StepReader(excelReader);
+
+            Scenario createBookingScenario = scenarioReader.getAllScenarios().stream()
+                    .filter(scenario -> "Create New Booking".equals(scenario.getAction()))
+                    .findFirst()
+                    .orElseThrow();
+
+            List<String> keywords = stepReader.getTestCases(createBookingScenario).stream()
+                    .flatMap(testcase -> testcase.getSteps().stream())
+                    .map(TestStep::getKeyword)
+                    .toList();
+
+            Assert.assertTrue(keywords.contains("forEachDataRow"));
+            Assert.assertTrue(keywords.contains("ifEquals"));
+            Assert.assertTrue(keywords.contains("elseIfEquals"));
+            Assert.assertTrue(keywords.contains("else"));
+            Assert.assertTrue(keywords.contains("endIf"));
+            Assert.assertTrue(keywords.contains("endForEachDataRow"));
+        }
+    }
+
+    @Test
     public void finalTemplateShouldUseDotDataReferencesAndNoRemovedColumns() throws IOException {
         try (InputStream inputStream = Files.newInputStream(FINAL_TEMPLATE);
              Workbook workbook = WorkbookFactory.create(inputStream)) {
@@ -161,6 +209,15 @@ public class FinalTemplateValidationTest {
             Assert.assertEquals(dataReader.resolveValue("BOOKING_DATA.ROOM_NAME", "1"), "Meeting Room A");
             Assert.assertEquals(dataReader.resolveValue("BOOKING_DATA.EXPECTED_MESSAGE", "1"), "Booking created successfully");
             Assert.assertEquals(dataReader.resolveValue("BOOKING_DATA.BOOKING_ID", "3"), "BOOK-003");
+            Assert.assertEquals(dataReader.resolveValue("BOOKING_DATA.SCHEDULE_TYPE", "1"), "Single Meeting");
+            Assert.assertEquals(dataReader.resolveValue("BOOKING_DATA.MEETING_DATE", "1"), "2026-07-01");
+            Assert.assertEquals(dataReader.resolveValue("BOOKING_DATA.START_DATE", "2"), "2026-07-01");
+            Assert.assertEquals(dataReader.resolveValue("BOOKING_DATA.END_DATE", "2"), "2026-07-03");
+            Assert.assertEquals(dataReader.resolveValue("BOOKING_DATA.START_TIME", "2"), "08:00");
+            Assert.assertEquals(dataReader.resolveValue("BOOKING_DATA.FINISH_TIME", "2"), "09:00");
+            Assert.assertEquals(dataReader.resolveValue("BOOKING_DATA.RECURRENCE", "2"), "Daily");
+            Assert.assertEquals(dataReader.resolveValue("BOOKING_DATA.GUEST_TYPE", "2"), "Internal");
+            Assert.assertEquals(dataReader.resolveValue("BOOKING_DATA.GUEST_QTY", "2"), "3");
         }
     }
 
@@ -260,11 +317,13 @@ public class FinalTemplateValidationTest {
                         "Scenario Value cells should use dot notation. Sheet = " + sheetName + ", row = " + (rowIndex + 1)
                 );
 
-                if (value.chars().filter(character -> character == '.').count() == 1) {
-                    String[] referenceParts = value.split("\\.", -1);
-                    Assert.assertNotNull(workbook.getSheet(referenceParts[0]), "Referenced data sheet should exist: " + referenceParts[0]);
-                    assertHeaderExists(workbook.getSheet(referenceParts[0]), referenceParts[1]);
-                    discoveredReferences.add(value);
+                Matcher referenceMatcher = DATA_REFERENCE_PATTERN.matcher(value);
+                while (referenceMatcher.find()) {
+                    String referencedSheetName = referenceMatcher.group(1);
+                    String headerName = referenceMatcher.group(2);
+                    Assert.assertNotNull(workbook.getSheet(referencedSheetName), "Referenced data sheet should exist: " + referencedSheetName);
+                    assertHeaderExists(workbook.getSheet(referencedSheetName), headerName);
+                    discoveredReferences.add(referencedSheetName + "." + headerName);
                 }
             }
         }

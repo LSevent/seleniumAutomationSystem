@@ -10,5 +10,7 @@ Recommended use:
 - Keep all headers unchanged.
 - Do not add DATA_ROW.
 - Use `SHEET_NAME.COLUMN_NAME` for data references.
+- Use the `Create New Booking` sheet as the sample for loop + condition flow:
+  `forEachDataRow`, `ifEquals`, `elseIfEquals`, `else`, `endIf`, and `endForEachDataRow`.
 
 `Template Testing.xlsx` is the stable workbook used by the automated tests in this repository.

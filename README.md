@@ -176,6 +176,12 @@ The final example workbook is:
 src/test/resources/testdata/Final Excel Template.xlsx
 ```
 
+The template includes:
+
+- `Local Keyword Test` for simple login/create-booking examples.
+- `Create New Booking` for a loop + condition example using `forEachDataRow`, `ifEquals`, `elseIfEquals`, `else`, and `endIf`.
+- `Cancel Booking` for a dynamic XPath example using `BOOKING_DATA.BOOKING_ID`.
+
 It contains these sheets:
 
 - `SCENARIOS`
@@ -246,6 +252,8 @@ Examples:
 - `LOGIN_DATA.PASSWORD`
 - `BOOKING_DATA.ROOM_NAME`
 - `BOOKING_DATA.EXPECTED_MESSAGE`
+- `BOOKING_DATA.SCHEDULE_TYPE`
+- `BOOKING_DATA.GUEST_QTY`
 
 If a step `Value` does not match a data reference, the framework treats it as literal text.
 
@@ -328,13 +336,14 @@ Example conditional block:
 
 ```text
 Keyword       | Object              | Value                                           | Description
-select        | sltScheduleType     | BOOKING_DATA.SCHEDULE_TYPE                      | Select schedule type
 ifEquals      |                     | BOOKING_DATA.SCHEDULE_TYPE = Single Meeting     | Single meeting branch
 input         | txtMeetingDate      | BOOKING_DATA.MEETING_DATE                       | Input meeting date
 input         | txtStartTime        | BOOKING_DATA.START_TIME                         | Input start time
+input         | txtDuration         | BOOKING_DATA.DURATION                           | Input duration
 elseIfEquals  |                     | BOOKING_DATA.SCHEDULE_TYPE = Repeating Meeting  | Repeating meeting branch
 input         | txtStartDate        | BOOKING_DATA.START_DATE                         | Input start date
 input         | txtEndDate          | BOOKING_DATA.END_DATE                           | Input end date
+input         | txtFinishTime       | BOOKING_DATA.FINISH_TIME                        | Input finish time
 else          |                     |                                                 | Fallback branch
 screenshot    |                     | Unknown schedule type                           | Capture unexpected condition
 endIf         |                     |                                                 | End schedule condition
@@ -360,14 +369,13 @@ Example data-row loop:
 ```text
 Keyword            | Object            | Value                                           | Description
 forEachDataRow     |                   | #BOOKING_DATA                                   | Repeat for each booking row
-select             | sltScheduleType   | BOOKING_DATA.SCHEDULE_TYPE                      | Select schedule type
 ifEquals           |                   | BOOKING_DATA.SCHEDULE_TYPE = Single Meeting     | Single meeting branch
 input              | txtMeetingDate    | BOOKING_DATA.MEETING_DATE                       | Input meeting date
 elseIfEquals       |                   | BOOKING_DATA.SCHEDULE_TYPE = Repeating Meeting  | Repeating meeting branch
 input              | txtStartDate      | BOOKING_DATA.START_DATE                         | Input start date
 input              | txtEndDate        | BOOKING_DATA.END_DATE                           | Input end date
 endIf              |                   |                                                 | End schedule condition
-select             | sltGuestType      | BOOKING_DATA.GUEST_TYPE                         | Select guest type
+input              | txtGuestType      | BOOKING_DATA.GUEST_TYPE                         | Input guest type
 input              | txtGuestQty       | BOOKING_DATA.GUEST_QTY                          | Input guest quantity
 endForEachDataRow  |                   |                                                 | End booking loop
 ```
