@@ -38,6 +38,18 @@ public abstract class KeywordSupport {
         }
     }
 
+    protected WebElement visibleElement(String keyword) {
+        return waitForVisibleElement(xpath(), keyword);
+    }
+
+    protected WebElement clickableElement(String keyword) {
+        return waitForClickableElement(xpath(), keyword);
+    }
+
+    protected String visibleText(String keyword) {
+        return visibleElement(keyword).getText();
+    }
+
     protected ResolvedStepContext currentStep() {
         return StepContextHolder.get();
     }
@@ -69,6 +81,10 @@ public abstract class KeywordSupport {
 
     protected String withCurrentStepContext(String message) {
         return withStepContext(message, currentStep());
+    }
+
+    protected void failWithCurrentStepContext(String message) {
+        throw new AssertionError(withCurrentStepContext(message));
     }
 
     private String stepContext(ResolvedStepContext step) {

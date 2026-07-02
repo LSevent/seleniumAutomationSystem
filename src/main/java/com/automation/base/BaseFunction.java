@@ -29,7 +29,7 @@ public class BaseFunction extends KeywordSupport {
     }
 
     public void click() {
-        waitForClickableElement(xpath(), "click").click();
+        clickableElement("click").click();
     }
 
     public void input() {
@@ -45,83 +45,51 @@ public class BaseFunction extends KeywordSupport {
     }
 
     public void clear() {
-        waitForVisibleElement(xpath(), "clear").clear();
+        visibleElement("clear").clear();
     }
 
     public String getText() {
-        return waitForVisibleElement(xpath(), "getText").getText();
+        return visibleText("getText");
     }
 
     public void verifyDisplayed() {
         String targetXPath = xpath();
         WebElement element = waitForVisibleElement(targetXPath, "verifyDisplayed");
         if (!element.isDisplayed()) {
-            throw new AssertionError(withCurrentStepContext("Element is not displayed. XPath: " + targetXPath));
+            failWithCurrentStepContext("Element is not displayed. XPath: " + targetXPath);
         }
     }
 
     public void verifyText() {
-        String targetXPath = xpath();
-        String expectedText = value();
-        String actual = getText();
-        if (!expectedText.equals(actual)) {
-            throw new AssertionError(withCurrentStepContext(
-                    "Expected text '" + expectedText + "' but found '" + actual + "'. XPath: " + targetXPath
-            ));
-        }
+        verifyElementTextEquals(value());
     }
 
     public void verifyTextContains() {
-        String targetXPath = xpath();
-        String expected = value();
-        String actual = getText();
-        if (!actual.contains(expected)) {
-            throw new AssertionError(withCurrentStepContext(
-                    "Expected text to contain '" + expected + "' but found '" + actual + "'. XPath: " + targetXPath
-            ));
-        }
+        verifyElementTextContains(value());
     }
 
     public void verifyUrlContains() {
-        String expectedValue = value();
-        String actualUrl = driver.getCurrentUrl();
-        if (actualUrl == null || !actualUrl.contains(expectedValue.trim())) {
-            throw new AssertionError(withCurrentStepContext(
-                    "Expected URL to contain '" + expectedValue.trim() + "' but actual URL was '" + actualUrl + "'."
-            ));
-        }
+        assertContains("URL", value().trim(), driver.getCurrentUrl());
     }
 
     public void verifyTitle() {
-        String expectedTitle = value();
-        String actualTitle = driver.getTitle();
-        if (!expectedTitle.trim().equals(actualTitle)) {
-            throw new AssertionError(withCurrentStepContext(
-                    "Expected title '" + expectedTitle.trim() + "' but actual title was '" + actualTitle + "'."
-            ));
-        }
+        assertEquals("title", value().trim(), driver.getTitle());
     }
 
     public void verifyTitleContains() {
-        String expectedTitlePart = value();
-        String actualTitle = driver.getTitle();
-        if (actualTitle == null || !actualTitle.contains(expectedTitlePart.trim())) {
-            throw new AssertionError(withCurrentStepContext(
-                    "Expected title to contain '" + expectedTitlePart.trim() + "' but actual title was '" + actualTitle + "'."
-            ));
-        }
+        assertContains("title", value().trim(), driver.getTitle());
     }
 
     public WebElement waitVisible() {
-        return waitForVisibleElement(xpath(), "waitVisible");
+        return visibleElement("waitVisible");
     }
 
     public WebElement waitClickable() {
-        return waitForClickableElement(xpath(), "waitClickable");
+        return clickableElement("waitClickable");
     }
 
     public void scrollToElement() {
-        JavaScriptUtil.scrollToElement(driver, waitForVisibleElement(xpath(), "scrollToElement"));
+        JavaScriptUtil.scrollToElement(driver, visibleElement("scrollToElement"));
     }
 
     public void safeClick() {
@@ -136,13 +104,12 @@ public class BaseFunction extends KeywordSupport {
     }
 
     public void pressEnter() {
-        waitForVisibleElement(xpath(), "pressEnter").sendKeys(Keys.ENTER);
+        visibleElement("pressEnter").sendKeys(Keys.ENTER);
     }
 
     public boolean isDisplayed() {
-        String targetXPath = xpath();
         try {
-            return waitForVisibleElement(targetXPath, "isDisplayed").isDisplayed();
+            return visibleElement("isDisplayed").isDisplayed();
         } catch (AssertionError exception) {
             return false;
         }
@@ -160,6 +127,42 @@ public class BaseFunction extends KeywordSupport {
         } catch (RuntimeException fallbackException) {
             fallbackException.addSuppressed(originalException);
             throw new AssertionError("Safe click failed for XPath: " + xpath, fallbackException);
+        }
+    }
+
+    private void verifyElementTextEquals(String expectedText) {
+        String targetXPath = xpath();
+        String actual = waitForVisibleElement(targetXPath, "verifyText").getText();
+        if (!expectedText.equals(actual)) {
+            failWithCurrentStepContext(
+                    "Expected text '" + expectedText + "' but found '" + actual + "'. XPath: " + targetXPath
+            );
+        }
+    }
+
+    private void verifyElementTextContains(String expected) {
+        String targetXPath = xpath();
+        String actual = waitForVisibleElement(targetXPath, "verifyTextContains").getText();
+        if (!actual.contains(expected)) {
+            failWithCurrentStepContext(
+                    "Expected text to contain '" + expected + "' but found '" + actual + "'. XPath: " + targetXPath
+            );
+        }
+    }
+
+    private void assertEquals(String label, String expected, String actual) {
+        if (!expected.equals(actual)) {
+            failWithCurrentStepContext(
+                    "Expected " + label + " '" + expected + "' but actual " + label + " was '" + actual + "'."
+            );
+        }
+    }
+
+    private void assertContains(String label, String expected, String actual) {
+        if (actual == null || !actual.contains(expected)) {
+            failWithCurrentStepContext(
+                    "Expected " + label + " to contain '" + expected + "' but actual " + label + " was '" + actual + "'."
+            );
         }
     }
 
