@@ -274,30 +274,50 @@ Another example:
 
 ## Keywords
 
-Common Selenium keywords live in `BaseFunction`.
+Common Excel commands live in `BaseFunction`. These are the reusable keywords that can be placed in the scenario sheet `Keyword` column.
 
-Implemented common keywords include:
+Helper methods in `KeywordSupport` are internal framework support. They are not Excel commands.
 
-- `openUrl`
-- `click`
-- `input`
-- `clear`
-- `getText`
-- `verifyDisplayed`
-- `verifyText`
-- `verifyTextContains`
-- `verifyUrlContains`
-- `verifyTitle`
-- `verifyTitleContains`
-- `waitVisible`
-- `waitClickable`
-- `scrollToElement`
-- `safeClick`
-- `pressEnter`
-- `isDisplayed`
-- `isNotDisplayed`
+Supported common Excel commands:
+
+| Keyword | Object required | Value required | Purpose |
+| --- | --- | --- | --- |
+| `openUrl` | No | Yes | Opens the URL from `Value`. The value may be literal text or a data reference such as `CONFIG.BASE_URL`. |
+| `click` | Yes | No | Waits for the resolved object XPath to be clickable, then clicks it. |
+| `input` | Yes | Yes | Waits for the resolved object XPath, clears the element when possible, then types `Value`. |
+| `clear` | Yes | No | Clears the target element. |
+| `getText` | Yes | No | Reads text from the target element. As an Excel step, the returned value is not stored back into Excel. |
+| `verifyDisplayed` | Yes | No | Fails if the target element is not displayed. |
+| `verifyText` | Yes | Yes | Fails unless the target element text exactly equals `Value`. |
+| `verifyTextContains` | Yes | Yes | Fails unless the target element text contains `Value`. |
+| `verifyUrlContains` | No | Yes | Fails unless the current browser URL contains `Value`. |
+| `verifyTitle` | No | Yes | Fails unless the page title exactly equals `Value`. |
+| `verifyTitleContains` | No | Yes | Fails unless the page title contains `Value`. |
+| `waitVisible` | Yes | No | Waits until the target element is visible. |
+| `waitClickable` | Yes | No | Waits until the target element is clickable. |
+| `scrollToElement` | Yes | No | Scrolls the target element into view. |
+| `safeClick` | Yes | No | Tries a normal click first, then falls back to JavaScript click when Selenium click is intercepted or stale. |
+| `pressEnter` | Yes | No | Sends the Enter key to the target element. |
+| `isDisplayed` | Yes | No | Returns whether the target element is displayed. As an Excel step, the returned value is not stored back into Excel. |
+| `isNotDisplayed` | Yes | No | Returns the opposite of `isDisplayed`. As an Excel step, the returned value is not stored back into Excel. |
 
 The `screenshot` keyword is special. It is handled by `KeywordEngine`, not by `BaseFunction`, because it needs scenario, testcase, step, report config, screenshot naming, and evidence-link context.
+
+| Keyword | Object required | Value required | Purpose |
+| --- | --- | --- | --- |
+| `screenshot` | No | Optional | Captures a manual screenshot when `report.manualScreenshotEnabled=true`. `Value` is used as the screenshot label when provided. |
+
+Example scenario steps:
+
+```text
+Keyword          | Object        | Value                 | Description
+openUrl          |               | CONFIG.BASE_URL       | Open application
+input            | txtUsername   | LOGIN_DATA.USERNAME   | Type username
+input            | txtPassword   | LOGIN_DATA.PASSWORD   | Type password
+click            | btnLogin      |                       | Submit login
+verifyDisplayed  | lblDashboard  |                       | Verify dashboard is visible
+screenshot       |               | After login           | Capture evidence
+```
 
 ## BaseFunction vs SpecificFunction
 
@@ -326,6 +346,20 @@ Keyword lookup order:
 3. Clear failure when the keyword is not found
 
 If the same no-argument method exists in both `SpecificFunction` and `BaseFunction`, the application-specific method wins. Public parameter-based keyword fallback is no longer part of runtime resolution.
+
+Currently implemented application-specific commands:
+
+| Application | Keyword | Purpose |
+| --- | --- | --- |
+| `BRS` | `click` | Overrides the common `click` keyword while currently delegating to the shared behavior. |
+| `BRS` | `selectRoomByName` | Uses the resolved object XPath and value flow for selecting a room. |
+| `BRS` | `verifyBookingCreated` | Verifies booking success text using application-specific naming. |
+| `BRS` | `waitForApplicationReady` | Placeholder application-ready command for BRS-specific flows. |
+| `HRIS` | `verifyEmployeeVisible` | Verifies employee text using HRIS-specific naming. |
+| `HRIS` | `waitForApplicationReady` | Placeholder application-ready command for HRIS-specific flows. |
+| `CRM` | `waitForApplicationReady` | Placeholder application-ready command for CRM-specific flows. |
+
+To add a custom application command, add a public no-argument method to the matching `SpecificFunction` class, then use the method name in the Excel `Keyword` column.
 
 ## Screenshots
 
