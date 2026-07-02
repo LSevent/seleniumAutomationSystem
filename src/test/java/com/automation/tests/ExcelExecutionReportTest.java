@@ -1,6 +1,7 @@
 package com.automation.tests;
 
 import com.automation.config.ExcelExecutionConfig;
+import com.automation.engine.ExecutionPlanBuilder;
 import com.automation.engine.KeywordResolver;
 import com.automation.engine.KeywordEngine;
 import com.automation.engine.ScenarioRunner;
@@ -10,8 +11,7 @@ import com.automation.excel.ObjectRepositoryReader;
 import com.automation.excel.ScenarioReader;
 import com.automation.excel.StepReader;
 import com.automation.models.ExecutionResult;
-import com.automation.models.Scenario;
-import com.automation.models.TestStep;
+import com.automation.models.ResolvedStepContext;
 import com.automation.reports.ExcelExecutionReporter;
 import com.automation.reports.ExcelReportConfig;
 import com.automation.tests.support.ExcelKeywordTestWorkbookFactory;
@@ -226,8 +226,7 @@ public class ExcelExecutionReportTest {
         executionConfig = executionConfig(workbookPath);
         FakeWebDriver fakeDriver = localPageDriver();
         try (ExcelReader excelReader = new ExcelReader(workbookPath.toString())) {
-            Scenario scenario = new ScenarioReader(excelReader).getActiveScenarios().get(0);
-            TestStep screenshotStep = new StepReader(excelReader).getActiveSteps(scenario).stream()
+            ResolvedStepContext screenshotStep = resolvedSteps(excelReader).stream()
                     .filter(step -> "screenshot".equalsIgnoreCase(step.getKeyword()))
                     .findFirst()
                     .orElseThrow();
@@ -237,7 +236,7 @@ public class ExcelExecutionReportTest {
                     new ExcelReportConfig(false, true, false)
             );
 
-            ExecutionResult result = keywordEngine.executeStep(scenario, screenshotStep);
+            ExecutionResult result = keywordEngine.execute(screenshotStep);
 
             Assert.assertTrue(result.isSuccess());
             Assert.assertEquals(result.getStatus(), ExecutionResult.STATUS_SKIP);
@@ -315,6 +314,21 @@ public class ExcelExecutionReportTest {
         ObjectRepositoryReader objectRepositoryReader = new ObjectRepositoryReader(excelReader, dataReader);
         KeywordResolver keywordResolver = new KeywordResolver(fakeDriver.driver());
         return new KeywordEngine(dataReader, objectRepositoryReader, keywordResolver, reportConfig, executionConfig);
+    }
+
+    private List<ResolvedStepContext> resolvedSteps(ExcelReader excelReader) {
+        DataReader dataReader = new DataReader(excelReader);
+        ObjectRepositoryReader objectRepositoryReader = new ObjectRepositoryReader(excelReader, dataReader);
+        return new ExecutionPlanBuilder(
+                new ScenarioReader(excelReader),
+                new StepReader(excelReader),
+                dataReader,
+                objectRepositoryReader
+        ).build()
+                .stream()
+                .flatMap(scenario -> scenario.getTestcases().stream())
+                .flatMap(testcase -> testcase.getSteps().stream())
+                .toList();
     }
 
     private Set<String> screenshotFilesStartingWith(String prefix) throws IOException {

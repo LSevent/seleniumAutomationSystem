@@ -6,8 +6,7 @@ import com.automation.excel.DataReader;
 import com.automation.excel.ExcelReader;
 import com.automation.excel.ObjectRepositoryReader;
 import com.automation.models.ExecutionResult;
-import com.automation.models.Scenario;
-import com.automation.models.TestStep;
+import com.automation.models.ResolvedStepContext;
 import com.automation.reports.ExcelReportConfig;
 import com.automation.tests.support.ExcelKeywordTestWorkbookFactory;
 import com.automation.tests.support.FakeWebDriver;
@@ -34,46 +33,10 @@ public class KeywordEngineValidationTest {
     }
 
     @Test
-    public void dataResolutionErrorShouldIncludeStepContext() {
-        try (ExcelReader excelReader = new ExcelReader(workbookPath.toString())) {
-            ExecutionResult result = engine(excelReader).executeStep(
-                    scenario(),
-                    step("input", "txtUsername", "MISSING_DATA.USERNAME", 5)
-            );
-
-            Assert.assertFalse(result.isSuccess());
-            Assert.assertTrue(result.getMessage().contains("Failed to resolve value for step row 5."));
-            Assert.assertTrue(result.getMessage().contains("Raw value: MISSING_DATA.USERNAME."));
-            Assert.assertTrue(result.getMessage().contains("Scenario NO: 1."));
-            Assert.assertTrue(result.getMessage().contains("Scenario ACTION: Local Keyword Test."));
-            Assert.assertTrue(result.getMessage().contains("Testcase: Login BRS."));
-            Assert.assertTrue(result.getMessage().contains("Cause: Data sheet not found: MISSING_DATA."));
-        }
-    }
-
-    @Test
-    public void objectResolutionErrorShouldIncludeStepContext() {
-        try (ExcelReader excelReader = new ExcelReader(workbookPath.toString())) {
-            ExecutionResult result = engine(excelReader).executeStep(
-                    scenario(),
-                    step("click", "btnMissing", "", 6)
-            );
-
-            Assert.assertFalse(result.isSuccess());
-            Assert.assertTrue(result.getMessage().contains("Failed to resolve object for step row 6."));
-            Assert.assertTrue(result.getMessage().contains("Application: BRS."));
-            Assert.assertTrue(result.getMessage().contains("Object: btnMissing."));
-            Assert.assertTrue(result.getMessage().contains("Scenario NO: 1."));
-            Assert.assertTrue(result.getMessage().contains("Testcase: Login BRS."));
-        }
-    }
-
-    @Test
     public void keywordResolutionErrorShouldIncludeStepContext() {
         try (ExcelReader excelReader = new ExcelReader(workbookPath.toString())) {
-            ExecutionResult result = engine(excelReader).executeStep(
-                    scenario(),
-                    step("approveBooking", "", "", 7)
+            ExecutionResult result = engine(excelReader).execute(
+                    step("approveBooking", "", "", "", "", 7)
             );
 
             Assert.assertFalse(result.isSuccess());
@@ -87,13 +50,15 @@ public class KeywordEngineValidationTest {
     @Test
     public void blankKeywordShouldIncludeSheetAndRow() {
         try (ExcelReader excelReader = new ExcelReader(workbookPath.toString())) {
-            ExecutionResult result = engine(excelReader).executeStep(
-                    scenario(),
-                    step("", "btnLogin", "", 8)
+            ExecutionResult result = engine(excelReader).execute(
+                    step("", "btnLogin", "", "//button[@id='loginButton']", "//button[@id='loginButton']", 8)
             );
 
             Assert.assertFalse(result.isSuccess());
-            Assert.assertEquals(result.getMessage(), "Keyword is required in sheet Local Keyword Test row 8.");
+            Assert.assertTrue(result.getMessage().contains("Keyword is required in sheet Local Keyword Test row 8."));
+            Assert.assertTrue(result.getMessage().contains("Scenario NO: 1."));
+            Assert.assertTrue(result.getMessage().contains("Testcase: Login BRS."));
+            Assert.assertTrue(result.getMessage().contains("Object: btnLogin."));
         }
     }
 
@@ -111,12 +76,32 @@ public class KeywordEngineValidationTest {
         );
     }
 
-    private Scenario scenario() {
-        return new Scenario("1", true, "Local Keyword Test", "Local keyword execution test", 2);
-    }
-
-    private TestStep step(String keyword, String object, String value, int row) {
-        return new TestStep("1", "Local keyword execution test", "Local Keyword Test", "Login BRS",
-                keyword, object, value, "BRS", "Validation step", row, 1);
+    private ResolvedStepContext step(
+            String keyword,
+            String object,
+            String rawValue,
+            String rawXPath,
+            String resolvedXPath,
+            int row
+    ) {
+        return ResolvedStepContext.builder()
+                .scenarioNo("1")
+                .scenarioAction("Local Keyword Test")
+                .scenarioName("Local keyword execution test")
+                .sheetName("Local Keyword Test")
+                .testcaseName("Login BRS")
+                .testcaseParentRow(3)
+                .excelRow(row)
+                .stepNumber(1)
+                .keyword(keyword)
+                .objectName(object)
+                .application("BRS")
+                .description("Validation step")
+                .rawValue(rawValue)
+                .resolvedValue(rawValue)
+                .rawXPath(rawXPath)
+                .resolvedXPath(resolvedXPath)
+                .executedBy("")
+                .build();
     }
 }

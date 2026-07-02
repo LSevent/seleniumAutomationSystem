@@ -118,60 +118,6 @@ public class ExecutionResult {
     }
 
     public static ExecutionResult success(
-            Scenario scenario,
-            TestStep step,
-            String resolvedValue,
-            String rawXPath,
-            String resolvedXPath,
-            String executedByClass,
-            String executionSource,
-            String message
-    ) {
-        return fromStep(scenario, step, resolvedValue, rawXPath, resolvedXPath, executedByClass, executionSource, true, STATUS_PASS, "", message);
-    }
-
-    public static ExecutionResult success(
-            Scenario scenario,
-            TestStep step,
-            String resolvedValue,
-            String rawXPath,
-            String resolvedXPath,
-            String executedByClass,
-            String executionSource,
-            String evidence,
-            String message
-    ) {
-        return fromStep(scenario, step, resolvedValue, rawXPath, resolvedXPath, executedByClass, executionSource, true, STATUS_PASS, evidence, message);
-    }
-
-    public static ExecutionResult failure(
-            Scenario scenario,
-            TestStep step,
-            String resolvedValue,
-            String rawXPath,
-            String resolvedXPath,
-            String executedByClass,
-            String executionSource,
-            String message
-    ) {
-        return fromStep(scenario, step, resolvedValue, rawXPath, resolvedXPath, executedByClass, executionSource, false, STATUS_FAIL, "", message);
-    }
-
-    public static ExecutionResult skipped(
-            Scenario scenario,
-            TestStep step,
-            String resolvedValue,
-            String rawXPath,
-            String resolvedXPath,
-            String executedByClass,
-            String executionSource,
-            String evidence,
-            String message
-    ) {
-        return fromStep(scenario, step, resolvedValue, rawXPath, resolvedXPath, executedByClass, executionSource, true, STATUS_SKIP, evidence, message);
-    }
-
-    public static ExecutionResult success(
             ResolvedStepContext step,
             String executedByClass,
             String executionSource,
@@ -207,43 +153,6 @@ public class ExecutionResult {
             String message
     ) {
         return fromResolvedStep(step, executedByClass, executionSource, true, STATUS_SKIP, evidence, message);
-    }
-
-    private static ExecutionResult fromStep(
-            Scenario scenario,
-            TestStep step,
-            String resolvedValue,
-            String rawXPath,
-            String resolvedXPath,
-            String executedByClass,
-            String executionSource,
-            boolean success,
-            String status,
-            String evidence,
-            String message
-    ) {
-        return builder()
-                .scenarioNo(safe(scenario == null ? "" : scenario.getNo()))
-                .scenarioName(safe(scenario == null ? "" : scenario.getScenarioName()))
-                .scenarioAction(safe(scenario == null ? "" : scenario.getAction()))
-                .testcaseName(safe(step == null ? "" : step.getTestcaseName()))
-                .description(safe(step == null ? "" : step.getDescription()))
-                .keywordName(safe(step == null ? "" : step.getKeyword()))
-                .objectName(safe(step == null ? "" : step.getObject()))
-                .application(safe(step == null ? "" : step.getApplication()))
-                .rawValue(safe(step == null ? "" : step.getValue()))
-                .resolvedValue(safe(resolvedValue))
-                .rawXPath(safe(rawXPath))
-                .resolvedXPath(safe(resolvedXPath))
-                .executedByClass(safe(executedByClass))
-                .executionSource(safe(executionSource))
-                .success(success)
-                .status(safe(status))
-                .evidence(safe(evidence))
-                .message(safe(message))
-                .excelRowNumber(step == null ? 0 : step.getExcelRowNumber())
-                .stepOrder(step == null ? 0 : step.getStepOrder())
-                .build();
     }
 
     private static ExecutionResult fromResolvedStep(

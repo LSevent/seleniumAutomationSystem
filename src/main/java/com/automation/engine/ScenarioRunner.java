@@ -13,7 +13,6 @@ import com.automation.models.ResolvedStepContext;
 import com.automation.models.ResolvedTestcaseContext;
 import com.automation.models.Scenario;
 import com.automation.models.TestCaseBlock;
-import com.automation.models.TestStep;
 import com.automation.reports.ExcelExecutionReporter;
 import com.automation.validation.PreRunValidator;
 import org.apache.logging.log4j.LogManager;
@@ -29,8 +28,6 @@ public class ScenarioRunner {
 
     private static final Logger LOGGER = LogManager.getLogger(ScenarioRunner.class);
 
-    private final ScenarioReader scenarioReader;
-    private final StepReader stepReader;
     private KeywordEngine keywordEngine;
     private final Supplier<KeywordEngine> keywordEngineSupplier;
     private final ExcelExecutionReporter reporter;
@@ -60,8 +57,6 @@ public class ScenarioRunner {
         if (keywordEngine == null) {
             throw new IllegalArgumentException("KeywordEngine must not be null.");
         }
-        this.scenarioReader = scenarioReader;
-        this.stepReader = stepReader;
         this.keywordEngine = keywordEngine;
         this.keywordEngineSupplier = () -> keywordEngine;
         this.reporter = reporter;
@@ -96,8 +91,6 @@ public class ScenarioRunner {
         if (keywordEngineSupplier == null) {
             throw new IllegalArgumentException("KeywordEngine supplier must not be null.");
         }
-        this.scenarioReader = scenarioReader;
-        this.stepReader = stepReader;
         this.keywordEngineSupplier = keywordEngineSupplier;
         this.reporter = null;
         this.executionPlanBuilder = new ExecutionPlanBuilder(
@@ -213,75 +206,6 @@ public class ScenarioRunner {
                 "",
                 testcase.getParentExcelRow()
         );
-    }
-
-    public List<ExecutionResult> runScenario(Scenario scenario) {
-        if (scenario == null) {
-            throw new IllegalArgumentException("Scenario must not be null.");
-        }
-
-        LOGGER.info("Scenario started. NO = {}, ACTION = {}", scenario.getNo(), scenario.getAction());
-        startScenarioReport(scenario);
-        List<ExecutionResult> results = new ArrayList<>();
-        boolean scenarioSuccess = true;
-        String scenarioMessage = "";
-        List<TestCaseBlock> activeTestCases = stepReader.getActiveTestCases(scenario);
-
-        if (activeTestCases.isEmpty()) {
-            String message = "Active scenario has no active testcase. Scenario NO = "
-                    + scenario.getNo() + ", ACTION = " + scenario.getAction() + ".";
-            finishScenarioReport(scenario, false, message);
-            throw new FrameworkException(message);
-        }
-
-        for (TestCaseBlock testCaseBlock : activeTestCases) {
-            LOGGER.info(
-                    "Testcase started. Scenario NO = {}, ACTION = {}, Testcase = {}",
-                    scenario.getNo(),
-                    scenario.getAction(),
-                    testCaseBlock.getTestcaseName()
-            );
-            startTestcaseReport(testCaseBlock);
-
-            boolean testcaseSuccess = true;
-            String testcaseMessage = "";
-            for (TestStep step : testCaseBlock.getSteps()) {
-                ExecutionResult result = keywordEngine().executeStep(scenario, step);
-                results.add(result);
-                logStepReport(result);
-                if (!result.isSuccess()) {
-                    scenarioSuccess = false;
-                    testcaseSuccess = false;
-                    testcaseMessage = result.getMessage();
-                    scenarioMessage = "Scenario failed. NO = " + scenario.getNo()
-                            + ", ACTION = " + scenario.getAction()
-                            + ", Testcase = " + testCaseBlock.getTestcaseName()
-                            + ". " + result.getMessage();
-                    LOGGER.error(
-                            "Scenario failed. NO = {}, ACTION = {}, Testcase = {}. Message = {}",
-                            scenario.getNo(),
-                            scenario.getAction(),
-                            testCaseBlock.getTestcaseName(),
-                            result.getMessage()
-                    );
-                    finishTestcaseReport(testCaseBlock, testcaseSuccess, testcaseMessage);
-                    finishScenarioReport(scenario, scenarioSuccess, scenarioMessage);
-                    return results;
-                }
-            }
-            finishTestcaseReport(testCaseBlock, testcaseSuccess, testcaseMessage);
-
-            LOGGER.info(
-                    "Testcase finished. Scenario NO = {}, ACTION = {}, Testcase = {}",
-                    scenario.getNo(),
-                    scenario.getAction(),
-                    testCaseBlock.getTestcaseName()
-            );
-        }
-
-        LOGGER.info("Scenario finished. NO = {}, ACTION = {}", scenario.getNo(), scenario.getAction());
-        finishScenarioReport(scenario, scenarioSuccess, scenarioMessage);
-        return results;
     }
 
     private void startScenarioReport(Scenario scenario) {

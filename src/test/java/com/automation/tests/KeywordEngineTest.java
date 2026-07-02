@@ -1,5 +1,6 @@
 package com.automation.tests;
 
+import com.automation.engine.ExecutionPlanBuilder;
 import com.automation.engine.KeywordResolver;
 import com.automation.engine.KeywordEngine;
 import com.automation.excel.DataReader;
@@ -9,8 +10,7 @@ import com.automation.excel.ScenarioReader;
 import com.automation.excel.StepReader;
 import com.automation.models.ExecutionResult;
 import com.automation.models.KeywordSourceType;
-import com.automation.models.Scenario;
-import com.automation.models.TestStep;
+import com.automation.models.ResolvedStepContext;
 import com.automation.tests.support.ExcelKeywordTestWorkbookFactory;
 import com.automation.tests.support.FakeWebDriver;
 import org.testng.Assert;
@@ -38,14 +38,13 @@ public class KeywordEngineTest {
     }
 
     @Test
-    public void executeStepShouldResolveValueObjectAndCallBaseFunction() {
+    public void executeShouldRunResolvedStepFromPlanAndCallBaseFunction() {
         FakeWebDriver fakeDriver = localPageDriver();
         try (ExcelReader excelReader = new ExcelReader(workbookPath.toString())) {
-            Scenario scenario = activeScenario(excelReader);
-            TestStep step = stepByObject(excelReader, scenario, "txtUsername");
+            ResolvedStepContext step = resolvedStepByObject(excelReader, "txtUsername");
             KeywordEngine keywordEngine = keywordEngine(excelReader, fakeDriver);
 
-            ExecutionResult result = keywordEngine.executeStep(scenario, step);
+            ExecutionResult result = keywordEngine.execute(step);
 
             Assert.assertTrue(result.isSuccess(), result.getMessage());
             Assert.assertEquals(result.getResolvedValue(), "brs_admin");
@@ -57,14 +56,13 @@ public class KeywordEngineTest {
     }
 
     @Test
-    public void executeStepShouldResolveDynamicXPathPlaceholder() {
+    public void executeShouldUseResolvedDynamicXPathFromPlan() {
         FakeWebDriver fakeDriver = localPageDriver();
         try (ExcelReader excelReader = new ExcelReader(workbookPath.toString())) {
-            Scenario scenario = activeScenario(excelReader);
-            TestStep step = stepByObject(excelReader, scenario, "btnRoomByName");
+            ResolvedStepContext step = resolvedStepByObject(excelReader, "btnRoomByName");
             KeywordEngine keywordEngine = keywordEngine(excelReader, fakeDriver);
 
-            ExecutionResult result = keywordEngine.executeStep(scenario, step);
+            ExecutionResult result = keywordEngine.execute(step);
 
             Assert.assertTrue(result.isSuccess(), result.getMessage());
             Assert.assertEquals(result.getResolvedValue(), "Meeting Room A");
@@ -75,14 +73,23 @@ public class KeywordEngineTest {
     }
 
     @Test
-    public void executeStepShouldSupportLiteralValues() {
+    public void executeShouldSupportLiteralValuesFromResolvedStep() {
         FakeWebDriver fakeDriver = localPageDriver();
         try (ExcelReader excelReader = new ExcelReader(workbookPath.toString())) {
-            Scenario scenario = activeScenario(excelReader);
-            TestStep step = step("Create Booking", "input", "txtBookingTitle", "Manual Booking Title", 15, 1);
+            ResolvedStepContext step = resolvedStep(
+                    "Create Booking",
+                    "input",
+                    "txtBookingTitle",
+                    "Manual Booking Title",
+                    "Manual Booking Title",
+                    "//input[@id='bookingTitle']",
+                    "//input[@id='bookingTitle']",
+                    15,
+                    1
+            );
             KeywordEngine keywordEngine = keywordEngine(excelReader, fakeDriver);
 
-            ExecutionResult result = keywordEngine.executeStep(scenario, step);
+            ExecutionResult result = keywordEngine.execute(step);
 
             Assert.assertTrue(result.isSuccess(), result.getMessage());
             Assert.assertEquals(result.getResolvedValue(), "Manual Booking Title");
@@ -91,14 +98,13 @@ public class KeywordEngineTest {
     }
 
     @Test
-    public void executeStepShouldSupportBlankObjectForValueOnlyKeyword() {
+    public void executeShouldSupportBlankObjectForValueOnlyKeyword() {
         FakeWebDriver fakeDriver = localPageDriver();
         try (ExcelReader excelReader = new ExcelReader(workbookPath.toString())) {
-            Scenario scenario = activeScenario(excelReader);
-            TestStep step = stepByKeyword(excelReader, scenario, "openUrl");
+            ResolvedStepContext step = resolvedStepByKeyword(excelReader, "openUrl");
             KeywordEngine keywordEngine = keywordEngine(excelReader, fakeDriver);
 
-            ExecutionResult result = keywordEngine.executeStep(scenario, step);
+            ExecutionResult result = keywordEngine.execute(step);
 
             Assert.assertTrue(result.isSuccess(), result.getMessage());
             Assert.assertEquals(result.getObjectName(), "");
@@ -109,57 +115,29 @@ public class KeywordEngineTest {
     }
 
     @Test
-    public void executeStepShouldReturnClearFailureForBlankKeyword() {
+    public void executeShouldReturnClearFailureForBlankKeyword() {
         FakeWebDriver fakeDriver = localPageDriver();
         try (ExcelReader excelReader = new ExcelReader(workbookPath.toString())) {
-            Scenario scenario = activeScenario(excelReader);
-            TestStep step = step("Login BRS", " ", "btnLogin", "", 3, 1);
+            ResolvedStepContext step = resolvedStep(
+                    "Login BRS",
+                    " ",
+                    "btnLogin",
+                    "",
+                    "",
+                    "//button[@id='loginButton']",
+                    "//button[@id='loginButton']",
+                    3,
+                    1
+            );
             KeywordEngine keywordEngine = keywordEngine(excelReader, fakeDriver);
 
-            ExecutionResult result = keywordEngine.executeStep(scenario, step);
+            ExecutionResult result = keywordEngine.execute(step);
 
             Assert.assertFalse(result.isSuccess());
-            Assert.assertEquals(result.getMessage(), "Keyword is required in sheet Local Keyword Test row 3.");
-        }
-    }
-
-    @Test
-    public void executeStepShouldReturnClearFailureForDataReferenceError() {
-        FakeWebDriver fakeDriver = localPageDriver();
-        try (ExcelReader excelReader = new ExcelReader(workbookPath.toString())) {
-            Scenario scenario = activeScenario(excelReader);
-            TestStep step = step("Login BRS", "input", "txtUsername", "MISSING_DATA.USERNAME", 4, 1);
-            KeywordEngine keywordEngine = keywordEngine(excelReader, fakeDriver);
-
-            ExecutionResult result = keywordEngine.executeStep(scenario, step);
-
-            Assert.assertFalse(result.isSuccess());
-            Assert.assertTrue(result.getMessage().contains("Failed to resolve value for step row 4."));
-            Assert.assertTrue(result.getMessage().contains("Raw value: MISSING_DATA.USERNAME."));
+            Assert.assertTrue(result.getMessage().contains("Keyword is required in sheet Local Keyword Test row 3."));
             Assert.assertTrue(result.getMessage().contains("Scenario NO: 1."));
             Assert.assertTrue(result.getMessage().contains("Scenario ACTION: Local Keyword Test."));
             Assert.assertTrue(result.getMessage().contains("Testcase: Login BRS."));
-            Assert.assertTrue(result.getMessage().contains("Data sheet not found: MISSING_DATA."));
-        }
-    }
-
-    @Test
-    public void executeStepShouldReturnClearFailureForObjectResolutionError() {
-        FakeWebDriver fakeDriver = localPageDriver();
-        try (ExcelReader excelReader = new ExcelReader(workbookPath.toString())) {
-            Scenario scenario = activeScenario(excelReader);
-            TestStep step = step("Login BRS", "click", "btnMissing", "", 5, 1);
-            KeywordEngine keywordEngine = keywordEngine(excelReader, fakeDriver);
-
-            ExecutionResult result = keywordEngine.executeStep(scenario, step);
-
-            Assert.assertFalse(result.isSuccess());
-            Assert.assertTrue(result.getMessage().contains("Failed to resolve object for step row 5."));
-            Assert.assertTrue(result.getMessage().contains("Application: BRS."));
-            Assert.assertTrue(result.getMessage().contains("Object: btnMissing."));
-            Assert.assertTrue(result.getMessage().contains("Scenario NO: 1."));
-            Assert.assertTrue(result.getMessage().contains("Testcase: Login BRS."));
-            Assert.assertTrue(result.getMessage().contains("Object not found in OBJECT_REPOSITORY. Application = BRS, Object = btnMissing."));
         }
     }
 
@@ -170,42 +148,65 @@ public class KeywordEngineTest {
         return new KeywordEngine(dataReader, objectRepositoryReader, keywordResolver);
     }
 
-    private Scenario activeScenario(ExcelReader excelReader) {
-        return new ScenarioReader(excelReader).getActiveScenarios().get(0);
-    }
-
-    private TestStep stepByKeyword(ExcelReader excelReader, Scenario scenario, String keyword) {
-        return activeSteps(excelReader, scenario).stream()
+    private ResolvedStepContext resolvedStepByKeyword(ExcelReader excelReader, String keyword) {
+        return resolvedSteps(excelReader).stream()
                 .filter(step -> keyword.equals(step.getKeyword()))
                 .findFirst()
                 .orElseThrow();
     }
 
-    private TestStep stepByObject(ExcelReader excelReader, Scenario scenario, String object) {
-        return activeSteps(excelReader, scenario).stream()
-                .filter(step -> object.equals(step.getObject()))
+    private ResolvedStepContext resolvedStepByObject(ExcelReader excelReader, String object) {
+        return resolvedSteps(excelReader).stream()
+                .filter(step -> object.equals(step.getObjectName()))
                 .findFirst()
                 .orElseThrow();
     }
 
-    private List<TestStep> activeSteps(ExcelReader excelReader, Scenario scenario) {
-        return new StepReader(excelReader).getActiveSteps(scenario);
+    private List<ResolvedStepContext> resolvedSteps(ExcelReader excelReader) {
+        DataReader dataReader = new DataReader(excelReader);
+        ObjectRepositoryReader objectRepositoryReader = new ObjectRepositoryReader(excelReader, dataReader);
+        return new ExecutionPlanBuilder(
+                new ScenarioReader(excelReader),
+                new StepReader(excelReader),
+                dataReader,
+                objectRepositoryReader
+        ).build()
+                .stream()
+                .flatMap(scenario -> scenario.getTestcases().stream())
+                .flatMap(testcase -> testcase.getSteps().stream())
+                .toList();
     }
 
-    private TestStep step(String testcaseName, String keyword, String object, String value, int excelRowNumber, int stepOrder) {
-        return new TestStep(
-                "1",
-                "Local keyword execution test",
-                "Local Keyword Test",
-                testcaseName,
-                keyword,
-                object,
-                value,
-                "BRS",
-                "KeywordEngine test step",
-                excelRowNumber,
-                stepOrder
-        );
+    private ResolvedStepContext resolvedStep(
+            String testcaseName,
+            String keyword,
+            String object,
+            String rawValue,
+            String resolvedValue,
+            String rawXPath,
+            String resolvedXPath,
+            int excelRowNumber,
+            int stepOrder
+    ) {
+        return ResolvedStepContext.builder()
+                .scenarioNo("1")
+                .scenarioAction("Local Keyword Test")
+                .scenarioName("Local keyword execution test")
+                .sheetName("Local Keyword Test")
+                .testcaseName(testcaseName)
+                .testcaseParentRow(2)
+                .excelRow(excelRowNumber)
+                .stepNumber(stepOrder)
+                .keyword(keyword)
+                .objectName(object)
+                .application("BRS")
+                .description("KeywordEngine test step")
+                .rawValue(rawValue)
+                .resolvedValue(resolvedValue)
+                .rawXPath(rawXPath)
+                .resolvedXPath(resolvedXPath)
+                .executedBy("")
+                .build();
     }
 
     private FakeWebDriver localPageDriver() {

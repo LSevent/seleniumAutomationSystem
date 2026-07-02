@@ -9,7 +9,6 @@ import com.automation.excel.ObjectRepositoryReader;
 import com.automation.excel.ScenarioReader;
 import com.automation.excel.StepReader;
 import com.automation.exceptions.FrameworkException;
-import com.automation.models.Scenario;
 import com.automation.tests.support.FakeWebDriver;
 import com.automation.tests.support.ValidationWorkbookFactory;
 import org.testng.Assert;
@@ -34,15 +33,18 @@ public class ScenarioRunnerValidationTest {
                 ValidationWorkbookFactory.objectRepository(new Object[][]{{"BRS", "btnLogin", "//button[@id='login']", "Login"}})
         );
 
-        IllegalArgumentException exception = Assert.expectThrows(IllegalArgumentException.class, () -> {
+        FrameworkException exception = Assert.expectThrows(FrameworkException.class, () -> {
             try (ExcelReader excelReader = new ExcelReader(workbookPath.toString())) {
                 ScenarioRunner runner = runner(excelReader);
-                Scenario scenario = new ScenarioReader(excelReader).getActiveScenarios().get(0);
-                runner.runScenario(scenario);
+                runner.runActiveScenarios();
             }
         });
 
-        Assert.assertEquals(exception.getMessage(), "Active scenario has no active testcase. Scenario NO = 1, ACTION = Local Keyword Test.");
+        Assert.assertTrue(exception.getMessage().contains("Pre-run validation failed with 1 error(s)."));
+        Assert.assertTrue(exception.getMessage().contains("Active scenario has no active testcase."));
+        Assert.assertTrue(exception.getMessage().contains("Scenario NO"));
+        Assert.assertTrue(exception.getMessage().contains("1"));
+        Assert.assertTrue(exception.getMessage().contains("Local Keyword Test"));
     }
 
     @Test

@@ -103,7 +103,7 @@ The framework resolves an Excel keyword into a `ResolvedKeyword`; `KeywordExecut
 
 `KeywordEngine` centrally logs keyword start, completion, skip, and failure events using the resolved step context, with sensitive values masked. Internal helper methods are limited to shared context access, validation, waiting, and reusable custom keyword support; they are not Excel-facing keyword entry points.
 
-Excel execution now builds and validates a resolved execution plan before runtime startup. Runtime execution uses each `ResolvedStepContext` as its source of truth; `KeywordEngine` sets `StepContextHolder` for the step and clears it afterward, and report rows are populated from the same resolved step data.
+Excel execution now builds and validates a resolved execution plan before runtime startup. Runtime execution uses each `ResolvedStepContext` as its source of truth; raw `TestStep` rows are parser input only, not a separate runtime execution path. `KeywordEngine` sets `StepContextHolder` for the step and clears it afterward, and report rows are populated from the same resolved step data.
 
 ## Configuration
 
