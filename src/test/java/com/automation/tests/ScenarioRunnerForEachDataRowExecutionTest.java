@@ -85,6 +85,41 @@ public class ScenarioRunnerForEachDataRowExecutionTest {
         Assert.assertEquals(result.resultCountForKeywordAndStatus("elseIfEquals", ExecutionResult.STATUS_SKIP), 1);
     }
 
+    @Test
+    public void conditionWrappingLoopShouldExecuteLoopWhenConditionMatches() throws IOException {
+        RunnerResult result = runConditionWrappingLoopWorkbook("condition-wraps-matching-loop.xlsx", "Yes");
+
+        Assert.assertEquals(result.executedObjects(), List.of("txtBookingTitle", "txtBookingTitle", "btnAfterFlow"));
+        Assert.assertEquals(result.resolvedValuesForObject("txtBookingTitle"), List.of("Weekly Meeting", "Daily Standup"));
+        Assert.assertEquals(result.resultCountForKeywordAndStatus("ifEquals", ExecutionResult.STATUS_PASS), 1);
+        Assert.assertEquals(result.resultCountForKeywordAndStatus("forEachDataRow", ExecutionResult.STATUS_PASS), 2);
+        Assert.assertEquals(result.resultCountForKeywordAndStatus("endForEachDataRow", ExecutionResult.STATUS_PASS), 2);
+        Assert.assertEquals(result.resultCountForObjectAndStatus("btnSkippedLoopFallback", ExecutionResult.STATUS_SKIP), 1);
+    }
+
+    @Test
+    public void conditionWrappingLoopShouldSkipLoopWhenConditionDoesNotMatch() throws IOException {
+        RunnerResult result = runConditionWrappingLoopWorkbook("condition-wraps-skipped-loop.xlsx", "No");
+
+        Assert.assertEquals(result.executedObjects(), List.of("btnSkippedLoopFallback", "btnAfterFlow"));
+        Assert.assertEquals(result.resultCountForObjectAndStatus("txtBookingTitle", ExecutionResult.STATUS_SKIP), 2);
+        Assert.assertEquals(result.resultCountForKeywordAndStatus("ifEquals", ExecutionResult.STATUS_SKIP), 1);
+        Assert.assertEquals(result.resultCountForKeywordAndStatus("forEachDataRow", ExecutionResult.STATUS_SKIP), 2);
+        Assert.assertEquals(result.resultCountForKeywordAndStatus("endForEachDataRow", ExecutionResult.STATUS_SKIP), 2);
+        Assert.assertEquals(result.resultCountForKeywordAndStatus("else", ExecutionResult.STATUS_PASS), 1);
+    }
+
+    @Test
+    public void loopInsideElseBranchShouldExecuteWhenElseBranchIsActive() throws IOException {
+        RunnerResult result = runLoopInsideElseWorkbook("loop-inside-else-branch.xlsx");
+
+        Assert.assertEquals(result.executedObjects(), List.of("txtBookingTitle", "txtBookingTitle", "btnAfterFlow"));
+        Assert.assertEquals(result.resolvedValuesForObject("txtBookingTitle"), List.of("Weekly Meeting", "Daily Standup"));
+        Assert.assertEquals(result.resultCountForObjectAndStatus("btnIfBranch", ExecutionResult.STATUS_SKIP), 1);
+        Assert.assertEquals(result.resultCountForKeywordAndStatus("else", ExecutionResult.STATUS_PASS), 1);
+        Assert.assertEquals(result.resultCountForKeywordAndStatus("forEachDataRow", ExecutionResult.STATUS_PASS), 2);
+    }
+
     private RunnerResult runLoopWorkbook(String fileName, String loopValue) throws IOException {
         Path workbookPath = ValidationWorkbookFactory.createWorkbook(
                 TEMP_DIR.resolve(fileName),
@@ -113,6 +148,89 @@ public class ScenarioRunnerForEachDataRowExecutionTest {
                         {"BRS", "btnSingleMeeting", "//button[@id='single']", "Single"},
                         {"BRS", "btnRepeatingMeeting", "//button[@id='repeating']", "Repeating"},
                         {"BRS", "btnAfterLoop", "//button[@id='after-loop']", "After loop"}
+                })
+        );
+
+        try (ExcelReader excelReader = new ExcelReader(workbookPath.toString())) {
+            DataReader dataReader = new DataReader(excelReader);
+            ObjectRepositoryReader objectRepositoryReader = new ObjectRepositoryReader(excelReader, dataReader);
+            FakeWebDriver driver = new FakeWebDriver();
+            RecordingKeywordEngine keywordEngine = new RecordingKeywordEngine(
+                    dataReader,
+                    objectRepositoryReader,
+                    new KeywordResolver(driver.driver()),
+                    executionConfig(workbookPath)
+            );
+            ScenarioRunner runner = new ScenarioRunner(
+                    new ScenarioReader(excelReader),
+                    new StepReader(excelReader),
+                    dataReader,
+                    objectRepositoryReader,
+                    () -> keywordEngine
+            );
+
+            return new RunnerResult(runner.runActiveScenarios(), keywordEngine.executedSteps);
+        }
+    }
+
+    private RunnerResult runConditionWrappingLoopWorkbook(String fileName, String runBookingsValue) throws IOException {
+        return runWorkbook(
+                fileName,
+                new Object[][]{
+                        {"Create Booking", "Y", "", "", "", "BRS", "Active testcase"},
+                        {"", "", "ifEquals", "", "CONFIG.RUN_BOOKINGS = Yes", "", "Run booking loop condition"},
+                        {"", "", "forEachDataRow", "", "BOOKING_DATA", "", "Start booking-data loop"},
+                        {"", "", "input", "txtBookingTitle", "BOOKING_DATA.BOOKING_TITLE", "", "Input booking title"},
+                        {"", "", "endForEachDataRow", "", "", "", "End booking-data loop"},
+                        {"", "", "else", "", "", "", "Loop skipped fallback"},
+                        {"", "", "click", "btnSkippedLoopFallback", "", "", "Fallback when loop skipped"},
+                        {"", "", "endIf", "", "", "", "End condition"},
+                        {"", "", "click", "btnAfterFlow", "", "", "After conditional loop"}
+                },
+                runBookingsValue
+        );
+    }
+
+    private RunnerResult runLoopInsideElseWorkbook(String fileName) throws IOException {
+        return runWorkbook(
+                fileName,
+                new Object[][]{
+                        {"Create Booking", "Y", "", "", "", "BRS", "Active testcase"},
+                        {"", "", "ifEquals", "", "CONFIG.RUN_BOOKINGS = No", "", "Inactive if branch"},
+                        {"", "", "click", "btnIfBranch", "", "", "Should be skipped"},
+                        {"", "", "else", "", "", "", "Loop else branch"},
+                        {"", "", "forEachDataRow", "", "BOOKING_DATA", "", "Start booking-data loop"},
+                        {"", "", "input", "txtBookingTitle", "BOOKING_DATA.BOOKING_TITLE", "", "Input booking title"},
+                        {"", "", "endForEachDataRow", "", "", "", "End booking-data loop"},
+                        {"", "", "endIf", "", "", "", "End condition"},
+                        {"", "", "click", "btnAfterFlow", "", "", "After conditional loop"}
+                },
+                "Yes"
+        );
+    }
+
+    private RunnerResult runWorkbook(
+            String fileName,
+            Object[][] scenarioRows,
+            String runBookingsValue
+    ) throws IOException {
+        Path workbookPath = ValidationWorkbookFactory.createWorkbook(
+                TEMP_DIR.resolve(fileName),
+                scenarios(new Object[][]{{1, "Y", "Loop Flow", "Loop execution"}}),
+                scenarioSheet("Loop Flow", scenarioRows),
+                sheet("CONFIG", new String[]{"NO", "RUN_BOOKINGS"}, new Object[][]{
+                        {1, runBookingsValue}
+                }),
+                sheet("BOOKING_DATA", new String[]{"NO", "BOOKING_TITLE"}, new Object[][]{
+                        {1, "Weekly Meeting"},
+                        {1, "Daily Standup"},
+                        {2, "Other Scenario Meeting"}
+                }),
+                objectRepository(new Object[][]{
+                        {"BRS", "txtBookingTitle", "//input[@id='bookingTitle']", "Booking title"},
+                        {"BRS", "btnIfBranch", "//button[@id='if-branch']", "If branch"},
+                        {"BRS", "btnSkippedLoopFallback", "//button[@id='fallback']", "Loop skipped fallback"},
+                        {"BRS", "btnAfterFlow", "//button[@id='after-flow']", "After flow"}
                 })
         );
 

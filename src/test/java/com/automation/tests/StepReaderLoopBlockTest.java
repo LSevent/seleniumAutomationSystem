@@ -71,6 +71,33 @@ public class StepReaderLoopBlockTest {
     }
 
     @Test
+    public void conditionBlockCanWrapLoopBlock() throws IOException {
+        Path workbookPath = workbook(
+                "condition-wraps-loop-block.xlsx",
+                new Object[][]{
+                        {"Create Booking", "Y", "", "", "", "BRS", "Active testcase"},
+                        {"", "", "ifEquals", "", "CONFIG.RUN_BOOKINGS = Yes", "", "Should run booking loop"},
+                        {"", "", "forEachDataRow", "", "BOOKING_DATA", "", "Start booking loop"},
+                        {"", "", "input", "txtBookingTitle", "BOOKING_DATA.BOOKING_TITLE", "", "Input booking title"},
+                        {"", "", "endForEachDataRow", "", "", "", "End booking loop"},
+                        {"", "", "else", "", "", "", "Fallback branch"},
+                        {"", "", "click", "btnAfterLoop", "", "", "Fallback action"},
+                        {"", "", "endIf", "", "", "", "End condition"}
+                }
+        );
+
+        try (ExcelReader excelReader = new ExcelReader(workbookPath.toString())) {
+            List<TestStep> steps = new StepReader(excelReader).getActiveSteps(SCENARIO);
+
+            Assert.assertEquals(steps.get(0).getFlowDirective(), FlowDirectiveType.IF_EQUALS);
+            Assert.assertEquals(steps.get(1).getFlowDirective(), FlowDirectiveType.FOR_EACH_DATA_ROW);
+            Assert.assertEquals(steps.get(3).getFlowDirective(), FlowDirectiveType.END_FOR_EACH_DATA_ROW);
+            Assert.assertEquals(steps.get(4).getFlowDirective(), FlowDirectiveType.ELSE);
+            Assert.assertEquals(steps.get(6).getFlowDirective(), FlowDirectiveType.END_IF);
+        }
+    }
+
+    @Test
     public void endForEachDataRowWithoutStartShouldFailClearly() throws IOException {
         Path workbookPath = workbook(
                 "end-loop-without-start.xlsx",
@@ -124,6 +151,28 @@ public class StepReaderLoopBlockTest {
 
         Assert.assertTrue(exception.getMessage().contains(
                 "Loop directive 'endForEachDataRow' cannot close an 'ifEquals' block before 'endIf'."
+        ));
+        Assert.assertTrue(exception.getMessage().contains("Row: 5."));
+    }
+
+    @Test
+    public void elseCannotBranchForEachDataRowBlockBeforeEndForEachDataRow() throws IOException {
+        Path workbookPath = workbook(
+                "else-crosses-loop.xlsx",
+                new Object[][]{
+                        {"Create Booking", "Y", "", "", "", "BRS", "Active testcase"},
+                        {"", "", "ifEquals", "", "CONFIG.RUN_BOOKINGS = Yes", "", "Condition"},
+                        {"", "", "forEachDataRow", "", "BOOKING_DATA", "", "Start booking loop"},
+                        {"", "", "else", "", "", "", "Invalid else before loop end"},
+                        {"", "", "endForEachDataRow", "", "", "", "End booking loop"},
+                        {"", "", "endIf", "", "", "", "End condition"}
+                }
+        );
+
+        FrameworkException exception = expectStepReaderFailure(workbookPath);
+
+        Assert.assertTrue(exception.getMessage().contains(
+                "Conditional directive 'else' cannot close or branch a 'forEachDataRow' block before 'endForEachDataRow'."
         ));
         Assert.assertTrue(exception.getMessage().contains("Row: 5."));
     }

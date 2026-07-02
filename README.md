@@ -351,6 +351,8 @@ Loop `Value` is the data sheet name. A leading `#` is accepted for readability, 
 
 Inside the loop, data references for the loop sheet use the current loop row. Other data references still resolve normally.
 
+Loops and conditionals can be combined. You may put `ifEquals` blocks inside `forEachDataRow`, or put a `forEachDataRow` block inside an `ifEquals` / `else` branch. Close nested blocks in reverse order: for example, close an inner `endIf` before the outer `endForEachDataRow`.
+
 Example data-row loop:
 
 ```text
