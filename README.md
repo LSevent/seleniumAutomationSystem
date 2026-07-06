@@ -1,8 +1,8 @@
-# Selenium Java Automation Framework
+# Excel-Driven Selenium Java Automation Framework
 
-A Java 17 Selenium automation framework for normal TestNG UI tests and Excel-driven keyword execution.
+This is my Java 17 Selenium + TestNG automation framework. I built it to support normal Java UI tests and a practical Excel-driven keyword runner for real scenario work.
 
-The project is designed to be beginner-friendly while still using production-minded patterns: Page Object Model, `ThreadLocal` WebDriver management, explicit waits, external configuration, external test data, Excel scenario parsing, data resolution, object repository resolution, keyword dispatching, screenshots, logging, validation, and HTML reporting.
+The design goal is simple: keep Excel scenarios readable for testers, while keeping the Java side clean enough to maintain. The framework uses Page Object Model, `ThreadLocal` WebDriver management, explicit waits, external configuration, Excel scenario parsing, data resolution, object repository resolution, keyword dispatching, screenshots, lifecycle logging, pre-run validation, and HTML reporting.
 
 ## Overview
 
@@ -11,7 +11,9 @@ The framework supports two testing styles:
 - Standard TestNG tests that use page objects such as `LoginPage` and `DashboardPage`.
 - Excel-driven tests that read scenarios, testcases, steps, test data, and object locators from an `.xlsx` workbook.
 
-The Excel runner is the main automation design now. A scenario is selected from the `SCENARIOS` sheet, its action points to a scenario sheet, steps are parsed in Excel row order, values and XPath locators are resolved, then keywords are executed through application-specific or common Selenium functions.
+The Excel runner is the main workflow. A scenario is selected from the `SCENARIOS` sheet, its `ACTION` points to a scenario sheet, steps are parsed in Excel row order, values and XPath locators are resolved, then keywords are executed through application-specific or common Selenium keyword classes.
+
+The important idea: Excel describes what should happen, and Java owns how it happens.
 
 ## Tech Stack
 
@@ -73,7 +75,7 @@ src
 3. `StepReader` parses the scenario sheet named by `SCENARIOS.ACTION`.
 4. Parent testcase rows define testcase name, run flag, application, and description.
 5. Step rows inherit `Run` and `Application` from the latest parent testcase row unless the step overrides them.
-6. `DataReader` resolves step `Value` cells that use `SHEET_NAME.COLUMN_NAME`.
+6. `DataReader` resolves step `Value` cells that use `SHEET_NAME.COLUMN_NAME` or formula-header references such as `=LOGIN_DATA!$B$1`.
 7. `ObjectRepositoryReader` resolves step `Object` names into XPath values for the current application.
 8. `KeywordEngine` executes the step. The special `screenshot` keyword is handled by the engine for reporting evidence.
 9. `KeywordResolver` looks for the keyword in application-specific `SpecificFunction` first, then `BaseFunction`.
@@ -103,7 +105,7 @@ The framework resolves an Excel keyword into a `ResolvedKeyword`; `KeywordExecut
 
 `KeywordEngine` centrally logs keyword start, completion, skip, and failure events using the resolved step context, with sensitive values masked. Internal helper methods are limited to shared context access, validation, waiting, and reusable custom keyword support; they are not Excel-facing keyword entry points.
 
-Excel execution now builds and validates a resolved execution plan before runtime startup. Runtime execution uses each `ResolvedStepContext` as its source of truth; raw `TestStep` rows are parser input only, not a separate runtime execution path. `KeywordEngine` sets `StepContextHolder` for the step and clears it afterward, and report rows are populated from the same resolved step data.
+Excel execution builds and validates a resolved execution plan before runtime startup. Runtime execution uses each `ResolvedStepContext` as its source of truth; raw `TestStep` rows are parser input only, not a separate runtime execution path. `KeywordEngine` sets `StepContextHolder` for the step and clears it afterward, and report rows are populated from the same resolved step data.
 
 ## Configuration
 
@@ -160,9 +162,9 @@ C:/Automation/BRS/Reports/Report-Booking Room System.html
 C:/Automation/BRS/Reports/Screenshots
 ```
 
-`Final Excel Template.xlsx` is the user-facing sample workbook.
+`Final Excel Template.xlsx` is the sample workbook I keep as the project template.
 
-You can override Excel settings when running the configured Excel runner:
+Excel settings can be overridden when running the configured Excel runner:
 
 ```bash
 mvn test -DsuiteXmlFile=src/test/resources/excel-runner.xml -Dexcel.scenarioFilePath="C:/Automation/scenarios/BookingRoomScenarios.xlsx" -Dreport.outputDirectory="C:/Automation/reports"
@@ -257,13 +259,13 @@ Examples:
 
 If a step `Value` does not match a data reference, the framework treats it as literal text.
 
-You may also point a `Value` cell to a data-sheet header cell with a simple Excel formula:
+A `Value` cell can also point to a data-sheet header cell with a simple Excel formula:
 
 ```text
 =LOGIN_DATA!$B$1
 ```
 
-If `LOGIN_DATA!B1` contains `USERNAME`, the framework treats the formula as `LOGIN_DATA.USERNAME` and resolves the value from the current scenario `NO`. This is useful when you prefer clicking the data column header in Excel instead of typing the dot-notation reference manually.
+If `LOGIN_DATA!B1` contains `USERNAME`, the framework treats the formula as `LOGIN_DATA.USERNAME` and resolves the value from the current scenario `NO`. This keeps the sheet friendly for Excel work because the data column header can be selected directly instead of typing the dot-notation reference manually.
 
 Formula header references also work inside `forEachDataRow` loops. If the formula points to the loop sheet header, the framework reads from the current loop row.
 
@@ -372,7 +374,7 @@ Loop `Value` is the data sheet name. A leading `#` is accepted for readability, 
 
 Inside the loop, data references for the loop sheet use the current loop row. Other data references still resolve normally.
 
-Loops and conditionals can be combined. You may put `ifEquals` blocks inside `forEachDataRow`, or put a `forEachDataRow` block inside an `ifEquals` / `else` branch. Close nested blocks in reverse order: for example, close an inner `endIf` before the outer `endForEachDataRow`.
+Loops and conditionals can be combined. An `ifEquals` block can live inside `forEachDataRow`, and a `forEachDataRow` block can live inside an `ifEquals` / `else` branch. Nested blocks close in reverse order: for example, close an inner `endIf` before the outer `endForEachDataRow`.
 
 Flow directive rows are shown in the execution report with readable details, such as whether a condition matched, which loop iteration started or ended, or why a row was skipped by an inactive branch.
 
