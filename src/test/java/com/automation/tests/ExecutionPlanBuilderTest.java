@@ -20,6 +20,7 @@ import java.nio.file.Path;
 import java.util.List;
 
 import static com.automation.tests.support.ValidationWorkbookFactory.objectRepository;
+import static com.automation.tests.support.ValidationWorkbookFactory.formula;
 import static com.automation.tests.support.ValidationWorkbookFactory.scenarioSheet;
 import static com.automation.tests.support.ValidationWorkbookFactory.scenarios;
 import static com.automation.tests.support.ValidationWorkbookFactory.sheet;
@@ -162,6 +163,101 @@ public class ExecutionPlanBuilderTest {
 
             ResolvedStepContext endStep = testcase.getSteps().get(2);
             Assert.assertEquals(endStep.getFlowDirective(), FlowDirectiveType.END_IF);
+        }
+    }
+
+    @Test
+    public void formulaHeaderReferenceShouldResolveUsingCurrentScenarioDataRow() throws IOException {
+        Path workbookPath = ValidationWorkbookFactory.createWorkbook(
+                TEMP_DIR.resolve("formula-header-reference.xlsx"),
+                scenarios(new Object[][]{{1, "Y", "Booking Flow", "Create booking"}}),
+                scenarioSheet("Booking Flow", new Object[][]{
+                        {"Create Booking", "Y", "", "", "", "BRS", "Active testcase"},
+                        {"", "", "click", "btnBookingByTitle", formula("BOOKING_DATA!$B$1"), "", "Click title from formula header"}
+                }),
+                sheet("BOOKING_DATA", new String[]{"NO", "BOOKING_TITLE"}, new Object[][]{
+                        {1, "Formula Header Meeting"}
+                }),
+                objectRepository(new Object[][]{
+                        {"BRS", "btnBookingByTitle", "//button[text()='{BOOKING_TITLE}']", "Title button"}
+                })
+        );
+
+        try (ExcelReader excelReader = new ExcelReader(workbookPath.toString())) {
+            ResolvedStepContext step = builder(excelReader)
+                    .build()
+                    .get(0)
+                    .getTestcases()
+                    .get(0)
+                    .getSteps()
+                    .get(0);
+
+            Assert.assertEquals(step.getRawValue(), "=BOOKING_DATA!$B$1");
+            Assert.assertEquals(step.getResolvedValue(), "Formula Header Meeting");
+            Assert.assertEquals(step.getRawXPath(), "//button[text()='{BOOKING_TITLE}']");
+            Assert.assertEquals(step.getResolvedXPath(), "//button[text()='Formula Header Meeting']");
+        }
+    }
+
+    @Test
+    public void formulaHeaderReferenceInsideLoopShouldUseCurrentLoopRow() throws IOException {
+        Path workbookPath = ValidationWorkbookFactory.createWorkbook(
+                TEMP_DIR.resolve("formula-header-reference-loop.xlsx"),
+                scenarios(new Object[][]{{1, "Y", "Booking Flow", "Create booking"}}),
+                scenarioSheet("Booking Flow", new Object[][]{
+                        {"Create Booking", "Y", "", "", "", "BRS", "Active testcase"},
+                        {"", "", "forEachDataRow", "", "#BOOKING_DATA", "", "Loop bookings"},
+                        {"", "", "input", "txtBookingTitle", formula("BOOKING_DATA!$B$1"), "", "Input loop title"},
+                        {"", "", "endForEachDataRow", "", "", "", "End loop"}
+                }),
+                sheet("BOOKING_DATA", new String[]{"NO", "BOOKING_TITLE"}, new Object[][]{
+                        {1, "First Meeting"},
+                        {1, "Second Meeting"}
+                }),
+                objectRepository(new Object[][]{
+                        {"BRS", "txtBookingTitle", "//input[@id='bookingTitle']", "Title"}
+                })
+        );
+
+        try (ExcelReader excelReader = new ExcelReader(workbookPath.toString())) {
+            List<ResolvedStepContext> steps = builder(excelReader)
+                    .build()
+                    .get(0)
+                    .getTestcases()
+                    .get(0)
+                    .getSteps();
+
+            Assert.assertEquals(steps.size(), 6);
+            Assert.assertEquals(steps.get(1).getRawValue(), "=BOOKING_DATA!$B$1");
+            Assert.assertEquals(steps.get(1).getResolvedValue(), "First Meeting");
+            Assert.assertEquals(steps.get(4).getRawValue(), "=BOOKING_DATA!$B$1");
+            Assert.assertEquals(steps.get(4).getResolvedValue(), "Second Meeting");
+        }
+    }
+
+    @Test
+    public void ordinaryFormulaValueShouldStillEvaluateAsRawValue() throws IOException {
+        Path workbookPath = ValidationWorkbookFactory.createWorkbook(
+                TEMP_DIR.resolve("ordinary-formula-value.xlsx"),
+                scenarios(new Object[][]{{1, "Y", "Booking Flow", "Create booking"}}),
+                scenarioSheet("Booking Flow", new Object[][]{
+                        {"Create Booking", "Y", "", "", "", "BRS", "Active testcase"},
+                        {"", "", "openUrl", "", formula("\"Hello\"&\" World\""), "", "Use ordinary formula result"}
+                }),
+                objectRepository(new Object[][]{})
+        );
+
+        try (ExcelReader excelReader = new ExcelReader(workbookPath.toString())) {
+            ResolvedStepContext step = builder(excelReader)
+                    .build()
+                    .get(0)
+                    .getTestcases()
+                    .get(0)
+                    .getSteps()
+                    .get(0);
+
+            Assert.assertEquals(step.getRawValue(), "Hello World");
+            Assert.assertEquals(step.getResolvedValue(), "Hello World");
         }
     }
 

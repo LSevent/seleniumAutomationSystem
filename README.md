@@ -257,6 +257,18 @@ Examples:
 
 If a step `Value` does not match a data reference, the framework treats it as literal text.
 
+You may also point a `Value` cell to a data-sheet header cell with a simple Excel formula:
+
+```text
+=LOGIN_DATA!$B$1
+```
+
+If `LOGIN_DATA!B1` contains `USERNAME`, the framework treats the formula as `LOGIN_DATA.USERNAME` and resolves the value from the current scenario `NO`. This is useful when you prefer clicking the data column header in Excel instead of typing the dot-notation reference manually.
+
+Formula header references also work inside `forEachDataRow` loops. If the formula points to the loop sheet header, the framework reads from the current loop row.
+
+Other formulas are still evaluated normally by Excel/Apache POI and used as raw values.
+
 ## Dynamic XPath
 
 The object repository supports a single dynamic placeholder in an XPath:

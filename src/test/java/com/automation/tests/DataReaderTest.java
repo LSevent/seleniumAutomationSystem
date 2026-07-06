@@ -64,6 +64,55 @@ public class DataReaderTest {
     }
 
     @Test
+    public void shouldParseFormulaHeaderReferenceAsDataReference() throws IOException {
+        Path workbookPath = createWorkbook(
+                "formula-header-reference-parse.xlsx",
+                loginDataSheet(new Object[][]{{1, "brs_admin", "brs123"}})
+        );
+
+        try (ExcelReader excelReader = new ExcelReader(workbookPath.toString())) {
+            DataReader dataReader = new DataReader(excelReader);
+
+            DataReference dataReference = dataReader.parseReference("=LOGIN_DATA!$B$1");
+
+            Assert.assertEquals(dataReference.getRawReference(), "=LOGIN_DATA!$B$1");
+            Assert.assertEquals(dataReference.getSheetName(), "LOGIN_DATA");
+            Assert.assertEquals(dataReference.getColumnName(), "USERNAME");
+        }
+    }
+
+    @Test
+    public void shouldResolveFormulaHeaderReferenceForScenarioNo() throws IOException {
+        Path workbookPath = createWorkbook(
+                "formula-header-reference-resolve.xlsx",
+                loginDataSheet(new Object[][]{
+                        {1, "brs_admin", "brs123"},
+                        {2, "brs_user2", "secret2"}
+                })
+        );
+
+        try (ExcelReader excelReader = new ExcelReader(workbookPath.toString())) {
+            DataReader dataReader = new DataReader(excelReader);
+
+            Assert.assertTrue(dataReader.isDataReference("=LOGIN_DATA!$B$1"));
+            Assert.assertEquals(dataReader.resolveValue("=LOGIN_DATA!$B$1", "1"), "brs_admin");
+            Assert.assertEquals(dataReader.resolveValue("=LOGIN_DATA!$B$1", "2"), "brs_user2");
+        }
+    }
+
+    @Test
+    public void nonHeaderFormulaShouldNotBeTreatedAsDataReference() {
+        try (ExcelReader excelReader = new ExcelReader(TEMPLATE_FILE.toString())) {
+            DataReader dataReader = new DataReader(excelReader);
+
+            Assert.assertFalse(dataReader.isDataReference("=TODAY()"));
+            Assert.assertFalse(dataReader.isDataReference("=LOGIN_DATA!$B$2"));
+            Assert.assertFalse(dataReader.isDataReference("LOGIN_DATA!$B$1"));
+            Assert.assertEquals(dataReader.resolveValue("=LOGIN_DATA!$B$2", "1"), "=LOGIN_DATA!$B$2");
+        }
+    }
+
+    @Test
     public void shouldTrimReferenceParts() {
         try (ExcelReader excelReader = new ExcelReader(TEMPLATE_FILE.toString())) {
             DataReader dataReader = new DataReader(excelReader);

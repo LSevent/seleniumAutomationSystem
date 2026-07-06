@@ -348,10 +348,25 @@ public class StepReader {
                 readCell(sheetName, rowIndex, RUN_COLUMN, true),
                 readCell(sheetName, rowIndex, findKeywordColumnName(sheetName), true),
                 readCell(sheetName, rowIndex, OBJECT_COLUMN, true),
-                readCell(sheetName, rowIndex, VALUE_COLUMN, true),
+                readValueCell(sheetName, rowIndex),
                 readCell(sheetName, rowIndex, APPLICATION_COLUMN, true),
                 readCell(sheetName, rowIndex, DESCRIPTION_COLUMN, false)
         );
+    }
+
+    private String readValueCell(String sheetName, int rowIndex) {
+        int columnIndex = findRequiredColumnIndex(sheetName, VALUE_COLUMN);
+        try {
+            if (columnIndex >= excelReader.getColumnCount(sheetName, rowIndex)) {
+                return "";
+            }
+            return excelReader.getCellValuePreservingFormulaHeaderReference(sheetName, rowIndex, columnIndex).trim();
+        } catch (IllegalArgumentException exception) {
+            if (exception.getMessage() != null && exception.getMessage().startsWith("Row not found: row " + rowIndex + " in sheet " + sheetName)) {
+                return "";
+            }
+            throw exception;
+        }
     }
 
     private String readCell(String sheetName, int rowIndex, String columnName, boolean requiredHeader) {

@@ -50,10 +50,17 @@ public final class ValidationWorkbookFactory {
         return sheet("LOGIN_DATA", new String[]{"NO", "USERNAME", "PASSWORD"}, rows);
     }
 
+    public static Formula formula(String expression) {
+        return new Formula(expression);
+    }
+
     private static void writeRow(Row row, Object[] values) {
         for (int columnIndex = 0; columnIndex < values.length; columnIndex++) {
             Object value = values[columnIndex];
-            if (value instanceof Number number) {
+            if (value instanceof Formula formula) {
+                String expression = formula.expression();
+                row.createCell(columnIndex).setCellFormula(expression.startsWith("=") ? expression.substring(1) : expression);
+            } else if (value instanceof Number number) {
                 row.createCell(columnIndex).setCellValue(number.doubleValue());
             } else if (value instanceof Boolean bool) {
                 row.createCell(columnIndex).setCellValue(bool);
@@ -64,5 +71,8 @@ public final class ValidationWorkbookFactory {
     }
 
     public record SheetData(String name, String[] headers, Object[][] rows) {
+    }
+
+    public record Formula(String expression) {
     }
 }

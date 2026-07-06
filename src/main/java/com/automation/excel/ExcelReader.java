@@ -82,6 +82,23 @@ public class ExcelReader implements AutoCloseable {
         return getCellValue(cell, sheetName, rowIndex, columnIndex);
     }
 
+    public String getCellValuePreservingFormulaHeaderReference(String sheetName, int rowIndex, int columnIndex) {
+        Sheet sheet = getSheetOrThrow(sheetName);
+        Row row = getRowOrThrow(sheet, sheetName, rowIndex);
+        validateColumnIndex(row, sheetName, columnIndex);
+
+        Cell cell = row.getCell(columnIndex, Row.MissingCellPolicy.RETURN_BLANK_AS_NULL);
+        if (cell == null) {
+            return "";
+        }
+        if (cell.getCellType() == CellType.FORMULA) {
+            return FormulaHeaderReference.parseCellFormula(cell.getCellFormula())
+                    .map(FormulaHeaderReference::rawFormula)
+                    .orElseGet(() -> getCellValue(cell, sheetName, rowIndex, columnIndex));
+        }
+        return getCellValue(cell, sheetName, rowIndex, columnIndex);
+    }
+
     public String getCellValue(String sheetName, int rowIndex, String columnName) {
         int columnIndex = findColumnIndex(sheetName, columnName);
         return getCellValue(sheetName, rowIndex, columnIndex);

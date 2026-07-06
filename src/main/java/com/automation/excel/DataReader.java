@@ -6,6 +6,7 @@ import com.automation.models.Scenario;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 public class DataReader {
 
@@ -27,6 +28,9 @@ public class DataReader {
         }
 
         String trimmedValue = value.trim();
+        if (FormulaHeaderReference.parseValue(trimmedValue).isPresent()) {
+            return true;
+        }
         if (containsBracketNotation(trimmedValue)) {
             throw invalidReferenceFormat(trimmedValue);
         }
@@ -45,6 +49,10 @@ public class DataReader {
 
     public DataReference parseReference(String value) {
         String rawReference = value == null ? "" : value.trim();
+        Optional<FormulaHeaderReference> formulaHeaderReference = FormulaHeaderReference.parseValue(rawReference);
+        if (formulaHeaderReference.isPresent()) {
+            return parseFormulaHeaderReference(formulaHeaderReference.get());
+        }
         if (rawReference.isEmpty() || containsBracketNotation(rawReference)) {
             throw invalidReferenceFormat(rawReference);
         }
@@ -66,6 +74,35 @@ public class DataReader {
         }
 
         return new DataReference(rawReference, sheetName, columnName);
+    }
+
+    private DataReference parseFormulaHeaderReference(FormulaHeaderReference formulaReference) {
+        if (!excelReader.isSheetExists(formulaReference.sheetName())) {
+            throw new FrameworkException(
+                    "Data sheet not found: " + formulaReference.sheetName()
+                            + ". Referenced by value " + formulaReference.rawFormula() + "."
+            );
+        }
+
+        String columnName;
+        try {
+            columnName = excelReader.getCellValue(formulaReference.sheetName(), 0, formulaReference.columnIndex()).trim();
+        } catch (IllegalArgumentException exception) {
+            throw new FrameworkException(
+                    "Formula header reference " + formulaReference.rawFormula()
+                            + " points to a missing header cell in sheet " + formulaReference.sheetName() + ".",
+                    exception
+            );
+        }
+
+        if (columnName.isBlank()) {
+            throw new FrameworkException(
+                    "Formula header reference " + formulaReference.rawFormula()
+                            + " points to a blank header cell in sheet " + formulaReference.sheetName() + "."
+            );
+        }
+
+        return new DataReference(formulaReference.rawFormula(), formulaReference.sheetName(), columnName);
     }
 
     public String resolveValue(String rawValue, String scenarioNo) {
