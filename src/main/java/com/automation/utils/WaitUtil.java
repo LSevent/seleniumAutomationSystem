@@ -13,7 +13,20 @@ import java.time.Duration;
 
 public final class WaitUtil {
 
+    private static final ThreadLocal<Integer> TIMEOUT_SECONDS = new ThreadLocal<>();
+
     private WaitUtil() {
+    }
+
+    public static void setTimeoutSeconds(int timeoutSeconds) {
+        if (timeoutSeconds <= 0) {
+            throw new IllegalArgumentException("Timeout must be greater than zero. Actual value: " + timeoutSeconds);
+        }
+        TIMEOUT_SECONDS.set(timeoutSeconds);
+    }
+
+    public static void clearTimeoutSeconds() {
+        TIMEOUT_SECONDS.remove();
     }
 
     public static WebElement waitForVisible(WebDriver driver, By locator) {
@@ -33,9 +46,16 @@ public final class WaitUtil {
     }
 
     private static WebDriverWait createWait(WebDriver driver) {
-        int timeout = ConfigReader.getIntProperty("timeout", FrameworkConstants.DEFAULT_TIMEOUT_SECONDS);
+        int timeout = timeoutSeconds();
         WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(timeout));
         wait.ignoring(StaleElementReferenceException.class);
         return wait;
+    }
+
+    private static int timeoutSeconds() {
+        Integer timeout = TIMEOUT_SECONDS.get();
+        return timeout == null
+                ? ConfigReader.getIntProperty("timeout", FrameworkConstants.DEFAULT_TIMEOUT_SECONDS)
+                : timeout;
     }
 }

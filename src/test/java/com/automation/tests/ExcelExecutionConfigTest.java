@@ -1,6 +1,7 @@
 package com.automation.tests;
 
 import com.automation.config.ExcelExecutionConfig;
+import com.automation.reports.ExcelReportConfig;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -25,6 +26,14 @@ public class ExcelExecutionConfigTest {
         Assert.assertEquals(config.getReportFileName(), "Report-Booking Room System.html");
         Assert.assertEquals(config.getReportFilePath(), Path.of("C:/Automation/BRS/Reports/Report-Booking Room System.html").toAbsolutePath().normalize());
         Assert.assertEquals(config.getScreenshotOutputDirectory(), Path.of("C:/Automation/BRS/Reports/Screenshots").toAbsolutePath().normalize());
+        Assert.assertEquals(config.getBrowser(), "chrome");
+        Assert.assertFalse(config.isHeadless());
+        Assert.assertEquals(config.getTimeoutSeconds(), 10);
+        Assert.assertFalse(config.isRemote());
+        Assert.assertEquals(config.getGridUrl(), "http://localhost:4444/wd/hub");
+        Assert.assertFalse(config.isShowSensitiveData());
+        Assert.assertTrue(config.isScreenshotOnFailure());
+        Assert.assertTrue(config.isManualScreenshotEnabled());
     }
 
     @Test
@@ -60,6 +69,51 @@ public class ExcelExecutionConfigTest {
     }
 
     @Test
+    public void systemPropertyOverridesShouldApplyToExcelRunnerSettings() throws IOException {
+        Path scenarioFile = createFile("excel-runner-overrides.xlsx");
+        Properties properties = properties(scenarioFile.toString());
+
+        ExcelExecutionConfig config = ExcelExecutionConfig.fromProperties(
+                properties,
+                Map.of(
+                        ExcelExecutionConfig.BROWSER_KEY, "firefox",
+                        ExcelExecutionConfig.HEADLESS_KEY, "true",
+                        ExcelExecutionConfig.TIMEOUT_KEY, "25",
+                        ExcelExecutionConfig.REMOTE_KEY, "true",
+                        ExcelExecutionConfig.GRID_URL_KEY, "http://grid.example/wd/hub",
+                        ExcelExecutionConfig.REPORT_SHOW_SENSITIVE_DATA_KEY, "true",
+                        ExcelExecutionConfig.REPORT_SCREENSHOT_ON_FAILURE_KEY, "false",
+                        ExcelExecutionConfig.REPORT_MANUAL_SCREENSHOT_ENABLED_KEY, "false"
+                )
+        );
+
+        Assert.assertEquals(config.getBrowser(), "firefox");
+        Assert.assertTrue(config.isHeadless());
+        Assert.assertEquals(config.getTimeoutSeconds(), 25);
+        Assert.assertTrue(config.isRemote());
+        Assert.assertEquals(config.getGridUrl(), "http://grid.example/wd/hub");
+        Assert.assertTrue(config.isShowSensitiveData());
+        Assert.assertFalse(config.isScreenshotOnFailure());
+        Assert.assertFalse(config.isManualScreenshotEnabled());
+    }
+
+    @Test
+    public void excelReportConfigShouldUseExcelExecutionConfigValues() throws IOException {
+        Path scenarioFile = createFile("excel-report-config.xlsx");
+        Properties properties = properties(scenarioFile.toString());
+        properties.setProperty(ExcelExecutionConfig.REPORT_SHOW_SENSITIVE_DATA_KEY, "true");
+        properties.setProperty(ExcelExecutionConfig.REPORT_SCREENSHOT_ON_FAILURE_KEY, "false");
+        properties.setProperty(ExcelExecutionConfig.REPORT_MANUAL_SCREENSHOT_ENABLED_KEY, "false");
+
+        ExcelExecutionConfig executionConfig = ExcelExecutionConfig.fromProperties(properties, Map.of());
+        ExcelReportConfig reportConfig = ExcelReportConfig.fromExcelExecutionConfig(executionConfig);
+
+        Assert.assertTrue(reportConfig.isShowSensitiveData());
+        Assert.assertFalse(reportConfig.isScreenshotOnFailure());
+        Assert.assertFalse(reportConfig.isManualScreenshotEnabled());
+    }
+
+    @Test
     public void missingScenarioFilePathShouldFailClearly() {
         Properties properties = properties("");
 
@@ -83,6 +137,20 @@ public class ExcelExecutionConfigTest {
 
         Assert.assertTrue(exception.getMessage().contains("Excel scenario file not found:"));
         Assert.assertTrue(exception.getMessage().contains("missing.xlsx"));
+    }
+
+    @Test
+    public void invalidExcelRunnerTimeoutShouldFailClearly() throws IOException {
+        Path scenarioFile = createFile("invalid-timeout.xlsx");
+        Properties properties = properties(scenarioFile.toString());
+        properties.setProperty(ExcelExecutionConfig.TIMEOUT_KEY, "0");
+
+        IllegalArgumentException exception = Assert.expectThrows(
+                IllegalArgumentException.class,
+                () -> ExcelExecutionConfig.fromProperties(properties, Map.of())
+        );
+
+        Assert.assertTrue(exception.getMessage().contains("Excel execution configuration key 'timeout' must be a positive number."));
     }
 
     @Test

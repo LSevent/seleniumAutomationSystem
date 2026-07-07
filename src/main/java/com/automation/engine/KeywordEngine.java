@@ -11,6 +11,7 @@ import com.automation.models.ResolvedStepContext;
 import com.automation.reports.ExcelReportConfig;
 import com.automation.reports.SensitiveDataMasker;
 import com.automation.services.ScreenshotService;
+import com.automation.utils.WaitUtil;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.openqa.selenium.WebDriver;
@@ -90,6 +91,7 @@ public class KeywordEngine {
         }
 
         StepContextHolder.set(step);
+        WaitUtil.setTimeoutSeconds(executionConfig.getTimeoutSeconds());
         try {
             logResolvedStepStarted(step);
 
@@ -113,6 +115,7 @@ public class KeywordEngine {
             }
             return logResolvedResult(result);
         } finally {
+            WaitUtil.clearTimeoutSeconds();
             StepContextHolder.clear();
         }
     }

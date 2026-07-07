@@ -17,6 +17,23 @@ public class ExcelExecutionConfig {
     public static final String SCENARIO_FILE_PATH_KEY = "excel.scenarioFilePath";
     public static final String REPORT_OUTPUT_DIRECTORY_KEY = "report.outputDirectory";
     public static final String DEFAULT_REPORT_OUTPUT_DIRECTORY = "test-output/reports";
+    public static final String BROWSER_KEY = "browser";
+    public static final String HEADLESS_KEY = "headless";
+    public static final String TIMEOUT_KEY = "timeout";
+    public static final String REMOTE_KEY = "remote";
+    public static final String GRID_URL_KEY = "gridUrl";
+    public static final String REPORT_SHOW_SENSITIVE_DATA_KEY = "report.showSensitiveData";
+    public static final String REPORT_SCREENSHOT_ON_FAILURE_KEY = "report.screenshotOnFailure";
+    public static final String REPORT_MANUAL_SCREENSHOT_ENABLED_KEY = "report.manualScreenshotEnabled";
+
+    public static final String DEFAULT_BROWSER = "chrome";
+    public static final boolean DEFAULT_HEADLESS = false;
+    public static final int DEFAULT_TIMEOUT_SECONDS = 10;
+    public static final boolean DEFAULT_REMOTE = false;
+    public static final String DEFAULT_GRID_URL = "http://localhost:4444/wd/hub";
+    public static final boolean DEFAULT_SHOW_SENSITIVE_DATA = false;
+    public static final boolean DEFAULT_SCREENSHOT_ON_FAILURE = true;
+    public static final boolean DEFAULT_MANUAL_SCREENSHOT_ENABLED = true;
 
     private static final Logger LOGGER = LogManager.getLogger(ExcelExecutionConfig.class);
 
@@ -25,18 +42,42 @@ public class ExcelExecutionConfig {
     private final String reportFileName;
     private final Path reportFilePath;
     private final Path screenshotOutputDirectory;
+    private final String browser;
+    private final boolean headless;
+    private final int timeoutSeconds;
+    private final boolean remote;
+    private final String gridUrl;
+    private final boolean showSensitiveData;
+    private final boolean screenshotOnFailure;
+    private final boolean manualScreenshotEnabled;
 
     private ExcelExecutionConfig(
             Path scenarioFilePath,
             Path reportOutputDirectory,
             String reportFileName,
-            Path screenshotOutputDirectory
+            Path screenshotOutputDirectory,
+            String browser,
+            boolean headless,
+            int timeoutSeconds,
+            boolean remote,
+            String gridUrl,
+            boolean showSensitiveData,
+            boolean screenshotOnFailure,
+            boolean manualScreenshotEnabled
     ) {
         this.scenarioFilePath = scenarioFilePath;
         this.reportOutputDirectory = reportOutputDirectory;
         this.reportFileName = reportFileName;
         this.reportFilePath = reportOutputDirectory.resolve(reportFileName).toAbsolutePath().normalize();
         this.screenshotOutputDirectory = screenshotOutputDirectory;
+        this.browser = browser;
+        this.headless = headless;
+        this.timeoutSeconds = timeoutSeconds;
+        this.remote = remote;
+        this.gridUrl = gridUrl;
+        this.showSensitiveData = showSensitiveData;
+        this.screenshotOnFailure = screenshotOnFailure;
+        this.manualScreenshotEnabled = manualScreenshotEnabled;
     }
 
     public static ExcelExecutionConfig load() {
@@ -76,12 +117,43 @@ public class ExcelExecutionConfig {
         String reportFileName = deriveReportFileName(scenarioFileValue);
         Path reportOutputDirectory = resolvePath(reportOutputValue);
         Path screenshotOutputDirectory = reportOutputDirectory.resolve("Screenshots").toAbsolutePath().normalize();
+        String browser = valueFor(safeProperties, overrideResolver, BROWSER_KEY, DEFAULT_BROWSER);
+        boolean headless = booleanValueFor(safeProperties, overrideResolver, HEADLESS_KEY, DEFAULT_HEADLESS);
+        int timeoutSeconds = intValueFor(safeProperties, overrideResolver, TIMEOUT_KEY, DEFAULT_TIMEOUT_SECONDS);
+        boolean remote = booleanValueFor(safeProperties, overrideResolver, REMOTE_KEY, DEFAULT_REMOTE);
+        String gridUrl = valueFor(safeProperties, overrideResolver, GRID_URL_KEY, DEFAULT_GRID_URL);
+        boolean showSensitiveData = booleanValueFor(
+                safeProperties,
+                overrideResolver,
+                REPORT_SHOW_SENSITIVE_DATA_KEY,
+                DEFAULT_SHOW_SENSITIVE_DATA
+        );
+        boolean screenshotOnFailure = booleanValueFor(
+                safeProperties,
+                overrideResolver,
+                REPORT_SCREENSHOT_ON_FAILURE_KEY,
+                DEFAULT_SCREENSHOT_ON_FAILURE
+        );
+        boolean manualScreenshotEnabled = booleanValueFor(
+                safeProperties,
+                overrideResolver,
+                REPORT_MANUAL_SCREENSHOT_ENABLED_KEY,
+                DEFAULT_MANUAL_SCREENSHOT_ENABLED
+        );
 
         return new ExcelExecutionConfig(
                 resolvePath(scenarioFileValue),
                 reportOutputDirectory,
                 reportFileName,
-                screenshotOutputDirectory
+                screenshotOutputDirectory,
+                browser,
+                headless,
+                timeoutSeconds,
+                remote,
+                gridUrl,
+                showSensitiveData,
+                screenshotOnFailure,
+                manualScreenshotEnabled
         );
     }
 
@@ -93,6 +165,7 @@ public class ExcelExecutionConfig {
         LOGGER.info("Excel scenario file: {}", scenarioFilePath);
         LOGGER.info("Report output: {}", reportFilePath);
         LOGGER.info("Screenshot output: {}", screenshotOutputDirectory);
+        LOGGER.info("Excel runner browser: {}, headless={}, remote={}", browser, headless, remote);
     }
 
     public Path getScenarioFilePath() {
@@ -113,6 +186,38 @@ public class ExcelExecutionConfig {
 
     public Path getScreenshotOutputDirectory() {
         return screenshotOutputDirectory;
+    }
+
+    public String getBrowser() {
+        return browser;
+    }
+
+    public boolean isHeadless() {
+        return headless;
+    }
+
+    public int getTimeoutSeconds() {
+        return timeoutSeconds;
+    }
+
+    public boolean isRemote() {
+        return remote;
+    }
+
+    public String getGridUrl() {
+        return gridUrl;
+    }
+
+    public boolean isShowSensitiveData() {
+        return showSensitiveData;
+    }
+
+    public boolean isScreenshotOnFailure() {
+        return screenshotOnFailure;
+    }
+
+    public boolean isManualScreenshotEnabled() {
+        return manualScreenshotEnabled;
     }
 
     private void validateScenarioFile() {
@@ -190,6 +295,34 @@ public class ExcelExecutionConfig {
         }
 
         return defaultValue == null ? "" : defaultValue;
+    }
+
+    private static boolean booleanValueFor(
+            Properties properties,
+            PropertyResolver overrideResolver,
+            String key,
+            boolean defaultValue
+    ) {
+        return Boolean.parseBoolean(valueFor(properties, overrideResolver, key, String.valueOf(defaultValue)));
+    }
+
+    private static int intValueFor(
+            Properties properties,
+            PropertyResolver overrideResolver,
+            String key,
+            int defaultValue
+    ) {
+        String value = valueFor(properties, overrideResolver, key, String.valueOf(defaultValue));
+        try {
+            int parsedValue = Integer.parseInt(value);
+            if (parsedValue <= 0) {
+                throw new NumberFormatException("Value must be greater than zero.");
+            }
+            return parsedValue;
+        } catch (NumberFormatException exception) {
+            throw new FrameworkException("Excel execution configuration key '" + key
+                    + "' must be a positive number. Actual value: " + value, exception);
+        }
     }
 
     private static String deriveReportFileName(String scenarioFilePath) {

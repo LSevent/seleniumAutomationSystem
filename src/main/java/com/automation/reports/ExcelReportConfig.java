@@ -1,6 +1,7 @@
 package com.automation.reports;
 
 import com.automation.config.ConfigReader;
+import com.automation.config.ExcelExecutionConfig;
 
 public class ExcelReportConfig {
 
@@ -27,6 +28,15 @@ public class ExcelReportConfig {
                 ConfigReader.getBooleanProperty("report.showSensitiveData", DEFAULT_SHOW_SENSITIVE_DATA),
                 ConfigReader.getBooleanProperty("report.screenshotOnFailure", DEFAULT_SCREENSHOT_ON_FAILURE),
                 ConfigReader.getBooleanProperty("report.manualScreenshotEnabled", DEFAULT_MANUAL_SCREENSHOT_ENABLED)
+        );
+    }
+
+    public static ExcelReportConfig fromExcelExecutionConfig(ExcelExecutionConfig config) {
+        ExcelExecutionConfig executionConfig = config == null ? ExcelExecutionConfig.load() : config;
+        return new ExcelReportConfig(
+                executionConfig.isShowSensitiveData(),
+                executionConfig.isScreenshotOnFailure(),
+                executionConfig.isManualScreenshotEnabled()
         );
     }
 

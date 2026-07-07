@@ -127,13 +127,13 @@ Excel execution builds and validates a resolved execution plan before runtime st
 
 ## Configuration
 
-Browser and normal UI-test configuration lives in:
+Java/TestNG demo-test configuration lives in:
 
 ```text
 src/test/resources/config.properties
 ```
 
-Important keys:
+These settings are used by `BaseTest`, `LoginTest`, `DashboardTest`, and the Page Object demo flow:
 
 ```properties
 browser=chrome
@@ -143,9 +143,6 @@ timeout=10
 remote=false
 gridUrl=http://localhost:4444/wd/hub
 demoMode=true
-report.showSensitiveData=false
-report.screenshotOnFailure=true
-report.manualScreenshotEnabled=true
 ```
 
 Excel execution configuration lives in:
@@ -154,20 +151,32 @@ Excel execution configuration lives in:
 src/test/resources/excelConfig.properties
 ```
 
-Only these Excel execution values are manually configured:
+The configured Excel runner uses this file directly; it does not depend on `demoMode` or the Java demo-test `baseUrl` from `config.properties`.
+
+Important keys:
 
 ```properties
 excel.scenarioFilePath=C:/Automation/BRS/Booking Room System.xlsx
 report.outputDirectory=C:/Automation/BRS/Reports
+
+browser=chrome
+headless=false
+timeout=10
+remote=false
+gridUrl=http://localhost:4444/wd/hub
+
+report.showSensitiveData=false
+report.screenshotOnFailure=true
+report.manualScreenshotEnabled=true
 ```
 
-The report file name is derived from the Excel scenario file name:
+The report file name is still derived from the Excel scenario file name:
 
 ```text
 Report-[Excel file name without extension].html
 ```
 
-The screenshot folder is derived from the report output directory:
+The screenshot folder is still derived from the report output directory:
 
 ```text
 [report.outputDirectory]/Screenshots
@@ -480,6 +489,8 @@ Manual Excel screenshot steps are controlled by:
 report.manualScreenshotEnabled=true
 ```
 
+Both settings live in `src/test/resources/excelConfig.properties` for configured Excel execution.
+
 Manual screenshot step example:
 
 ```text
@@ -524,6 +535,8 @@ Sensitive resolved values are masked by default:
 ```properties
 report.showSensitiveData=false
 ```
+
+This setting also lives in `src/test/resources/excelConfig.properties` for configured Excel execution.
 
 For example, resolved password values display as:
 

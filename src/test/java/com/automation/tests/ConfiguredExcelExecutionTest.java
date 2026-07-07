@@ -1,6 +1,5 @@
 package com.automation.tests;
 
-import com.automation.config.ConfigReader;
 import com.automation.config.ExcelExecutionConfig;
 import com.automation.drivers.DriverFactory;
 import com.automation.engine.KeywordEngine;
@@ -32,7 +31,6 @@ public class ConfiguredExcelExecutionTest {
 
     @Test
     public void runConfiguredExcelWorkbook() {
-        ConfigReader.loadConfig();
         Properties excelProperties = loadExcelConfigProperties();
         requireConfiguredValue(
                 excelProperties,
@@ -53,12 +51,12 @@ public class ConfiguredExcelExecutionTest {
 
         WebDriver driver = null;
         try (ExcelReader excelReader = new ExcelReader(executionConfig.getScenarioFilePath().toString())) {
-            driver = DriverFactory.initializeDriver();
-            configureDriver(driver);
+            driver = DriverFactory.initializeDriver(executionConfig);
+            configureDriver(driver, executionConfig);
 
             DataReader dataReader = new DataReader(excelReader);
             ObjectRepositoryReader objectRepositoryReader = new ObjectRepositoryReader(excelReader, dataReader);
-            ExcelReportConfig reportConfig = ExcelReportConfig.fromConfig();
+            ExcelReportConfig reportConfig = ExcelReportConfig.fromExcelExecutionConfig(executionConfig);
             KeywordEngine keywordEngine = new KeywordEngine(
                     dataReader,
                     objectRepositoryReader,
@@ -145,8 +143,8 @@ public class ConfiguredExcelExecutionTest {
         }
     }
 
-    private static void configureDriver(WebDriver driver) {
-        int timeout = ConfigReader.getIntProperty("timeout", 10);
+    private static void configureDriver(WebDriver driver, ExcelExecutionConfig executionConfig) {
+        int timeout = executionConfig.getTimeoutSeconds();
         driver.manage().timeouts().pageLoadTimeout(Duration.ofSeconds(timeout));
         driver.manage().timeouts().scriptTimeout(Duration.ofSeconds(timeout));
         driver.manage().timeouts().implicitlyWait(Duration.ZERO);

@@ -1,6 +1,7 @@
 package com.automation.drivers;
 
 import com.automation.config.ConfigReader;
+import com.automation.config.ExcelExecutionConfig;
 import io.github.bonigarcia.wdm.WebDriverManager;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -26,16 +27,41 @@ public final class DriverFactory {
     }
 
     public static WebDriver initializeDriver() {
+        return initializeDriver(
+                ConfigReader.getProperty("browser", "chrome"),
+                ConfigReader.getBooleanProperty("headless", false),
+                ConfigReader.getBooleanProperty("remote", false),
+                ConfigReader.getProperty("gridUrl", "http://localhost:4444/wd/hub")
+        );
+    }
+
+    public static WebDriver initializeDriver(ExcelExecutionConfig executionConfig) {
+        ExcelExecutionConfig config = executionConfig == null ? ExcelExecutionConfig.load() : executionConfig;
+        return initializeDriver(
+                config.getBrowser(),
+                config.isHeadless(),
+                config.isRemote(),
+                config.getGridUrl()
+        );
+    }
+
+    private static WebDriver initializeDriver(
+            String configuredBrowser,
+            boolean configuredHeadless,
+            boolean remote,
+            String gridUrl
+    ) {
         if (DRIVER.get() != null) {
             return DRIVER.get();
         }
 
-        String configuredBrowser = ConfigReader.getProperty("browser", "chrome").toLowerCase();
-        boolean headless = ConfigReader.getBooleanProperty("headless", false) || configuredBrowser.contains("headless");
-        String browser = normalizeBrowserName(configuredBrowser);
-        boolean remote = ConfigReader.getBooleanProperty("remote", false);
+        String cleanBrowser = configuredBrowser == null || configuredBrowser.isBlank()
+                ? "chrome"
+                : configuredBrowser.trim().toLowerCase();
+        boolean headless = configuredHeadless || cleanBrowser.contains("headless");
+        String browser = normalizeBrowserName(cleanBrowser);
 
-        WebDriver webDriver = remote ? createRemoteDriver(browser, headless) : createLocalDriver(browser, headless);
+        WebDriver webDriver = remote ? createRemoteDriver(browser, headless, gridUrl) : createLocalDriver(browser, headless);
         DRIVER.set(webDriver);
         LOGGER.info("Browser launched. browser={}, headless={}, remote={}", browser, headless, remote);
         return webDriver;
@@ -80,8 +106,10 @@ public final class DriverFactory {
         };
     }
 
-    private static WebDriver createRemoteDriver(String browser, boolean headless) {
-        String gridUrl = ConfigReader.getProperty("gridUrl", "http://localhost:4444/wd/hub");
+    private static WebDriver createRemoteDriver(String browser, boolean headless, String gridUrl) {
+        String remoteUrl = gridUrl == null || gridUrl.isBlank()
+                ? "http://localhost:4444/wd/hub"
+                : gridUrl.trim();
         MutableCapabilities capabilities = switch (browser) {
             case "firefox" -> buildFirefoxOptions(headless);
             case "edge" -> buildEdgeOptions(headless);
@@ -90,10 +118,10 @@ public final class DriverFactory {
         };
 
         try {
-            LOGGER.info("Creating RemoteWebDriver session at {}", gridUrl);
-            return new RemoteWebDriver(new URL(gridUrl), capabilities);
+            LOGGER.info("Creating RemoteWebDriver session at {}", remoteUrl);
+            return new RemoteWebDriver(new URL(remoteUrl), capabilities);
         } catch (MalformedURLException exception) {
-            throw new IllegalArgumentException("Invalid Selenium Grid URL: " + gridUrl, exception);
+            throw new IllegalArgumentException("Invalid Selenium Grid URL: " + remoteUrl, exception);
         }
     }
 
