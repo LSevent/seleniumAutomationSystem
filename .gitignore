@@ -1,5 +1,6 @@
 target/
 test-output/
+.tools/
 *.log
 .idea/
 .vscode/

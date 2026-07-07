@@ -28,6 +28,24 @@ The important idea: Excel describes what should happen, and Java owns how it hap
 - Jackson Databind
 - Apache Commons IO
 
+## Optional Local Toolchain Setup
+
+The repo includes `setup-env.ps1` as a small convenience script for local Windows development. It expects a local `.tools` folder beside the project files:
+
+```text
+.tools
+|-- jdk-17.0.19+10
+`-- apache-maven-3.9.11
+```
+
+`.tools/` is ignored by Git because those binaries are machine-local. If the tools are present, run:
+
+```powershell
+.\setup-env.ps1
+```
+
+The script sets `JAVA_HOME`, `MAVEN_HOME`, and the current PowerShell `Path` for that session. This is optional; a normal system Java 17 + Maven installation works too.
+
 ## Project Structure
 
 ```text
