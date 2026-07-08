@@ -95,7 +95,7 @@ src
 5. Step rows inherit `Run` and `Application` from the latest parent testcase row unless the step overrides them.
 6. `DataReader` resolves step `Value` cells that use `SHEET_NAME.COLUMN_NAME` or formula-header references such as `=LOGIN_DATA!$B$1`.
 7. `ObjectRepositoryReader` resolves step `Object` names into XPath values for the current application.
-8. `KeywordEngine` executes the step. The special `screenshot` keyword is handled by the engine for reporting evidence.
+8. `KeywordEngine` executes the step. Special screenshot/evidence keywords such as `screenshot` and `screenshotPartByObject` are handled by the engine for reporting evidence.
 9. `KeywordResolver` looks for the keyword in application-specific `SpecificFunction` first, then `BaseFunction`.
 10. `ScenarioRunner` collects step results and sends them to `ExcelExecutionReporter`.
 
@@ -355,6 +355,7 @@ The `screenshot` keyword is special. It is handled by `KeywordEngine`, not by `B
 | Keyword | Object required | Value required | Purpose |
 | --- | --- | --- | --- |
 | `screenshot` | No | Optional | Captures a manual screenshot when `report.manualScreenshotEnabled=true`. `Value` is used as the screenshot label when provided. |
+| `screenshotPartByObject` | Yes | Optional | Captures the resolved object in one or more screenshot parts when the element is taller than the viewport. `Value` is used as the evidence label when provided; otherwise the object name is used. |
 
 Conditional flow directives are handled by `ScenarioRunner`, not by `BaseFunction` or `SpecificFunction`.
 

@@ -238,11 +238,32 @@ public class ExcelExecutionReporter {
         }
 
         String evidence = safe(result.getEvidence());
-        if (evidence.toLowerCase(Locale.ROOT).endsWith(".png")) {
-            attachScreenshot(result, evidence, screenshotLabel(result));
-            return screenshotLink(evidence, screenshotLabel(result));
+        List<String> screenshotPaths = screenshotEvidencePaths(evidence);
+        if (!screenshotPaths.isEmpty()) {
+            List<String> links = new ArrayList<>();
+            for (int index = 0; index < screenshotPaths.size(); index++) {
+                String label = screenshotLabel(result, screenshotPaths.size(), index + 1);
+                String screenshotPath = screenshotPaths.get(index);
+                attachScreenshot(result, screenshotPath, label);
+                links.add(screenshotLink(screenshotPath, label));
+            }
+            return String.join("<br>", links);
         }
         return evidence;
+    }
+
+    private List<String> screenshotEvidencePaths(String evidence) {
+        List<String> lines = safe(evidence)
+                .lines()
+                .map(String::trim)
+                .filter(line -> !line.isBlank())
+                .toList();
+        if (lines.isEmpty()) {
+            return List.of();
+        }
+        boolean allScreenshots = lines.stream()
+                .allMatch(line -> line.toLowerCase(Locale.ROOT).endsWith(".png"));
+        return allScreenshots ? lines : List.of();
     }
 
     private String captureFailureScreenshot(ExecutionResult result) {
@@ -483,13 +504,26 @@ public class ExcelExecutionReporter {
     }
 
     private String screenshotLabel(ExecutionResult result) {
+        return screenshotLabel(result, 1, 1);
+    }
+
+    private String screenshotLabel(ExecutionResult result, int totalParts, int partNumber) {
+        String suffix = totalParts > 1 ? " part " + partNumber : "";
         if ("screenshot".equalsIgnoreCase(safe(result.getKeywordName()).trim())) {
             String label = safe(result.getResolvedValue());
-            return label.isBlank() ? "Manual screenshot" : "Manual screenshot: " + label;
+            return (label.isBlank() ? "Manual screenshot" : "Manual screenshot: " + label) + suffix;
         }
-        return safe(result.getResolvedValue()).isBlank()
+        if ("screenshotPartByObject".equalsIgnoreCase(safe(result.getKeywordName()).trim())) {
+            String label = safe(result.getResolvedValue());
+            if (label.isBlank()) {
+                label = safe(result.getObjectName());
+            }
+            return (label.isBlank() ? "Object screenshot" : "Object screenshot: " + label) + suffix;
+        }
+        String label = safe(result.getResolvedValue()).isBlank()
                 ? "Screenshot"
                 : result.getResolvedValue();
+        return label + suffix;
     }
 
     private String screenshotBaseName(ExecutionResult result, String label) {

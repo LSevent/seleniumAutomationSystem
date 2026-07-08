@@ -14,7 +14,11 @@ import com.automation.services.ScreenshotService;
 import com.automation.utils.WaitUtil;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
+
+import java.util.List;
 
 public class KeywordEngine {
 
@@ -110,6 +114,8 @@ public class KeywordEngine {
                 );
             } else if (isScreenshotKeyword(step.getKeyword())) {
                 result = executeManualScreenshot(step);
+            } else if (isScreenshotPartByObjectKeyword(step.getKeyword())) {
+                result = executeScreenshotPartByObject(step);
             } else {
                 result = executeResolvedKeyword(step);
             }
@@ -184,6 +190,53 @@ public class KeywordEngine {
         } catch (RuntimeException exception) {
             String message = failureMessage(
                     "Failed to capture manual screenshot for step row " + step.getExcelRow() + ".",
+                    step,
+                    exception
+            );
+            return ExecutionResult.failure(step, executedBy, "REPORT", message);
+        }
+    }
+
+    private ExecutionResult executeScreenshotPartByObject(ResolvedStepContext step) {
+        String executedBy = isBlank(step.getExecutedBy())
+                ? KeywordEngine.class.getName()
+                : step.getExecutedBy();
+        if (!reportConfig.isManualScreenshotEnabled()) {
+            return ExecutionResult.skipped(
+                    step,
+                    executedBy,
+                    "REPORT",
+                    MANUAL_SCREENSHOT_DISABLED_MESSAGE,
+                    MANUAL_SCREENSHOT_DISABLED_MESSAGE
+            );
+        }
+
+        try {
+            WebElement element = WaitUtil.waitForVisible(driver, By.xpath(safe(step.getResolvedXPath())));
+            String label = isBlank(step.getResolvedValue())
+                    ? safe(step.getObjectName())
+                    : step.getResolvedValue();
+            if (isBlank(label)) {
+                label = "ObjectScreenshot";
+            }
+            List<String> screenshotPaths = screenshotService.captureElementInParts(
+                    driver,
+                    element,
+                    screenshotBaseName(step, label)
+            );
+            String evidence = screenshotPaths.isEmpty()
+                    ? "Screenshot not available: driver does not support object screenshots."
+                    : String.join(System.lineSeparator(), screenshotPaths);
+            return ExecutionResult.success(
+                    step,
+                    executedBy,
+                    "REPORT",
+                    evidence,
+                    "Object screenshot captured in " + screenshotPaths.size() + " part(s)."
+            );
+        } catch (RuntimeException exception) {
+            String message = failureMessage(
+                    "Failed to capture object screenshot for step row " + step.getExcelRow() + ".",
                     step,
                     exception
             );
@@ -295,6 +348,10 @@ public class KeywordEngine {
 
     private boolean isScreenshotKeyword(String keywordName) {
         return keywordName != null && "screenshot".equalsIgnoreCase(keywordName.trim());
+    }
+
+    private boolean isScreenshotPartByObjectKeyword(String keywordName) {
+        return keywordName != null && "screenshotPartByObject".equalsIgnoreCase(keywordName.trim());
     }
 
     private String screenshotBaseName(ResolvedStepContext step, String label) {

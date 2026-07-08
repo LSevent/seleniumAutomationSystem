@@ -12,6 +12,8 @@ import com.automation.excel.ScenarioReader;
 import com.automation.excel.StepReader;
 import com.automation.models.ExecutionResult;
 import com.automation.models.ResolvedStepContext;
+import com.automation.models.Scenario;
+import com.automation.models.TestCaseBlock;
 import com.automation.reports.ExcelExecutionReporter;
 import com.automation.reports.ExcelReportConfig;
 import com.automation.tests.support.ExcelKeywordTestWorkbookFactory;
@@ -298,6 +300,74 @@ public class ExcelExecutionReportTest {
         Assert.assertTrue(reportHtml.contains("Ended data row loop. BOOKING_DATA row 2 of 2."));
         Assert.assertTrue(reportHtml.contains("A previous conditional branch already matched. Skipping else branch."));
         Assert.assertTrue(reportHtml.contains("Skipped because the active conditional branch does not include this step."));
+    }
+
+    @Test(priority = 6)
+    public void objectScreenshotPartsShouldRenderAsSeparateEvidenceItems() throws IOException {
+        executionConfig = executionConfig(workbookPath);
+        Files.createDirectories(executionConfig.getScreenshotOutputDirectory());
+        Path partOne = executionConfig.getScreenshotOutputDirectory().resolve("object-part-1.png");
+        Path partTwo = executionConfig.getScreenshotOutputDirectory().resolve("object-part-2.png");
+        Files.write(partOne, new byte[]{1});
+        Files.write(partTwo, new byte[]{2});
+
+        FakeWebDriver fakeDriver = localPageDriver();
+        ExcelExecutionReporter reporter = new ExcelExecutionReporter(
+                fakeDriver.driver(),
+                new ExcelReportConfig(false, true, true),
+                executionConfig
+        );
+        Scenario scenario = new Scenario("1", true, "Evidence Flow", "Evidence scenario", 1);
+        TestCaseBlock testCaseBlock = new TestCaseBlock(
+                "1",
+                "Evidence scenario",
+                "Evidence Flow",
+                "Object screenshot testcase",
+                true,
+                "BRS",
+                "Object screenshot regression",
+                2
+        );
+        ResolvedStepContext step = ResolvedStepContext.builder()
+                .scenarioNo("1")
+                .scenarioAction("Evidence Flow")
+                .scenarioName("Evidence scenario")
+                .sheetName("Evidence Flow")
+                .testcaseName("Object screenshot testcase")
+                .testcaseParentRow(2)
+                .excelRow(5)
+                .stepNumber(1)
+                .keyword("screenshotPartByObject")
+                .objectName("pnlBooking")
+                .application("BRS")
+                .description("Capture booking panel")
+                .rawValue("Booking panel")
+                .resolvedValue("Booking panel")
+                .rawXPath("//section[@id='booking']")
+                .resolvedXPath("//section[@id='booking']")
+                .executedBy(KeywordEngine.class.getName())
+                .build();
+        ExecutionResult result = ExecutionResult.success(
+                step,
+                KeywordEngine.class.getName(),
+                "REPORT",
+                partOne + System.lineSeparator() + partTwo,
+                "Object screenshot captured in 2 part(s)."
+        );
+
+        reporter.startScenario(scenario);
+        reporter.startTestCase(testCaseBlock);
+        reporter.logStep(result);
+        reporter.finishTestCase(testCaseBlock, true, "Testcase passed.");
+        reporter.finishScenario(scenario, true, "Scenario passed.");
+        reporter.flush();
+
+        String reportHtml = Files.readString(Path.of(ExcelExecutionReporter.getReportFilePath()));
+        Assert.assertTrue(reportHtml.contains("Evidence Gallery"));
+        Assert.assertTrue(reportHtml.contains("Object screenshot: Booking panel part 1"));
+        Assert.assertTrue(reportHtml.contains("Object screenshot: Booking panel part 2"));
+        Assert.assertTrue(reportHtml.contains("Screenshots/object-part-1.png"));
+        Assert.assertTrue(reportHtml.contains("Screenshots/object-part-2.png"));
     }
 
     private ScenarioRunner scenarioRunner(ExcelReader excelReader, FakeWebDriver fakeDriver, ExcelReportConfig reportConfig) {

@@ -22,6 +22,7 @@ import org.apache.logging.log4j.core.appender.AbstractAppender;
 import org.apache.logging.log4j.core.config.Property;
 import org.apache.logging.log4j.core.layout.PatternLayout;
 import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
@@ -195,6 +196,34 @@ public class KeywordEngineResolvedContextTest {
         Assert.assertTrue(StepContextHolder.current().isEmpty());
     }
 
+    @Test
+    public void screenshotPartByObjectShouldUseResolvedObjectAndProduceMultipleEvidencePaths() {
+        FakeWebDriver driver = new FakeWebDriver();
+        driver.addElement("//input[@id='resolvedUsername']", "Long object");
+        ObservingResolver resolver = new ObservingResolver(driver, true);
+        RecordingScreenshotService screenshotService = new RecordingScreenshotService();
+        ResolvedStepContext step = step(
+                "screenshotPartByObject",
+                "pnlLongContent",
+                "Long content evidence",
+                "Booking form",
+                ""
+        );
+
+        ExecutionResult result = engine(resolver, screenshotService).execute(step);
+
+        Assert.assertTrue(result.isSuccess(), result.getMessage());
+        Assert.assertNull(resolver.observedContext, "screenshotPartByObject should remain KeywordEngine special handling.");
+        Assert.assertSame(screenshotService.observedContext, step);
+        Assert.assertTrue(screenshotService.observedScreenshotName.contains("Booking form"));
+        Assert.assertEquals(result.getExecutionSource(), "REPORT");
+        Assert.assertEquals(result.getStatus(), ExecutionResult.STATUS_PASS);
+        Assert.assertTrue(result.getEvidence().contains("target/screenshots/object-part-1.png"));
+        Assert.assertTrue(result.getEvidence().contains("target/screenshots/object-part-2.png"));
+        Assert.assertTrue(result.getEvidence().contains(System.lineSeparator()));
+        Assert.assertTrue(StepContextHolder.current().isEmpty());
+    }
+
     private KeywordEngine engine(KeywordResolver resolver) {
         return engine(resolver, null);
     }
@@ -275,6 +304,7 @@ public class KeywordEngineResolvedContextTest {
     private static class RecordingScreenshotService extends ScreenshotService {
 
         private ResolvedStepContext observedContext;
+        private String observedScreenshotName;
 
         private RecordingScreenshotService() {
             super(Path.of("target", "screenshots"));
@@ -284,6 +314,16 @@ public class KeywordEngineResolvedContextTest {
         public String capture(WebDriver driver, String screenshotName) {
             observedContext = StepContextHolder.get();
             return "target/screenshots/resolved-context.png";
+        }
+
+        @Override
+        public List<String> captureElementInParts(WebDriver driver, WebElement element, String screenshotName) {
+            observedContext = StepContextHolder.get();
+            observedScreenshotName = screenshotName;
+            return List.of(
+                    "target/screenshots/object-part-1.png",
+                    "target/screenshots/object-part-2.png"
+            );
         }
     }
 

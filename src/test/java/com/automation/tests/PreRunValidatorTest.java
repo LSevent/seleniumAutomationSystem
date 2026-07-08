@@ -27,7 +27,8 @@ public class PreRunValidatorTest {
                 step("endIf", "", "", "", "", "", "BRS"),
                 step("forEachDataRow", "", "BOOKING_DATA", "BOOKING_DATA row 1 of 2", "", "", "BRS"),
                 step("endForEachDataRow", "", "", "BOOKING_DATA row 1 of 2", "", "", "BRS"),
-                step("screenshot", "", "", "", "", "", "BRS")
+                step("screenshot", "", "", "", "", "", "BRS"),
+                step("screenshotPartByObject", "pnlBooking", "Booking panel", "Booking panel", "//section[@id='booking']", "//section[@id='booking']", "BRS")
         ));
     }
 
@@ -45,6 +46,7 @@ public class PreRunValidatorTest {
                 "pressEnter",
                 "isDisplayed",
                 "isNotDisplayed",
+                "screenshotPartByObject",
                 "input",
                 "verifyText",
                 "verifyTextContains",
@@ -152,6 +154,35 @@ public class PreRunValidatorTest {
     @Test
     public void screenshotWithoutObjectShouldPass() {
         validator.validate(plan(step("screenshot", "", "", "", "", "", "BRS")));
+    }
+
+    @Test
+    public void screenshotPartByObjectShouldRequireObjectAndXPath() {
+        FrameworkException missingObject = validationFailure(step("screenshotPartByObject", "", "", "", "", "", "BRS"));
+        assertContainsContext(
+                missingObject,
+                "Object is required for keyword 'screenshotPartByObject'.",
+                "screenshotPartByObject",
+                "",
+                "BRS"
+        );
+
+        FrameworkException missingXPath = validationFailure(step(
+                "screenshotPartByObject",
+                "pnlBooking",
+                "",
+                "",
+                "",
+                "",
+                "BRS"
+        ));
+        assertContainsContext(
+                missingXPath,
+                "XPath is required for keyword 'screenshotPartByObject'.",
+                "screenshotPartByObject",
+                "pnlBooking",
+                "BRS"
+        );
     }
 
     @Test
