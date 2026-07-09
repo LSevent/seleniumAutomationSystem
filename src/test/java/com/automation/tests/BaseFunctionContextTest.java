@@ -1,19 +1,30 @@
 package com.automation.tests;
 
 import com.automation.base.BaseFunction;
+import com.automation.context.EvidenceContextHolder;
+import com.automation.context.ScreenshotContextHolder;
 import com.automation.context.StepContextHolder;
 import com.automation.exceptions.FrameworkException;
 import com.automation.models.ResolvedStepContext;
+import com.automation.reports.ExcelReportConfig;
+import com.automation.services.ScreenshotService;
 import com.automation.tests.support.FakeWebDriver;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
+
+import java.nio.file.Path;
+import java.util.List;
 
 @Test(singleThreaded = true)
 public class BaseFunctionContextTest {
 
     @AfterMethod(alwaysRun = true)
     public void clearContext() {
+        ScreenshotContextHolder.clear();
+        EvidenceContextHolder.clear();
         StepContextHolder.clear();
     }
 
@@ -89,6 +100,53 @@ public class BaseFunctionContextTest {
         ));
 
         new BaseFunction(driver.driver()).verifyText();
+    }
+
+    @Test
+    public void screenshotShouldUseDescriptionLabelAndRegisterEvidence() {
+        FakeWebDriver driver = driver();
+        RecordingScreenshotService screenshotService = new RecordingScreenshotService();
+        StepContextHolder.set(step(
+                "screenshot",
+                "",
+                "Value should not label screenshot",
+                "Value should not label screenshot",
+                "",
+                ""
+        ));
+        EvidenceContextHolder.start();
+        ScreenshotContextHolder.set(screenshotService, new ExcelReportConfig(false, true, true));
+
+        new BaseFunction(driver.driver()).screenshot();
+
+        Assert.assertEquals(EvidenceContextHolder.getAll(), List.of("target/screenshots/manual.png"));
+        Assert.assertTrue(screenshotService.observedScreenshotName.contains("BaseFunction context test"));
+        Assert.assertFalse(screenshotService.observedScreenshotName.contains("Value should not label screenshot"));
+    }
+
+    @Test
+    public void screenshotPartByObjectShouldUseDescriptionLabelAndRegisterMultipleEvidenceItems() {
+        FakeWebDriver driver = driver();
+        RecordingScreenshotService screenshotService = new RecordingScreenshotService();
+        StepContextHolder.set(step(
+                "screenshotPartByObject",
+                "pnlBooking",
+                "Value should not label object screenshot",
+                "Value should not label object screenshot",
+                "//div[@id='raw-message']",
+                "//div[@id='resolved-message']"
+        ));
+        EvidenceContextHolder.start();
+        ScreenshotContextHolder.set(screenshotService, new ExcelReportConfig(false, true, true));
+
+        new BaseFunction(driver.driver()).screenshotPartByObject();
+
+        Assert.assertEquals(
+                EvidenceContextHolder.getAll(),
+                List.of("target/screenshots/object-part-1.png", "target/screenshots/object-part-2.png")
+        );
+        Assert.assertTrue(screenshotService.observedScreenshotName.contains("BaseFunction context test"));
+        Assert.assertFalse(screenshotService.observedScreenshotName.contains("Value should not label object screenshot"));
     }
 
     @Test
@@ -192,6 +250,27 @@ public class BaseFunctionContextTest {
 
         private String stepApplication() {
             return application();
+        }
+    }
+
+    private static final class RecordingScreenshotService extends ScreenshotService {
+
+        private String observedScreenshotName;
+
+        private RecordingScreenshotService() {
+            super(Path.of("target", "screenshots"));
+        }
+
+        @Override
+        public String capture(WebDriver driver, String screenshotName) {
+            observedScreenshotName = screenshotName;
+            return "target/screenshots/manual.png";
+        }
+
+        @Override
+        public List<String> captureElementInParts(WebDriver driver, WebElement element, String screenshotName) {
+            observedScreenshotName = screenshotName;
+            return List.of("target/screenshots/object-part-1.png", "target/screenshots/object-part-2.png");
         }
     }
 

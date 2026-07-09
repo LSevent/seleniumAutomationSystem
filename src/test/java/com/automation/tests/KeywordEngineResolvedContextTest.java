@@ -222,6 +222,8 @@ public class KeywordEngineResolvedContextTest {
         Assert.assertTrue(result.isSuccess(), result.getMessage());
         Assert.assertNull(resolver.observedContext, "Screenshot should remain KeywordEngine special handling.");
         Assert.assertSame(screenshotService.observedContext, step);
+        Assert.assertTrue(screenshotService.observedScreenshotName.contains("Execute an already-resolved step"));
+        Assert.assertFalse(screenshotService.observedScreenshotName.contains("Login complete"));
         Assert.assertEquals(result.getExecutionSource(), "REPORT");
         Assert.assertEquals(result.getStatus(), ExecutionResult.STATUS_PASS);
         Assert.assertEquals(result.getEvidence(), "target/screenshots/resolved-context.png");
@@ -247,7 +249,8 @@ public class KeywordEngineResolvedContextTest {
         Assert.assertTrue(result.isSuccess(), result.getMessage());
         Assert.assertNull(resolver.observedContext, "screenshotPartByObject should remain KeywordEngine special handling.");
         Assert.assertSame(screenshotService.observedContext, step);
-        Assert.assertTrue(screenshotService.observedScreenshotName.contains("Booking form"));
+        Assert.assertTrue(screenshotService.observedScreenshotName.contains("Execute an already-resolved step"));
+        Assert.assertFalse(screenshotService.observedScreenshotName.contains("Booking form"));
         Assert.assertEquals(result.getExecutionSource(), "REPORT");
         Assert.assertEquals(result.getStatus(), ExecutionResult.STATUS_PASS);
         Assert.assertTrue(result.getEvidence().contains("target/screenshots/object-part-1.png"));
@@ -352,6 +355,7 @@ public class KeywordEngineResolvedContextTest {
         @Override
         public String capture(WebDriver driver, String screenshotName) {
             observedContext = StepContextHolder.get();
+            observedScreenshotName = screenshotName;
             return "target/screenshots/resolved-context.png";
         }
 

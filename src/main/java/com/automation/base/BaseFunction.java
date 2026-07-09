@@ -107,6 +107,14 @@ public class BaseFunction extends KeywordSupport {
         visibleElement("pressEnter").sendKeys(Keys.ENTER);
     }
 
+    public void screenshot() {
+        captureScreenshot(screenshotLabel("ManualScreenshot"));
+    }
+
+    public void screenshotPartByObject() {
+        captureElementInParts(objectScreenshotLabel());
+    }
+
     public boolean isDisplayed() {
         try {
             return visibleElement("isDisplayed").isDisplayed();

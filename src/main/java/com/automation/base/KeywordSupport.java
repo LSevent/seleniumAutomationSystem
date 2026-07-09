@@ -1,5 +1,7 @@
 package com.automation.base;
 
+import com.automation.context.EvidenceContextHolder;
+import com.automation.context.ScreenshotContextHolder;
 import com.automation.context.StepContextHolder;
 import com.automation.exceptions.ErrorContext;
 import com.automation.models.ResolvedStepContext;
@@ -10,6 +12,8 @@ import org.openqa.selenium.StaleElementReferenceException;
 import org.openqa.selenium.TimeoutException;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
+
+import java.util.List;
 
 public abstract class KeywordSupport {
 
@@ -74,6 +78,61 @@ public abstract class KeywordSupport {
         return currentStep().application();
     }
 
+    protected String captureScreenshot(String label) {
+        if (!ScreenshotContextHolder.isManualScreenshotEnabled()) {
+            return "";
+        }
+
+        String screenshotPath = ScreenshotContextHolder.service().capture(
+                driver,
+                screenshotBaseName(currentStep(), fallbackLabel(label, "ManualScreenshot"))
+        );
+        registerEvidence(screenshotPath);
+        return screenshotPath == null ? "" : screenshotPath;
+    }
+
+    protected List<String> captureElementInParts(String label) {
+        return captureElementInParts(
+                visibleElement("screenshotPartByObject"),
+                fallbackLabel(label, fallbackLabel(objectName(), "ObjectScreenshot"))
+        );
+    }
+
+    protected List<String> captureElementInParts(WebElement element, String label) {
+        if (!ScreenshotContextHolder.isManualScreenshotEnabled()) {
+            return List.of();
+        }
+
+        List<String> screenshotPaths = ScreenshotContextHolder.service().captureElementInParts(
+                driver,
+                element,
+                screenshotBaseName(currentStep(), fallbackLabel(label, "ObjectScreenshot"))
+        );
+        registerEvidence(screenshotPaths);
+        return screenshotPaths;
+    }
+
+    protected String screenshotLabel(String defaultLabel) {
+        return fallbackLabel(currentStep().getDescription(), defaultLabel);
+    }
+
+    protected String objectScreenshotLabel() {
+        return fallbackLabel(currentStep().getDescription(), fallbackLabel(objectName(), "ObjectScreenshot"));
+    }
+
+    protected void registerEvidence(String evidencePath) {
+        if (evidencePath != null && !evidencePath.isBlank()) {
+            EvidenceContextHolder.add(evidencePath);
+        }
+    }
+
+    protected void registerEvidence(List<String> evidencePaths) {
+        if (evidencePaths == null) {
+            return;
+        }
+        evidencePaths.forEach(this::registerEvidence);
+    }
+
     protected String withStepContext(String message, ResolvedStepContext step) {
         String context = stepContext(step);
         return context.isBlank() ? message : message + System.lineSeparator() + context;
@@ -85,6 +144,21 @@ public abstract class KeywordSupport {
 
     protected void failWithCurrentStepContext(String message) {
         throw new AssertionError(withCurrentStepContext(message));
+    }
+
+    private String screenshotBaseName(ResolvedStepContext step, String label) {
+        return String.join(
+                "_",
+                safe(step.getScenarioNo()),
+                safe(step.getTestcaseName()),
+                "step" + step.getStepNumber(),
+                "row" + step.getExcelRow(),
+                safe(label)
+        );
+    }
+
+    private String fallbackLabel(String preferredLabel, String fallbackLabel) {
+        return preferredLabel == null || preferredLabel.isBlank() ? safe(fallbackLabel) : preferredLabel.trim();
     }
 
     private String stepContext(ResolvedStepContext step) {
@@ -101,5 +175,9 @@ public abstract class KeywordSupport {
                 .object(step.getObjectName())
                 .application(step.getApplication())
                 .render();
+    }
+
+    private String safe(String value) {
+        return value == null ? "" : value.trim();
     }
 }

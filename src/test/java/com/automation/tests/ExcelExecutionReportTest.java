@@ -125,9 +125,9 @@ public class ExcelExecutionReportTest {
             Assert.assertTrue(reportHtml.contains("Manual screenshot"));
             Assert.assertTrue(reportHtml.contains("Evidence Gallery"));
             Assert.assertTrue(reportHtml.contains("Screenshots/"));
-            Assert.assertTrue(reportHtml.contains("After input title"));
-            Assert.assertTrue(reportHtml.contains("After select room"));
-            Assert.assertTrue(reportHtml.contains("After submit"));
+            Assert.assertTrue(reportHtml.contains("Capture form after title"));
+            Assert.assertTrue(reportHtml.contains("Capture selected room"));
+            Assert.assertTrue(reportHtml.contains("Capture submit result"));
             Assert.assertTrue(countOccurrences(reportHtml, "Manual screenshot:") >= 3);
             Assert.assertFalse(reportHtml.contains("RUNNING"), "Report should only render final scenario/testcase metadata.");
             Assert.assertFalse(reportHtml.contains("Step 1 passed:"), "Passed steps should be represented by the step table.");
@@ -364,8 +364,8 @@ public class ExcelExecutionReportTest {
 
         String reportHtml = Files.readString(Path.of(ExcelExecutionReporter.getReportFilePath()));
         Assert.assertTrue(reportHtml.contains("Evidence Gallery"));
-        Assert.assertTrue(reportHtml.contains("Object screenshot: Booking panel part 1"));
-        Assert.assertTrue(reportHtml.contains("Object screenshot: Booking panel part 2"));
+        Assert.assertTrue(reportHtml.contains("Object screenshot: Capture booking panel part 1"));
+        Assert.assertTrue(reportHtml.contains("Object screenshot: Capture booking panel part 2"));
         Assert.assertTrue(reportHtml.contains("Screenshots/object-part-1.png"));
         Assert.assertTrue(reportHtml.contains("Screenshots/object-part-2.png"));
     }

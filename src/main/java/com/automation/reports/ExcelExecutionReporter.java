@@ -510,19 +510,19 @@ public class ExcelExecutionReporter {
     private String screenshotLabel(ExecutionResult result, int totalParts, int partNumber) {
         String suffix = totalParts > 1 ? " part " + partNumber : "";
         if ("screenshot".equalsIgnoreCase(safe(result.getKeywordName()).trim())) {
-            String label = safe(result.getResolvedValue());
+            String label = safe(result.getDescription());
             return (label.isBlank() ? "Manual screenshot" : "Manual screenshot: " + label) + suffix;
         }
         if ("screenshotPartByObject".equalsIgnoreCase(safe(result.getKeywordName()).trim())) {
-            String label = safe(result.getResolvedValue());
+            String label = safe(result.getDescription());
             if (label.isBlank()) {
                 label = safe(result.getObjectName());
             }
             return (label.isBlank() ? "Object screenshot" : "Object screenshot: " + label) + suffix;
         }
-        String label = safe(result.getResolvedValue()).isBlank()
+        String label = safe(result.getDescription()).isBlank()
                 ? "Screenshot"
-                : result.getResolvedValue();
+                : result.getDescription();
         return label + suffix;
     }
 

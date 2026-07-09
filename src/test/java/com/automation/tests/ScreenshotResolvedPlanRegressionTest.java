@@ -67,9 +67,9 @@ public class ScreenshotResolvedPlanRegressionTest {
         String reportHtml = Files.readString(executionConfig.getReportFilePath());
         Assert.assertTrue(reportHtml.contains("Evidence Gallery"));
         Assert.assertTrue(reportHtml.contains("Manual screenshot"));
-        Assert.assertTrue(reportHtml.contains("After input title"));
-        Assert.assertTrue(reportHtml.contains("After select room"));
-        Assert.assertTrue(reportHtml.contains("After submit"));
+        Assert.assertTrue(reportHtml.contains("Capture form after title"));
+        Assert.assertTrue(reportHtml.contains("Capture selected room"));
+        Assert.assertTrue(reportHtml.contains("Capture submit result"));
     }
 
     @Test

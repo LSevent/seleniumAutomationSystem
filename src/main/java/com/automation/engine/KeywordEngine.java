@@ -1,6 +1,7 @@
 package com.automation.engine;
 
 import com.automation.context.EvidenceContextHolder;
+import com.automation.context.ScreenshotContextHolder;
 import com.automation.context.StepContextHolder;
 import com.automation.excel.DataReader;
 import com.automation.excel.ObjectRepositoryReader;
@@ -30,6 +31,8 @@ public class KeywordEngine {
     private final ObjectRepositoryReader objectRepositoryReader;
     private final KeywordResolver keywordResolver;
     private final ExcelExecutionConfig executionConfig;
+    private final ExcelReportConfig reportConfig;
+    private final ScreenshotService screenshotService;
     private final ScreenshotKeywordHandler screenshotKeywordHandler;
 
     public KeywordEngine(
@@ -85,6 +88,8 @@ public class KeywordEngine {
         ScreenshotService resolvedScreenshotService = screenshotService == null
                 ? new ScreenshotService(this.executionConfig.getScreenshotOutputDirectory())
                 : screenshotService;
+        this.reportConfig = resolvedReportConfig;
+        this.screenshotService = resolvedScreenshotService;
         this.screenshotKeywordHandler = new ScreenshotKeywordHandler(
                 resolvedDriver,
                 resolvedReportConfig,
@@ -99,6 +104,7 @@ public class KeywordEngine {
 
         StepContextHolder.set(step);
         EvidenceContextHolder.start();
+        ScreenshotContextHolder.set(screenshotService, reportConfig);
         WaitUtil.setTimeoutSeconds(executionConfig.getTimeoutSeconds());
         try {
             logResolvedStepStarted(step);
@@ -125,6 +131,7 @@ public class KeywordEngine {
             return logResolvedResult(result);
         } finally {
             WaitUtil.clearTimeoutSeconds();
+            ScreenshotContextHolder.clear();
             EvidenceContextHolder.clear();
             StepContextHolder.clear();
         }

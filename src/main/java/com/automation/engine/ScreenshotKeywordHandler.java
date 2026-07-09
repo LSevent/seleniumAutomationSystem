@@ -55,7 +55,7 @@ public class ScreenshotKeywordHandler {
         }
 
         try {
-            String label = isBlank(step.getResolvedValue()) ? "ManualScreenshot" : step.getResolvedValue();
+            String label = manualScreenshotLabel(step);
             String screenshotPath = screenshotService.capture(driver, screenshotBaseName(step, label));
             String evidence = screenshotPath == null
                     ? "Screenshot not available: driver does not support screenshots."
@@ -85,12 +85,7 @@ public class ScreenshotKeywordHandler {
 
         try {
             WebElement element = WaitUtil.waitForVisible(driver, By.xpath(safe(step.getResolvedXPath())));
-            String label = isBlank(step.getResolvedValue())
-                    ? safe(step.getObjectName())
-                    : step.getResolvedValue();
-            if (isBlank(label)) {
-                label = "ObjectScreenshot";
-            }
+            String label = objectScreenshotLabel(step);
             List<String> screenshotPaths = screenshotService.captureElementInParts(
                     driver,
                     element,
@@ -140,6 +135,14 @@ public class ScreenshotKeywordHandler {
         return keywordName != null && "screenshotPartByObject".equalsIgnoreCase(keywordName.trim());
     }
 
+    private String manualScreenshotLabel(ResolvedStepContext step) {
+        return fallbackLabel(step.getDescription(), "ManualScreenshot");
+    }
+
+    private String objectScreenshotLabel(ResolvedStepContext step) {
+        return fallbackLabel(step.getDescription(), fallbackLabel(step.getObjectName(), "ObjectScreenshot"));
+    }
+
     private String screenshotBaseName(ResolvedStepContext step, String label) {
         return String.join(
                 "_",
@@ -178,5 +181,9 @@ public class ScreenshotKeywordHandler {
 
     private String safe(String value) {
         return value == null ? "" : value.trim();
+    }
+
+    private String fallbackLabel(String preferredLabel, String fallbackLabel) {
+        return isBlank(preferredLabel) ? safe(fallbackLabel) : preferredLabel.trim();
     }
 }

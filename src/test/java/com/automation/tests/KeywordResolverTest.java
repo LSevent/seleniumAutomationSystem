@@ -162,18 +162,13 @@ public class KeywordResolverTest {
     }
 
     @Test
-    public void screenshotShouldNotResolveAsNormalKeyword() {
+    public void screenshotShouldResolveAsComposableBaseKeyword() {
         KeywordResolver resolver = new KeywordResolver(testDriver().driver());
 
-        IllegalArgumentException exception = Assert.expectThrows(
-                IllegalArgumentException.class,
-                () -> resolver.resolve("BRS", "screenshot")
-        );
+        ResolvedKeyword resolvedKeyword = resolver.resolve("BRS", "screenshot");
 
-        Assert.assertEquals(
-                exception.getMessage(),
-                "Keyword 'screenshot' not found in SpecificFunction for application 'BRS' or BaseFunction."
-        );
+        Assert.assertEquals(resolvedKeyword.getSourceType(), KeywordSourceType.BASE);
+        Assert.assertEquals(resolvedKeyword.getResolvedClassName(), "com.automation.base.BaseFunction");
     }
 
     @Test

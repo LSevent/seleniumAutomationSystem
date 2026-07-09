@@ -41,11 +41,11 @@ public final class ExcelKeywordTestWorkbookFactory {
                             {"", "", "verifyDisplayed", "lblDashboard", "", "", "Verify dashboard"},
                             {"Create Booking", "Yes", "", "", "", "BRS", "Create booking test"},
                             {"", "", "input", "txtBookingTitle", "BOOKING_DATA.BOOKING_TITLE", "", "Input booking title"},
-                            {"", "", "screenshot", "", "After input title", "", "Capture form after title"},
+                            {"", "", "screenshot", "", "", "", "Capture form after title"},
                             {"", "", "click", "btnRoomByName", "BOOKING_DATA.ROOM_NAME", "", "Select room"},
-                            {"", "", "screenshot", "", "After select room", "", "Capture selected room"},
+                            {"", "", "screenshot", "", "", "", "Capture selected room"},
                             {"", "", "verifyText", "lblSuccessMessage", "BOOKING_DATA.EXPECTED_MESSAGE", "", "Verify success"},
-                            {"", "", "screenshot", "", "After submit", "", "Capture submit result"}
+                            {"", "", "screenshot", "", "", "", "Capture submit result"}
                     }
             );
             createSheet(
