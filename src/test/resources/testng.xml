@@ -46,6 +46,7 @@
             <class name="com.automation.tests.ResolvedStepContextTest"/>
             <class name="com.automation.tests.ResolvedStepContextBuilderTest"/>
             <class name="com.automation.tests.StepContextHolderTest"/>
+            <class name="com.automation.tests.EvidenceContextHolderTest"/>
             <class name="com.automation.tests.ExecutionPlanBuilderTest"/>
             <class name="com.automation.tests.PreRunValidatorTest"/>
         </classes>
