@@ -1,6 +1,7 @@
 package com.automation.tests;
 
 import com.automation.config.ExcelExecutionConfig;
+import com.automation.context.EvidenceContextHolder;
 import com.automation.context.StepContextHolder;
 import com.automation.engine.KeywordResolver;
 import com.automation.engine.KeywordEngine;
@@ -43,6 +44,7 @@ public class KeywordEngineResolvedContextTest {
 
     @AfterMethod(alwaysRun = true)
     public void cleanUp() {
+        EvidenceContextHolder.clear();
         StepContextHolder.clear();
         if (excelReader != null) {
             excelReader.close();
@@ -111,6 +113,36 @@ public class KeywordEngineResolvedContextTest {
         Assert.assertEquals(result.getEvidence(), "");
         Assert.assertEquals(result.getExcelRowNumber(), 17);
         Assert.assertEquals(result.getStepOrder(), 3);
+    }
+
+    @Test
+    public void executeShouldAttachEvidenceRegisteredByKeyword() {
+        List<String> evidencePaths = List.of(
+                "target/screenshots/custom-keyword-1.png",
+                "target/screenshots/custom-keyword-2.png"
+        );
+        ObservingResolver resolver = new ObservingResolver(new FakeWebDriver(), false, evidencePaths);
+
+        ExecutionResult result = engine(resolver).execute(step("customEvidence", "btnLogin", "", "", ""));
+
+        Assert.assertTrue(result.isSuccess(), result.getMessage());
+        Assert.assertEquals(result.getEvidence(), String.join(System.lineSeparator(), evidencePaths));
+        Assert.assertTrue(EvidenceContextHolder.getAll().isEmpty());
+        Assert.assertTrue(StepContextHolder.current().isEmpty());
+    }
+
+    @Test
+    public void executeShouldAttachEvidenceRegisteredBeforeFailureAndClearEvidenceContext() {
+        List<String> evidencePaths = List.of("target/screenshots/before-failure.png");
+        ObservingResolver resolver = new ObservingResolver(new FakeWebDriver(), true, evidencePaths);
+
+        ExecutionResult result = engine(resolver).execute(step("customEvidence", "btnLogin", "", "", ""));
+
+        Assert.assertFalse(result.isSuccess());
+        Assert.assertEquals(result.getEvidence(), "target/screenshots/before-failure.png");
+        Assert.assertTrue(result.getMessage().contains("Cause: Synthetic keyword failure."));
+        Assert.assertTrue(EvidenceContextHolder.getAll().isEmpty());
+        Assert.assertTrue(StepContextHolder.current().isEmpty());
     }
 
     @Test
@@ -273,13 +305,19 @@ public class KeywordEngineResolvedContextTest {
     private static class ObservingResolver extends KeywordResolver {
 
         private final boolean fail;
+        private final List<String> evidencePaths;
         private ResolvedStepContext observedContext;
         private String observedXPath;
         private String observedValue;
 
         private ObservingResolver(FakeWebDriver driver, boolean fail) {
+            this(driver, fail, List.of());
+        }
+
+        private ObservingResolver(FakeWebDriver driver, boolean fail, List<String> evidencePaths) {
             super(driver.driver());
             this.fail = fail;
+            this.evidencePaths = evidencePaths == null ? List.of() : List.copyOf(evidencePaths);
         }
 
         @Override
@@ -287,6 +325,7 @@ public class KeywordEngineResolvedContextTest {
             observedContext = StepContextHolder.get();
             observedXPath = observedContext.getResolvedXPath();
             observedValue = observedContext.getResolvedValue();
+            evidencePaths.forEach(EvidenceContextHolder::add);
             if (fail) {
                 throw new FrameworkException("Synthetic keyword failure.");
             }

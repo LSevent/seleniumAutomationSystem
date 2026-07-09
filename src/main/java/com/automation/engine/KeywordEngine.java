@@ -1,5 +1,6 @@
 package com.automation.engine;
 
+import com.automation.context.EvidenceContextHolder;
 import com.automation.context.StepContextHolder;
 import com.automation.excel.DataReader;
 import com.automation.excel.ObjectRepositoryReader;
@@ -15,6 +16,10 @@ import com.automation.utils.WaitUtil;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.openqa.selenium.WebDriver;
+
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
 public class KeywordEngine {
 
@@ -93,6 +98,7 @@ public class KeywordEngine {
         }
 
         StepContextHolder.set(step);
+        EvidenceContextHolder.start();
         WaitUtil.setTimeoutSeconds(executionConfig.getTimeoutSeconds());
         try {
             logResolvedStepStarted(step);
@@ -115,9 +121,11 @@ public class KeywordEngine {
             } else {
                 result = executeResolvedKeyword(step);
             }
+            result = attachCollectedEvidence(result);
             return logResolvedResult(result);
         } finally {
             WaitUtil.clearTimeoutSeconds();
+            EvidenceContextHolder.clear();
             StepContextHolder.clear();
         }
     }
@@ -153,6 +161,59 @@ public class KeywordEngine {
             }
             message += System.lineSeparator() + "Cause: " + safe(exception.getMessage());
             return ExecutionResult.failure(step, safe(step.getExecutedBy()), "KEYWORD", message);
+        }
+    }
+
+    private ExecutionResult attachCollectedEvidence(ExecutionResult result) {
+        List<String> collectedEvidence = EvidenceContextHolder.getAll();
+        if (collectedEvidence.isEmpty()) {
+            return result;
+        }
+
+        String mergedEvidence = mergeEvidence(result.getEvidence(), collectedEvidence);
+        if (mergedEvidence.equals(safe(result.getEvidence()))) {
+            return result;
+        }
+
+        return ExecutionResult.builder()
+                .scenarioNo(result.getScenarioNo())
+                .scenarioName(result.getScenarioName())
+                .scenarioAction(result.getScenarioAction())
+                .testcaseName(result.getTestcaseName())
+                .description(result.getDescription())
+                .keywordName(result.getKeywordName())
+                .objectName(result.getObjectName())
+                .application(result.getApplication())
+                .rawValue(result.getRawValue())
+                .resolvedValue(result.getResolvedValue())
+                .rawXPath(result.getRawXPath())
+                .resolvedXPath(result.getResolvedXPath())
+                .executedByClass(result.getExecutedByClass())
+                .executionSource(result.getExecutionSource())
+                .success(result.isSuccess())
+                .status(result.getStatus())
+                .evidence(mergedEvidence)
+                .message(result.getMessage())
+                .excelRowNumber(result.getExcelRowNumber())
+                .stepOrder(result.getStepOrder())
+                .build();
+    }
+
+    private String mergeEvidence(String existingEvidence, List<String> collectedEvidence) {
+        Set<String> evidenceItems = new LinkedHashSet<>();
+        addEvidenceItems(evidenceItems, existingEvidence);
+        collectedEvidence.forEach(evidence -> addEvidenceItems(evidenceItems, evidence));
+        return String.join(System.lineSeparator(), evidenceItems);
+    }
+
+    private void addEvidenceItems(Set<String> evidenceItems, String evidence) {
+        if (isBlank(evidence)) {
+            return;
+        }
+        for (String item : evidence.split("\\R")) {
+            if (!isBlank(item)) {
+                evidenceItems.add(item.trim());
+            }
         }
     }
 
