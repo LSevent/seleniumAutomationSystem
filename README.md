@@ -350,12 +350,12 @@ Supported common Excel commands:
 | `isDisplayed` | Yes | No | Returns whether the target element is displayed. As an Excel step, the returned value is not stored back into Excel. |
 | `isNotDisplayed` | Yes | No | Returns the opposite of `isDisplayed`. As an Excel step, the returned value is not stored back into Excel. |
 
-The `screenshot` keyword is special. It is handled by `KeywordEngine`, not by `BaseFunction`, because it needs scenario, testcase, step, report config, screenshot naming, and evidence-link context.
+The built-in Excel screenshot keywords are special. `KeywordEngine` handles them through `ScreenshotKeywordHandler` because they need scenario, testcase, step, report config, screenshot naming, and evidence-link context. `BaseFunction` still exposes small screenshot helper keywords so application-specific `SpecificFunction` methods can compose the same evidence behavior when needed.
 
 | Keyword | Object required | Value required | Purpose |
 | --- | --- | --- | --- |
-| `screenshot` | No | Optional | Captures a manual screenshot when `report.manualScreenshotEnabled=true`. `Value` is used as the screenshot label when provided. |
-| `screenshotPartByObject` | Yes | Optional | Captures the resolved object in one or more screenshot parts when the element is taller than the viewport. `Value` is used as the evidence label when provided; otherwise the object name is used. |
+| `screenshot` | No | No | Captures a manual screenshot when `report.manualScreenshotEnabled=true`. `Description` is used as the screenshot/evidence label. |
+| `screenshotPartByObject` | Yes | No | Captures the resolved object in one or more screenshot parts when the element is taller than the viewport. `Description` is used as the screenshot/evidence label; when blank, the object name is used. |
 
 Conditional flow directives are handled by `ScenarioRunner`, not by `BaseFunction` or `SpecificFunction`.
 
@@ -387,7 +387,7 @@ input         | txtStartDate        | BOOKING_DATA.START_DATE                   
 input         | txtEndDate          | BOOKING_DATA.END_DATE                           | Input end date
 input         | txtFinishTime       | BOOKING_DATA.FINISH_TIME                        | Input finish time
 else          |                     |                                                 | Fallback branch
-screenshot    |                     | Unknown schedule type                           | Capture unexpected condition
+screenshot    |                     |                                                 | Unknown schedule type
 endIf         |                     |                                                 | End schedule condition
 ```
 
@@ -431,7 +431,7 @@ input            | txtUsername   | LOGIN_DATA.USERNAME   | Type username
 input            | txtPassword   | LOGIN_DATA.PASSWORD   | Type password
 click            | btnLogin      |                       | Submit login
 verifyDisplayed  | lblDashboard  |                       | Verify dashboard is visible
-screenshot       |               | After login           | Capture evidence
+screenshot       |               |                       | After login
 ```
 
 ## BaseFunction vs SpecificFunction
@@ -476,6 +476,8 @@ Currently implemented application-specific commands:
 
 To add a custom application command, add a public no-argument method to the matching `SpecificFunction` class, then use the method name in the Excel `Keyword` column.
 
+Custom application commands can also compose screenshot evidence. For example, a `SpecificFunction` method may call `screenshot()` for a normal screenshot or `screenshotPartByObject()` for multi-part object evidence. The framework still collects the generated evidence through `KeywordEngine`, so the report behavior stays consistent.
+
 ## Screenshots
 
 Failure screenshots are controlled by:
@@ -496,7 +498,7 @@ Manual screenshot step example:
 
 ```text
 Keyword = screenshot
-Value = After select room
+Description = After select room
 ```
 
 Screenshots are saved under the automatically derived screenshot directory:
