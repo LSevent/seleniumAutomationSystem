@@ -25,6 +25,7 @@
             <class name="com.automation.tests.KeywordResolverTest"/>
             <class name="com.automation.tests.KeywordResolverNoArgTest"/>
             <class name="com.automation.tests.SpecificFunctionContextTest"/>
+            <class name="com.automation.tests.SpecificFunctionScreenshotCompositionTest"/>
             <class name="com.automation.tests.KeywordResolverValidationTest"/>
             <class name="com.automation.tests.KeywordEngineTest"/>
             <class name="com.automation.tests.KeywordEngineResolvedContextTest"/>
