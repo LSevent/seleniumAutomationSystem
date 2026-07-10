@@ -28,6 +28,7 @@ public class PreRunValidatorTest {
                 step("forEachDataRow", "", "BOOKING_DATA", "BOOKING_DATA row 1 of 2", "", "", "BRS"),
                 step("endForEachDataRow", "", "", "BOOKING_DATA row 1 of 2", "", "", "BRS"),
                 step("screenshot", "", "", "", "", "", "BRS"),
+                step("screenshotFullPart", "", "", "", "", "", "BRS"),
                 step("screenshotPartByObject", "pnlBooking", "Booking panel", "Booking panel", "//section[@id='booking']", "//section[@id='booking']", "BRS")
         ));
     }
@@ -154,6 +155,11 @@ public class PreRunValidatorTest {
     @Test
     public void screenshotWithoutObjectShouldPass() {
         validator.validate(plan(step("screenshot", "", "", "", "", "", "BRS")));
+    }
+
+    @Test
+    public void screenshotFullPartWithoutObjectShouldPass() {
+        validator.validate(plan(step("screenshotFullPart", "", "", "", "", "", "BRS")));
     }
 
     @Test

@@ -362,6 +362,7 @@ Screenshot keywords are normal reusable `BaseFunction` keywords. `KeywordEngine`
 | --- | --- | --- | --- |
 | `screenshot` | No | No | Captures a manual screenshot when `report.manualScreenshotEnabled=true`. `Description` is used as the screenshot/evidence label. |
 | `screenshotPartByObject` | Yes | No | Scrolls the resolved object/page and captures one or more screenshot parts. `Description` is used as the screenshot/evidence label; when blank, the object name is used. |
+| `screenshotFullPart` | No | No | Scrolls the browser page using `document.scrollingElement` and captures one or more screenshot parts. `Description` is used as the screenshot/evidence label. |
 
 Conditional flow directives are handled by `ScenarioRunner`, not by `BaseFunction` or `SpecificFunction`.
 
@@ -482,7 +483,7 @@ Currently implemented application-specific commands:
 
 To add a custom application command, add a public no-argument method to the matching `SpecificFunction` class, then use the method name in the Excel `Keyword` column.
 
-Custom application commands can also compose screenshot evidence. For example, a `SpecificFunction` method may call `screenshot()` for a normal screenshot or `screenshotPartByObject()` for multi-part object evidence. The framework still collects the generated evidence through `KeywordEngine`, so the report behavior stays consistent.
+Custom application commands can also compose screenshot evidence. For example, a `SpecificFunction` method may call `screenshot()` for a normal screenshot, `screenshotPartByObject()` for multi-part object evidence, or `screenshotFullPart()` for full-page scroll evidence. The framework still collects the generated evidence through `KeywordEngine`, so the report behavior stays consistent.
 
 ## Screenshots
 

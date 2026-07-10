@@ -115,6 +115,10 @@ public class BaseFunction extends KeywordSupport {
         captureObjectInParts();
     }
 
+    public void screenshotFullPart() {
+        captureFullPageInParts();
+    }
+
     public boolean isDisplayed() {
         try {
             return visibleElement("isDisplayed").isDisplayed();

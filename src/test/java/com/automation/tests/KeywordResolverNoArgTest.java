@@ -144,7 +144,8 @@ public class KeywordResolverNoArgTest {
                 "openUrl", "click", "input", "clear", "getText", "verifyDisplayed",
                 "verifyText", "verifyTextContains", "verifyUrlContains", "verifyTitle",
                 "verifyTitleContains", "waitVisible", "waitClickable", "scrollToElement",
-                "safeClick", "pressEnter", "isDisplayed", "isNotDisplayed"
+                "safeClick", "pressEnter", "screenshot", "screenshotPartByObject",
+                "screenshotFullPart", "isDisplayed", "isNotDisplayed"
         );
 
         for (java.lang.reflect.Method method : BaseFunction.class.getDeclaredMethods()) {

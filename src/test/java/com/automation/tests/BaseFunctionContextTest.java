@@ -150,6 +150,31 @@ public class BaseFunctionContextTest {
     }
 
     @Test
+    public void screenshotFullPartShouldUseDescriptionLabelAndRegisterMultipleEvidenceItems() {
+        FakeWebDriver driver = driver();
+        RecordingScreenshotService screenshotService = new RecordingScreenshotService();
+        StepContextHolder.set(step(
+                "screenshotFullPart",
+                "",
+                "Value should not label full screenshot",
+                "Value should not label full screenshot",
+                "",
+                ""
+        ));
+        EvidenceContextHolder.start();
+        ScreenshotContextHolder.set(screenshotService, new ExcelReportConfig(false, true, true));
+
+        new BaseFunction(driver.driver()).screenshotFullPart();
+
+        Assert.assertEquals(
+                EvidenceContextHolder.getAll(),
+                List.of("target/screenshots/full-part-1.png", "target/screenshots/full-part-2.png")
+        );
+        Assert.assertTrue(screenshotService.observedScreenshotName.contains("BaseFunction context test"));
+        Assert.assertFalse(screenshotService.observedScreenshotName.contains("Value should not label full screenshot"));
+    }
+
+    @Test
     public void sharedContextHelpersShouldReadFromStepContextHolder() {
         FakeWebDriver driver = driver();
         StepContextHolder.set(step(
@@ -276,6 +301,16 @@ public class BaseFunctionContextTest {
         ) {
             observedScreenshotName = screenshotName;
             return List.of("target/screenshots/object-part-1.png", "target/screenshots/object-part-2.png");
+        }
+
+        @Override
+        public List<String> captureFullPageInParts(
+                WebDriver driver,
+                ResolvedStepContext step,
+                String screenshotName
+        ) {
+            observedScreenshotName = screenshotName;
+            return List.of("target/screenshots/full-part-1.png", "target/screenshots/full-part-2.png");
         }
     }
 

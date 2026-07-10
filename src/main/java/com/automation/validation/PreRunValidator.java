@@ -126,8 +126,8 @@ public class PreRunValidator {
 
         String normalizedKeyword = keyword.toLowerCase(Locale.ROOT);
         switch (normalizedKeyword) {
-            case "screenshot" -> {
-                // Screenshot intentionally has no Object/XPath/Value requirement.
+            case "screenshot", "screenshotfullpart" -> {
+                // Screenshot keywords intentionally have no Object/XPath/Value requirement.
             }
             case "screenshotpartbyobject" -> requireObjectAndXPath(step, keyword, errors);
             case "openurl", "verifyurlcontains", "verifytitle", "verifytitlecontains" ->
@@ -353,7 +353,8 @@ public class PreRunValidator {
     private boolean isScreenshotKeyword(String keyword) {
         String normalizedKeyword = safe(keyword);
         return "screenshot".equalsIgnoreCase(normalizedKeyword)
-                || "screenshotPartByObject".equalsIgnoreCase(normalizedKeyword);
+                || "screenshotPartByObject".equalsIgnoreCase(normalizedKeyword)
+                || "screenshotFullPart".equalsIgnoreCase(normalizedKeyword);
     }
 
     private Class<?> loadSpecificFunctionClass(String application) {

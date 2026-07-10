@@ -16,9 +16,11 @@ public class ScreenshotKeywordSupportTest {
     public void screenshotKeywordsShouldBeNormalBaseFunctionKeywords() throws NoSuchMethodException {
         Method screenshot = BaseFunction.class.getMethod("screenshot");
         Method screenshotPartByObject = BaseFunction.class.getMethod("screenshotPartByObject");
+        Method screenshotFullPart = BaseFunction.class.getMethod("screenshotFullPart");
 
         Assert.assertEquals(screenshot.getParameterCount(), 0);
         Assert.assertEquals(screenshotPartByObject.getParameterCount(), 0);
+        Assert.assertEquals(screenshotFullPart.getParameterCount(), 0);
     }
 
     @Test
@@ -36,6 +38,20 @@ public class ScreenshotKeywordSupportTest {
         ResolvedStepContext step = step("screenshotPartByObject", "pnlBooking", "Sensitive value", "");
 
         Assert.assertEquals(service.objectLabel(step), "pnlBooking");
+    }
+
+    @Test
+    public void serviceFullPageLabelShouldUseDescriptionThenFallback() {
+        ScreenshotService service = new ScreenshotService(Path.of("target", "screenshots"));
+
+        Assert.assertEquals(
+                service.fullPageLabel(step("screenshotFullPart", "", "Sensitive value", "Full page evidence")),
+                "Full page evidence"
+        );
+        Assert.assertEquals(
+                service.fullPageLabel(step("screenshotFullPart", "", "Sensitive value", "")),
+                "FullPageScreenshot"
+        );
     }
 
     @Test

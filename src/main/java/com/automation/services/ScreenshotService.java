@@ -17,7 +17,8 @@ public class ScreenshotService {
 
     private static final Logger LOGGER = LogManager.getLogger(ScreenshotService.class);
     private static final int SCROLL_PAUSE_MILLIS = 500;
-    private static final int MAX_SCREENSHOT_PARTS = 100;
+    // Safety guard to prevent endless screenshot loops if a page keeps growing or scroll position stops updating.
+    private static final int MAX_PART_SCREENSHOTS_PER_RUN = 100;
 
     private final Path outputDirectory;
 
@@ -77,7 +78,7 @@ public class ScreenshotService {
             }
 
             int partNumber = 1;
-            while (partNumber <= MAX_SCREENSHOT_PARTS) {
+            while (partNumber <= MAX_PART_SCREENSHOTS_PER_RUN) {
                 String screenshotPath = captureScreen(driver, step, screenshotLabel + "_part" + partNumber);
                 if (!isBlank(screenshotPath)) {
                     screenshotPaths.add(screenshotPath);
@@ -130,6 +131,75 @@ public class ScreenshotService {
         return screenshotPaths;
     }
 
+    public List<String> captureFullPageInParts(WebDriver driver, ResolvedStepContext step) {
+        return captureFullPageInParts(driver, step, fullPageLabel(step));
+    }
+
+    public List<String> captureFullPageInParts(WebDriver driver, ResolvedStepContext step, String label) {
+        if (driver == null) {
+            throw new IllegalArgumentException("WebDriver must not be null.");
+        }
+
+        String screenshotLabel = fallbackLabel(label, fullPageLabel(step));
+        if (!(driver instanceof JavascriptExecutor javascriptExecutor)) {
+            String screenshotPath = captureScreen(driver, step, screenshotLabel + "_part1");
+            return isBlank(screenshotPath) ? List.of() : List.of(screenshotPath);
+        }
+
+        List<String> screenshotPaths = new ArrayList<>();
+        try {
+            javascriptExecutor.executeScript(
+                    "const scroller = document.scrollingElement || document.documentElement || document.body;"
+                            + "scroller.scrollTop = 0;"
+                            + "window.scrollTo(0, 0);"
+            );
+            pauseAfterScroll();
+
+            int partNumber = 1;
+            while (partNumber <= MAX_PART_SCREENSHOTS_PER_RUN) {
+                String screenshotPath = captureScreen(driver, step, screenshotLabel + "_part" + partNumber);
+                if (!isBlank(screenshotPath)) {
+                    screenshotPaths.add(screenshotPath);
+                }
+
+                double beforeScrollTop = pageScrollTop(javascriptExecutor);
+                double maxScrollTop = pageMaxScrollTop(javascriptExecutor);
+                if (beforeScrollTop >= maxScrollTop - 1) {
+                    break;
+                }
+
+                javascriptExecutor.executeScript(
+                        "const scroller = document.scrollingElement || document.documentElement || document.body;"
+                                + "scroller.scrollTop = Math.min(scroller.scrollTop + window.innerHeight, scroller.scrollHeight);"
+                                + "window.scrollTo(0, scroller.scrollTop);"
+                );
+                pauseAfterScroll();
+
+                double afterScrollTop = pageScrollTop(javascriptExecutor);
+                if (afterScrollTop <= beforeScrollTop) {
+                    LOGGER.debug("Stopping full-page screenshot loop because page scroll position did not move.");
+                    break;
+                }
+
+                partNumber++;
+            }
+
+            if (partNumber > MAX_PART_SCREENSHOTS_PER_RUN) {
+                LOGGER.warn("Stopped full-page screenshot capture after {} parts to avoid an endless loop.", MAX_PART_SCREENSHOTS_PER_RUN);
+            }
+
+            javascriptExecutor.executeScript(
+                    "const scroller = document.scrollingElement || document.documentElement || document.body;"
+                            + "scroller.scrollTop = 0;"
+                            + "window.scrollTo(0, 0);"
+            );
+        } catch (RuntimeException exception) {
+            throw new IllegalStateException("Unable to capture full-page screenshots for: " + screenshotLabel, exception);
+        }
+
+        return screenshotPaths;
+    }
+
     public String manualLabel(ResolvedStepContext step) {
         return fallbackLabel(step == null ? "" : step.getDescription(), "ManualScreenshot");
     }
@@ -139,6 +209,10 @@ public class ScreenshotService {
                 step == null ? "" : step.getDescription(),
                 fallbackLabel(step == null ? "" : step.getObjectName(), "ObjectScreenshot")
         );
+    }
+
+    public String fullPageLabel(ResolvedStepContext step) {
+        return fallbackLabel(step == null ? "" : step.getDescription(), "FullPageScreenshot");
     }
 
     private String screenshotName(ResolvedStepContext step, String label, String fallbackLabel) {
@@ -178,5 +252,19 @@ public class ScreenshotService {
 
     private double number(Object value) {
         return value instanceof Number number ? number.doubleValue() : 0;
+    }
+
+    private double pageScrollTop(JavascriptExecutor javascriptExecutor) {
+        return number(javascriptExecutor.executeScript(
+                "const scroller = document.scrollingElement || document.documentElement || document.body;"
+                        + "return scroller.scrollTop || window.pageYOffset || 0;"
+        ));
+    }
+
+    private double pageMaxScrollTop(JavascriptExecutor javascriptExecutor) {
+        return number(javascriptExecutor.executeScript(
+                "const scroller = document.scrollingElement || document.documentElement || document.body;"
+                        + "return Math.max(0, (scroller.scrollHeight || 0) - (window.innerHeight || scroller.clientHeight || 0));"
+        ));
     }
 }

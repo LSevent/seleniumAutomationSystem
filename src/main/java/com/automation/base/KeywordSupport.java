@@ -122,6 +122,24 @@ public abstract class KeywordSupport {
         return screenshotPaths;
     }
 
+    protected List<String> captureFullPageInParts() {
+        return captureFullPageInParts(ScreenshotContextHolder.service().fullPageLabel(currentStep()));
+    }
+
+    protected List<String> captureFullPageInParts(String label) {
+        if (!ScreenshotContextHolder.isManualScreenshotEnabled()) {
+            return List.of();
+        }
+
+        List<String> screenshotPaths = ScreenshotContextHolder.service().captureFullPageInParts(
+                driver,
+                currentStep(),
+                label
+        );
+        registerEvidence(screenshotPaths);
+        return screenshotPaths;
+    }
+
     protected void registerEvidence(String evidencePath) {
         if (evidencePath != null && !evidencePath.isBlank()) {
             EvidenceContextHolder.add(evidencePath);
