@@ -4,6 +4,7 @@ import com.automation.exceptions.ErrorContext;
 import com.automation.models.ExecutionResult;
 import com.automation.models.ResolvedStepContext;
 import com.automation.reports.ExcelReportConfig;
+import com.automation.services.ScreenshotEvidence;
 import com.automation.services.ScreenshotService;
 import com.automation.utils.WaitUtil;
 import org.openqa.selenium.By;
@@ -13,9 +14,6 @@ import org.openqa.selenium.WebElement;
 import java.util.List;
 
 public class ScreenshotKeywordHandler {
-
-    private static final String MANUAL_SCREENSHOT_DISABLED_MESSAGE =
-            "Manual screenshot skipped because report.manualScreenshotEnabled=false.";
 
     private final WebDriver driver;
     private final ExcelReportConfig reportConfig;
@@ -32,17 +30,17 @@ public class ScreenshotKeywordHandler {
     }
 
     public boolean supports(String keywordName) {
-        return isManualScreenshotKeyword(keywordName) || isScreenshotPartByObjectKeyword(keywordName);
+        return ScreenshotEvidence.supportsKeyword(keywordName);
     }
 
     public ExecutionResult execute(ResolvedStepContext step) {
         if (step == null) {
             throw new IllegalArgumentException("ResolvedStepContext must not be null.");
         }
-        if (isManualScreenshotKeyword(step.getKeyword())) {
+        if (ScreenshotEvidence.isManualScreenshotKeyword(step.getKeyword())) {
             return executeManualScreenshot(step);
         }
-        if (isScreenshotPartByObjectKeyword(step.getKeyword())) {
+        if (ScreenshotEvidence.isScreenshotPartByObjectKeyword(step.getKeyword())) {
             return executeScreenshotPartByObject(step);
         }
         throw new IllegalArgumentException("Unsupported screenshot keyword: " + safe(step.getKeyword()));
@@ -55,15 +53,16 @@ public class ScreenshotKeywordHandler {
         }
 
         try {
-            String label = manualScreenshotLabel(step);
-            String screenshotPath = screenshotService.capture(driver, screenshotBaseName(step, label));
-            String evidence = screenshotPath == null
-                    ? "Screenshot not available: driver does not support screenshots."
-                    : screenshotPath;
+            String label = ScreenshotEvidence.manualLabel(step);
+            String screenshotPath = screenshotService.capture(driver, ScreenshotEvidence.baseName(step, label));
+            String evidence = ScreenshotEvidence.evidenceOrUnavailable(
+                    screenshotPath,
+                    ScreenshotEvidence.MANUAL_SCREENSHOT_UNAVAILABLE_MESSAGE
+            );
             return ExecutionResult.success(
                     step,
                     executedBy,
-                    "REPORT",
+                    ScreenshotEvidence.REPORT_SOURCE,
                     evidence,
                     "Manual screenshot captured."
             );
@@ -85,21 +84,22 @@ public class ScreenshotKeywordHandler {
 
         try {
             WebElement element = WaitUtil.waitForVisible(driver, By.xpath(safe(step.getResolvedXPath())));
-            String label = objectScreenshotLabel(step);
+            String label = ScreenshotEvidence.objectLabel(step);
             List<String> screenshotPaths = screenshotService.captureElementInParts(
                     driver,
                     element,
-                    screenshotBaseName(step, label)
+                    ScreenshotEvidence.baseName(step, label)
             );
-            String evidence = screenshotPaths.isEmpty()
-                    ? "Screenshot not available: driver does not support object screenshots."
-                    : String.join(System.lineSeparator(), screenshotPaths);
+            String evidence = ScreenshotEvidence.evidenceOrUnavailable(
+                    screenshotPaths,
+                    ScreenshotEvidence.OBJECT_SCREENSHOT_UNAVAILABLE_MESSAGE
+            );
             return ExecutionResult.success(
                     step,
                     executedBy,
-                    "REPORT",
+                    ScreenshotEvidence.REPORT_SOURCE,
                     evidence,
-                    "Object screenshot captured in " + screenshotPaths.size() + " part(s)."
+                    "Object screenshot captured in " + (screenshotPaths == null ? 0 : screenshotPaths.size()) + " part(s)."
             );
         } catch (RuntimeException exception) {
             String message = failureMessage(
@@ -115,9 +115,9 @@ public class ScreenshotKeywordHandler {
         return ExecutionResult.skipped(
                 step,
                 executedBy,
-                "REPORT",
-                MANUAL_SCREENSHOT_DISABLED_MESSAGE,
-                MANUAL_SCREENSHOT_DISABLED_MESSAGE
+                ScreenshotEvidence.REPORT_SOURCE,
+                ScreenshotEvidence.MANUAL_SCREENSHOT_DISABLED_MESSAGE,
+                ScreenshotEvidence.MANUAL_SCREENSHOT_DISABLED_MESSAGE
         );
     }
 
@@ -125,33 +125,6 @@ public class ScreenshotKeywordHandler {
         return isBlank(step.getExecutedBy())
                 ? KeywordEngine.class.getName()
                 : step.getExecutedBy();
-    }
-
-    private boolean isManualScreenshotKeyword(String keywordName) {
-        return keywordName != null && "screenshot".equalsIgnoreCase(keywordName.trim());
-    }
-
-    private boolean isScreenshotPartByObjectKeyword(String keywordName) {
-        return keywordName != null && "screenshotPartByObject".equalsIgnoreCase(keywordName.trim());
-    }
-
-    private String manualScreenshotLabel(ResolvedStepContext step) {
-        return fallbackLabel(step.getDescription(), "ManualScreenshot");
-    }
-
-    private String objectScreenshotLabel(ResolvedStepContext step) {
-        return fallbackLabel(step.getDescription(), fallbackLabel(step.getObjectName(), "ObjectScreenshot"));
-    }
-
-    private String screenshotBaseName(ResolvedStepContext step, String label) {
-        return String.join(
-                "_",
-                safe(step.getScenarioNo()),
-                safe(step.getTestcaseName()),
-                "step" + step.getStepNumber(),
-                "row" + step.getExcelRow(),
-                safe(label)
-        );
     }
 
     private String failureMessage(String summary, ResolvedStepContext step, Throwable cause) {
@@ -183,7 +156,4 @@ public class ScreenshotKeywordHandler {
         return value == null ? "" : value.trim();
     }
 
-    private String fallbackLabel(String preferredLabel, String fallbackLabel) {
-        return isBlank(preferredLabel) ? safe(fallbackLabel) : preferredLabel.trim();
-    }
 }
