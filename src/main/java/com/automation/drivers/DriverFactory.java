@@ -17,6 +17,7 @@ import org.openqa.selenium.remote.RemoteWebDriver;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Map;
 
 public final class DriverFactory {
 
@@ -129,6 +130,11 @@ public final class DriverFactory {
         ChromeOptions options = new ChromeOptions();
         options.addArguments("--start-maximized");
         options.addArguments("--disable-notifications");
+        options.setExperimentalOption("prefs", Map.of(
+                "credentials_enable_service", false,
+                "profile.password_manager_enabled", false,
+                "profile.password_manager_leak_detection", false
+        ));
         if (headless) {
             options.addArguments("--headless=new");
             options.addArguments("--disable-gpu");
