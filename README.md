@@ -95,7 +95,7 @@ src
 5. Step rows inherit `Run` and `Application` from the latest parent testcase row unless the step overrides them.
 6. `DataReader` resolves step `Value` cells that use `SHEET_NAME.COLUMN_NAME` or formula-header references such as `=LOGIN_DATA!$B$1`.
 7. `ObjectRepositoryReader` resolves step `Object` names into XPath values for the current application.
-8. `KeywordEngine` executes the step. Special screenshot/evidence keywords such as `screenshot` and `screenshotPartByObject` are handled by the engine for reporting evidence.
+8. `KeywordEngine` executes the step and provides step context, screenshot context, lifecycle logging, and evidence collection.
 9. `KeywordResolver` looks for the keyword in application-specific `SpecificFunction` first, then `BaseFunction`.
 10. `ScenarioRunner` collects step results and sends them to `ExcelExecutionReporter`.
 
@@ -173,7 +173,7 @@ report.manualScreenshotEnabled=true
 The report root directory is configured manually, but each execution creates its own timestamped run folder inside it:
 
 ```text
-[report.outputDirectory]/yyyy-MM-dd_HH-mm-ss-SSS_[Excel file name without extension]
+[report.outputDirectory]/yyyy-MM-dd_HH-mm-ss-SSS
 ```
 
 The report file name is still derived from the Excel scenario file name:
@@ -185,14 +185,14 @@ Report-[Excel file name without extension].html
 The screenshot folder is derived inside the same run folder:
 
 ```text
-[report.outputDirectory]/yyyy-MM-dd_HH-mm-ss-SSS_[Excel file name without extension]/Screenshots
+[report.outputDirectory]/yyyy-MM-dd_HH-mm-ss-SSS/Screenshots
 ```
 
 For example, the config above generates:
 
 ```text
-C:/Automation/BRS/Reports/2026-07-08_10-15-30-123_Booking Room System/Report-Booking Room System.html
-C:/Automation/BRS/Reports/2026-07-08_10-15-30-123_Booking Room System/Screenshots
+C:/Automation/BRS/Reports/2026-07-08_10-15-30-123/Report-Booking Room System.html
+C:/Automation/BRS/Reports/2026-07-08_10-15-30-123/Screenshots
 ```
 
 `Final Excel Template.xlsx` is the sample workbook I keep as the project template.
@@ -356,12 +356,12 @@ Supported common Excel commands:
 | `isDisplayed` | Yes | No | Returns whether the target element is displayed. As an Excel step, the returned value is not stored back into Excel. |
 | `isNotDisplayed` | Yes | No | Returns the opposite of `isDisplayed`. As an Excel step, the returned value is not stored back into Excel. |
 
-The built-in Excel screenshot keywords are special. `KeywordEngine` handles them through `ScreenshotKeywordHandler` because they need scenario, testcase, step, report config, screenshot naming, and evidence-link context. `BaseFunction` still exposes small screenshot helper keywords so application-specific `SpecificFunction` methods can compose the same evidence behavior when needed.
+Screenshot keywords are normal reusable `BaseFunction` keywords. `KeywordEngine` still owns the execution context and evidence collection, while `ScreenshotService` owns the actual screenshot file creation. This keeps screenshot keywords easy to reuse from `SpecificFunction` methods without adding special engine-only code for each screenshot command.
 
 | Keyword | Object required | Value required | Purpose |
 | --- | --- | --- | --- |
 | `screenshot` | No | No | Captures a manual screenshot when `report.manualScreenshotEnabled=true`. `Description` is used as the screenshot/evidence label. |
-| `screenshotPartByObject` | Yes | No | Captures the resolved object in one or more screenshot parts when the element is taller than the viewport. `Description` is used as the screenshot/evidence label; when blank, the object name is used. |
+| `screenshotPartByObject` | Yes | No | Scrolls the resolved object/page and captures one or more screenshot parts. `Description` is used as the screenshot/evidence label; when blank, the object name is used. |
 
 Conditional flow directives are handled by `ScenarioRunner`, not by `BaseFunction` or `SpecificFunction`.
 
@@ -510,7 +510,7 @@ Description = After select room
 Screenshots are saved under the automatically derived screenshot directory:
 
 ```text
-[report.outputDirectory]/yyyy-MM-dd_HH-mm-ss-SSS_[Excel file name without extension]/Screenshots
+[report.outputDirectory]/yyyy-MM-dd_HH-mm-ss-SSS/Screenshots
 ```
 
 Manual screenshots and failure screenshots are attached as evidence in the Excel HTML report.
@@ -520,7 +520,7 @@ Manual screenshots and failure screenshots are attached as evidence in the Excel
 Excel execution generates a dedicated report in a new run folder under the configured report directory. The file name is derived from the Excel workbook name:
 
 ```text
-[report.outputDirectory]/yyyy-MM-dd_HH-mm-ss-SSS_[Excel file name without extension]/Report-[Excel file name without extension].html
+[report.outputDirectory]/yyyy-MM-dd_HH-mm-ss-SSS/Report-[Excel file name without extension].html
 ```
 
 This report is separate from the generic TestNG method-level ExtentReport.
@@ -619,8 +619,8 @@ mvn test -DsuiteXmlFile=src/test/resources/excel-runner.xml -Dexcel.scenarioFile
 Configured Excel execution generates:
 
 ```text
-[report.outputDirectory]/yyyy-MM-dd_HH-mm-ss-SSS_[Excel file name without extension]/Report-[Excel file name without extension].html
-[report.outputDirectory]/yyyy-MM-dd_HH-mm-ss-SSS_[Excel file name without extension]/Screenshots
+[report.outputDirectory]/yyyy-MM-dd_HH-mm-ss-SSS/Report-[Excel file name without extension].html
+[report.outputDirectory]/yyyy-MM-dd_HH-mm-ss-SSS/Screenshots
 ```
 
 Run tests in parallel by editing:

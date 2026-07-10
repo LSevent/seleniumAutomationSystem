@@ -124,9 +124,8 @@ public class ExcelExecutionConfig {
                 DEFAULT_REPORT_OUTPUT_DIRECTORY
         );
         String reportFileName = deriveReportFileName(scenarioFileValue);
-        String scenarioBaseFileName = extractBaseFileName(scenarioFileValue);
         Path reportRootDirectory = resolvePath(reportOutputValue);
-        String reportRunFolderName = deriveReportRunFolderName(scenarioBaseFileName);
+        String reportRunFolderName = deriveReportRunFolderName();
         Path reportOutputDirectory = reportRootDirectory.resolve(reportRunFolderName).toAbsolutePath().normalize();
         Path screenshotOutputDirectory = reportOutputDirectory.resolve("Screenshots").toAbsolutePath().normalize();
         String browser = valueFor(safeProperties, overrideResolver, BROWSER_KEY, DEFAULT_BROWSER);
@@ -358,12 +357,8 @@ public class ExcelExecutionConfig {
         return "Report-" + baseFileName + ".html";
     }
 
-    private static String deriveReportRunFolderName(String scenarioBaseFileName) {
-        String cleanedBaseName = sanitizeFolderName(scenarioBaseFileName);
-        if (cleanedBaseName.isBlank()) {
-            throw new FrameworkException("Excel scenario file name is required to derive the report run folder.");
-        }
-        return LocalDateTime.now().format(RUN_FOLDER_TIME_FORMAT) + "_" + cleanedBaseName;
+    private static String deriveReportRunFolderName() {
+        return LocalDateTime.now().format(RUN_FOLDER_TIME_FORMAT);
     }
 
     private static String extractBaseFileName(String scenarioFilePath) {
@@ -374,14 +369,6 @@ public class ExcelExecutionConfig {
         String fileName = lastSeparator >= 0 ? cleanedPath.substring(lastSeparator + 1) : cleanedPath;
         int lastDot = fileName.lastIndexOf('.');
         return lastDot > 0 ? fileName.substring(0, lastDot) : fileName;
-    }
-
-    private static String sanitizeFolderName(String value) {
-        String sanitizedValue = clean(value).replaceAll("[<>:\"/\\\\|?*]", "_");
-        while (sanitizedValue.endsWith(".") || sanitizedValue.endsWith(" ")) {
-            sanitizedValue = sanitizedValue.substring(0, sanitizedValue.length() - 1);
-        }
-        return sanitizedValue.trim();
     }
 
     private static Path resolvePath(String value) {

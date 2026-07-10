@@ -59,7 +59,7 @@ public class ScreenshotResolvedPlanRegressionTest {
                 .toList();
         Assert.assertEquals(screenshots.size(), 3);
         for (ExecutionResult screenshot : screenshots) {
-            Assert.assertEquals(screenshot.getExecutionSource(), "REPORT");
+            Assert.assertEquals(screenshot.getExecutionSource(), "BASE");
             Assert.assertTrue(screenshot.getEvidence().toLowerCase().endsWith(".png"));
             Assert.assertTrue(Files.exists(Path.of(screenshot.getEvidence())));
         }

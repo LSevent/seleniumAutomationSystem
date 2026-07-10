@@ -213,18 +213,17 @@ public class KeywordEngineResolvedContextTest {
     @Test
     public void screenshotShouldUseResolvedContextAndProduceEvidence() {
         FakeWebDriver driver = new FakeWebDriver();
-        ObservingResolver resolver = new ObservingResolver(driver, true);
+        KeywordResolver resolver = new KeywordResolver(driver.driver());
         RecordingScreenshotService screenshotService = new RecordingScreenshotService();
         ResolvedStepContext step = step("screenshot", "", "Manual checkpoint", "Login complete", "");
 
         ExecutionResult result = engine(resolver, screenshotService).execute(step);
 
         Assert.assertTrue(result.isSuccess(), result.getMessage());
-        Assert.assertNull(resolver.observedContext, "Screenshot should remain KeywordEngine special handling.");
         Assert.assertSame(screenshotService.observedContext, step);
         Assert.assertTrue(screenshotService.observedScreenshotName.contains("Execute an already-resolved step"));
         Assert.assertFalse(screenshotService.observedScreenshotName.contains("Login complete"));
-        Assert.assertEquals(result.getExecutionSource(), "REPORT");
+        Assert.assertEquals(result.getExecutionSource(), "BASE");
         Assert.assertEquals(result.getStatus(), ExecutionResult.STATUS_PASS);
         Assert.assertEquals(result.getEvidence(), "target/screenshots/resolved-context.png");
         Assert.assertTrue(StepContextHolder.current().isEmpty());
@@ -234,7 +233,7 @@ public class KeywordEngineResolvedContextTest {
     public void screenshotPartByObjectShouldUseResolvedObjectAndProduceMultipleEvidencePaths() {
         FakeWebDriver driver = new FakeWebDriver();
         driver.addElement("//input[@id='resolvedUsername']", "Long object");
-        ObservingResolver resolver = new ObservingResolver(driver, true);
+        KeywordResolver resolver = new KeywordResolver(driver.driver());
         RecordingScreenshotService screenshotService = new RecordingScreenshotService();
         ResolvedStepContext step = step(
                 "screenshotPartByObject",
@@ -247,11 +246,10 @@ public class KeywordEngineResolvedContextTest {
         ExecutionResult result = engine(resolver, screenshotService).execute(step);
 
         Assert.assertTrue(result.isSuccess(), result.getMessage());
-        Assert.assertNull(resolver.observedContext, "screenshotPartByObject should remain KeywordEngine special handling.");
         Assert.assertSame(screenshotService.observedContext, step);
         Assert.assertTrue(screenshotService.observedScreenshotName.contains("Execute an already-resolved step"));
         Assert.assertFalse(screenshotService.observedScreenshotName.contains("Booking form"));
-        Assert.assertEquals(result.getExecutionSource(), "REPORT");
+        Assert.assertEquals(result.getExecutionSource(), "BASE");
         Assert.assertEquals(result.getStatus(), ExecutionResult.STATUS_PASS);
         Assert.assertTrue(result.getEvidence().contains("target/screenshots/object-part-1.png"));
         Assert.assertTrue(result.getEvidence().contains("target/screenshots/object-part-2.png"));
@@ -360,7 +358,12 @@ public class KeywordEngineResolvedContextTest {
         }
 
         @Override
-        public List<String> captureElementInParts(WebDriver driver, WebElement element, String screenshotName) {
+        public List<String> captureObjectInParts(
+                WebDriver driver,
+                WebElement element,
+                ResolvedStepContext step,
+                String screenshotName
+        ) {
             observedContext = StepContextHolder.get();
             observedScreenshotName = screenshotName;
             return List.of(

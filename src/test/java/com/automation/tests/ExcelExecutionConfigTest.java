@@ -24,7 +24,7 @@ public class ExcelExecutionConfigTest {
 
         Assert.assertEquals(config.getScenarioFilePath(), Path.of("C:/Automation/BRS/Booking Room System.xlsx").toAbsolutePath().normalize());
         Assert.assertEquals(config.getReportRootDirectory(), Path.of("C:/Automation/BRS/Reports").toAbsolutePath().normalize());
-        assertRunFolder(config, "Booking Room System");
+        assertRunFolder(config);
         Assert.assertEquals(config.getReportFileName(), "Report-Booking Room System.html");
         Assert.assertEquals(
                 config.getReportFilePath(),
@@ -211,7 +211,7 @@ public class ExcelExecutionConfigTest {
                 config.getReportOutputDirectory().resolve("Screenshots").toAbsolutePath().normalize()
         );
         Assert.assertEquals(config.getReportRootDirectory(), reportDirectory.toAbsolutePath().normalize());
-        assertRunFolder(config, "default-screenshot-dir");
+        assertRunFolder(config);
     }
 
     @Test
@@ -228,7 +228,7 @@ public class ExcelExecutionConfigTest {
                 config.getReportOutputDirectory().resolve("Screenshots").toAbsolutePath().normalize()
         );
         Assert.assertEquals(config.getReportRootDirectory(), reportDirectory.toAbsolutePath().normalize());
-        assertRunFolder(config, "changed-report-directory");
+        assertRunFolder(config);
     }
 
     @Test
@@ -289,7 +289,7 @@ public class ExcelExecutionConfigTest {
                 config.getReportOutputDirectory().resolve("Screenshots").toAbsolutePath().normalize()
         );
         Assert.assertEquals(config.getReportRootDirectory(), reportDirectory.toAbsolutePath().normalize());
-        assertRunFolder(config, "ignored-screenshot-dir");
+        assertRunFolder(config);
     }
 
     @Test
@@ -322,7 +322,7 @@ public class ExcelExecutionConfigTest {
                 config.getReportOutputDirectory().resolve("Screenshots").toAbsolutePath().normalize()
         );
         Assert.assertEquals(config.getReportRootDirectory(), reportDirectory.toAbsolutePath().normalize());
-        assertRunFolder(config, "ignored-screenshot-override");
+        assertRunFolder(config);
     }
 
     @Test
@@ -338,15 +338,10 @@ public class ExcelExecutionConfigTest {
         Assert.assertTrue(exception.getMessage().contains("Report root output path is not a directory:"));
     }
 
-    private static void assertRunFolder(ExcelExecutionConfig config, String scenarioBaseFileName) {
-        String expectedSuffix = "_" + scenarioBaseFileName;
+    private static void assertRunFolder(ExcelExecutionConfig config) {
         Assert.assertTrue(
-                config.getReportRunFolderName().endsWith(expectedSuffix),
-                "Run folder should end with scenario file name. Actual: " + config.getReportRunFolderName()
-        );
-        Assert.assertTrue(
-                config.getReportRunFolderName().matches("\\d{4}-\\d{2}-\\d{2}_\\d{2}-\\d{2}-\\d{2}-\\d{3}_.+"),
-                "Run folder should start with timestamp. Actual: " + config.getReportRunFolderName()
+                config.getReportRunFolderName().matches("\\d{4}-\\d{2}-\\d{2}_\\d{2}-\\d{2}-\\d{2}-\\d{3}"),
+                "Run folder should be timestamp only. Actual: " + config.getReportRunFolderName()
         );
         Assert.assertEquals(
                 config.getReportOutputDirectory(),

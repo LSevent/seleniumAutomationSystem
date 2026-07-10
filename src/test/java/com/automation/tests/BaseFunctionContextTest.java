@@ -268,7 +268,12 @@ public class BaseFunctionContextTest {
         }
 
         @Override
-        public List<String> captureElementInParts(WebDriver driver, WebElement element, String screenshotName) {
+        public List<String> captureObjectInParts(
+                WebDriver driver,
+                WebElement element,
+                ResolvedStepContext step,
+                String screenshotName
+        ) {
             observedScreenshotName = screenshotName;
             return List.of("target/screenshots/object-part-1.png", "target/screenshots/object-part-2.png");
         }

@@ -239,8 +239,8 @@ public class ExcelExecutionReportTest {
             ExecutionResult result = keywordEngine.execute(screenshotStep);
 
             Assert.assertTrue(result.isSuccess());
-            Assert.assertEquals(result.getStatus(), ExecutionResult.STATUS_SKIP);
-            Assert.assertEquals(result.getEvidence(), "Manual screenshot skipped because report.manualScreenshotEnabled=false.");
+            Assert.assertEquals(result.getStatus(), ExecutionResult.STATUS_PASS);
+            Assert.assertTrue(result.getEvidence().isBlank());
         }
     }
 

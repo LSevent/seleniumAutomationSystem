@@ -169,7 +169,12 @@ public class SpecificFunctionScreenshotCompositionTest {
         }
 
         @Override
-        public List<String> captureElementInParts(WebDriver driver, WebElement element, String screenshotName) {
+        public List<String> captureObjectInParts(
+                WebDriver driver,
+                WebElement element,
+                ResolvedStepContext step,
+                String screenshotName
+        ) {
             observedScreenshotName = screenshotName;
             return List.of(
                     "target/screenshots/specific-object-1.png",

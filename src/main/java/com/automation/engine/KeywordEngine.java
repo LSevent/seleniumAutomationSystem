@@ -16,7 +16,6 @@ import com.automation.services.ScreenshotService;
 import com.automation.utils.WaitUtil;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.openqa.selenium.WebDriver;
 
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -33,7 +32,6 @@ public class KeywordEngine {
     private final ExcelExecutionConfig executionConfig;
     private final ExcelReportConfig reportConfig;
     private final ScreenshotService screenshotService;
-    private final ScreenshotKeywordHandler screenshotKeywordHandler;
 
     public KeywordEngine(
             DataReader dataReader,
@@ -82,7 +80,6 @@ public class KeywordEngine {
         this.dataReader = dataReader;
         this.objectRepositoryReader = objectRepositoryReader;
         this.keywordResolver = keywordResolver;
-        WebDriver resolvedDriver = keywordResolver.getDriver();
         ExcelReportConfig resolvedReportConfig = reportConfig == null ? ExcelReportConfig.fromConfig() : reportConfig;
         this.executionConfig = executionConfig == null ? ExcelExecutionConfig.load() : executionConfig;
         ScreenshotService resolvedScreenshotService = screenshotService == null
@@ -90,11 +87,6 @@ public class KeywordEngine {
                 : screenshotService;
         this.reportConfig = resolvedReportConfig;
         this.screenshotService = resolvedScreenshotService;
-        this.screenshotKeywordHandler = new ScreenshotKeywordHandler(
-                resolvedDriver,
-                resolvedReportConfig,
-                resolvedScreenshotService
-        );
     }
 
     public ExecutionResult execute(ResolvedStepContext step) {
@@ -122,8 +114,6 @@ public class KeywordEngine {
                                 null
                         )
                 );
-            } else if (screenshotKeywordHandler.supports(step.getKeyword())) {
-                result = screenshotKeywordHandler.execute(step);
             } else {
                 result = executeResolvedKeyword(step);
             }

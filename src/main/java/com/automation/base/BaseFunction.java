@@ -108,11 +108,11 @@ public class BaseFunction extends KeywordSupport {
     }
 
     public void screenshot() {
-        captureScreenshot(screenshotLabel("ManualScreenshot"));
+        captureScreen();
     }
 
     public void screenshotPartByObject() {
-        captureElementInParts(objectScreenshotLabel());
+        captureObjectInParts();
     }
 
     public boolean isDisplayed() {

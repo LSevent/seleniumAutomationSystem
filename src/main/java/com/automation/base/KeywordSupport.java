@@ -5,7 +5,6 @@ import com.automation.context.ScreenshotContextHolder;
 import com.automation.context.StepContextHolder;
 import com.automation.exceptions.ErrorContext;
 import com.automation.models.ResolvedStepContext;
-import com.automation.services.ScreenshotEvidence;
 import com.automation.utils.WaitUtil;
 import org.openqa.selenium.By;
 import org.openqa.selenium.NoSuchElementException;
@@ -79,55 +78,48 @@ public abstract class KeywordSupport {
         return currentStep().application();
     }
 
-    protected String captureScreenshot(String label) {
+    protected String captureScreen() {
+        return captureScreen(ScreenshotContextHolder.service().manualLabel(currentStep()));
+    }
+
+    protected String captureScreen(String label) {
         if (!ScreenshotContextHolder.isManualScreenshotEnabled()) {
             return "";
         }
 
-        String screenshotPath = ScreenshotContextHolder.service().capture(
+        String screenshotPath = ScreenshotContextHolder.service().captureScreen(
                 driver,
-                ScreenshotEvidence.baseName(
-                        currentStep(),
-                        ScreenshotEvidence.fallbackLabel(label, "ManualScreenshot")
-                )
+                currentStep(),
+                label
         );
         registerEvidence(screenshotPath);
         return screenshotPath == null ? "" : screenshotPath;
     }
 
-    protected List<String> captureElementInParts(String label) {
-        return captureElementInParts(
+    protected List<String> captureObjectInParts() {
+        return captureObjectInParts(ScreenshotContextHolder.service().objectLabel(currentStep()));
+    }
+
+    protected List<String> captureObjectInParts(String label) {
+        return captureObjectInParts(
                 visibleElement("screenshotPartByObject"),
-                ScreenshotEvidence.fallbackLabel(
-                        label,
-                        ScreenshotEvidence.fallbackLabel(objectName(), "ObjectScreenshot")
-                )
+                label
         );
     }
 
-    protected List<String> captureElementInParts(WebElement element, String label) {
+    protected List<String> captureObjectInParts(WebElement element, String label) {
         if (!ScreenshotContextHolder.isManualScreenshotEnabled()) {
             return List.of();
         }
 
-        List<String> screenshotPaths = ScreenshotContextHolder.service().captureElementInParts(
+        List<String> screenshotPaths = ScreenshotContextHolder.service().captureObjectInParts(
                 driver,
                 element,
-                ScreenshotEvidence.baseName(
-                        currentStep(),
-                        ScreenshotEvidence.fallbackLabel(label, "ObjectScreenshot")
-                )
+                currentStep(),
+                label
         );
         registerEvidence(screenshotPaths);
         return screenshotPaths;
-    }
-
-    protected String screenshotLabel(String defaultLabel) {
-        return ScreenshotEvidence.fallbackLabel(currentStep().getDescription(), defaultLabel);
-    }
-
-    protected String objectScreenshotLabel() {
-        return ScreenshotEvidence.objectLabel(currentStep());
     }
 
     protected void registerEvidence(String evidencePath) {
