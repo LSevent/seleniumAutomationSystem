@@ -43,7 +43,6 @@ public class ExcelExecutionReportTest {
     private static final Path LOCAL_HTML = Path.of("src", "test", "resources", "test-pages", "excel-keyword-test.html");
 
     private Path workbookPath;
-    private Path screenshotDirectory;
     private ExcelExecutionConfig executionConfig;
     private String baseUrl;
 
@@ -55,7 +54,6 @@ public class ExcelExecutionReportTest {
                 baseUrl
         );
         executionConfig = executionConfig(workbookPath);
-        screenshotDirectory = executionConfig.getScreenshotOutputDirectory();
     }
 
     @Test(priority = 1)
@@ -402,11 +400,12 @@ public class ExcelExecutionReportTest {
     }
 
     private Set<String> screenshotFilesStartingWith(String prefix) throws IOException {
-        if (!Files.exists(screenshotDirectory)) {
+        Path currentScreenshotDirectory = executionConfig.getScreenshotOutputDirectory();
+        if (!Files.exists(currentScreenshotDirectory)) {
             return Set.of();
         }
         Set<String> fileNames = new HashSet<>();
-        try (var files = Files.list(screenshotDirectory)) {
+        try (var files = Files.list(currentScreenshotDirectory)) {
             files.filter(Files::isRegularFile)
                     .map(path -> path.getFileName().toString())
                     .filter(fileName -> fileName.startsWith(prefix))

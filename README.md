@@ -170,23 +170,29 @@ report.screenshotOnFailure=true
 report.manualScreenshotEnabled=true
 ```
 
+The report root directory is configured manually, but each execution creates its own timestamped run folder inside it:
+
+```text
+[report.outputDirectory]/yyyy-MM-dd_HH-mm-ss-SSS_[Excel file name without extension]
+```
+
 The report file name is still derived from the Excel scenario file name:
 
 ```text
 Report-[Excel file name without extension].html
 ```
 
-The screenshot folder is still derived from the report output directory:
+The screenshot folder is derived inside the same run folder:
 
 ```text
-[report.outputDirectory]/Screenshots
+[report.outputDirectory]/yyyy-MM-dd_HH-mm-ss-SSS_[Excel file name without extension]/Screenshots
 ```
 
 For example, the config above generates:
 
 ```text
-C:/Automation/BRS/Reports/Report-Booking Room System.html
-C:/Automation/BRS/Reports/Screenshots
+C:/Automation/BRS/Reports/2026-07-08_10-15-30-123_Booking Room System/Report-Booking Room System.html
+C:/Automation/BRS/Reports/2026-07-08_10-15-30-123_Booking Room System/Screenshots
 ```
 
 `Final Excel Template.xlsx` is the sample workbook I keep as the project template.
@@ -504,17 +510,17 @@ Description = After select room
 Screenshots are saved under the automatically derived screenshot directory:
 
 ```text
-[report.outputDirectory]/Screenshots
+[report.outputDirectory]/yyyy-MM-dd_HH-mm-ss-SSS_[Excel file name without extension]/Screenshots
 ```
 
 Manual screenshots and failure screenshots are attached as evidence in the Excel HTML report.
 
 ## HTML Report
 
-Excel execution generates a dedicated report in the configured report directory. The file name is derived from the Excel workbook name:
+Excel execution generates a dedicated report in a new run folder under the configured report directory. The file name is derived from the Excel workbook name:
 
 ```text
-[report.outputDirectory]/Report-[Excel file name without extension].html
+[report.outputDirectory]/yyyy-MM-dd_HH-mm-ss-SSS_[Excel file name without extension]/Report-[Excel file name without extension].html
 ```
 
 This report is separate from the generic TestNG method-level ExtentReport.
@@ -613,8 +619,8 @@ mvn test -DsuiteXmlFile=src/test/resources/excel-runner.xml -Dexcel.scenarioFile
 Configured Excel execution generates:
 
 ```text
-[report.outputDirectory]/Report-[Excel file name without extension].html
-[report.outputDirectory]/Screenshots
+[report.outputDirectory]/yyyy-MM-dd_HH-mm-ss-SSS_[Excel file name without extension]/Report-[Excel file name without extension].html
+[report.outputDirectory]/yyyy-MM-dd_HH-mm-ss-SSS_[Excel file name without extension]/Screenshots
 ```
 
 Run tests in parallel by editing:
