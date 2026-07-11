@@ -70,16 +70,10 @@ public class BaseFunctionTest {
         useContext("openUrl", "", "file:///base-function-test.html");
         baseFunction.openUrl();
 
-        useContext("getText", MESSAGE_XPATH, "");
-        Assert.assertEquals(baseFunction.getText(), "Booking created successfully");
-        useContext("isDisplayed", MESSAGE_XPATH, "");
-        Assert.assertTrue(baseFunction.isDisplayed());
-        useContext("isNotDisplayed", MESSAGE_XPATH, "");
-        Assert.assertFalse(baseFunction.isNotDisplayed());
         useContext("waitVisible", MESSAGE_XPATH, "");
-        Assert.assertSame(baseFunction.waitVisible(), driver.element(MESSAGE_XPATH));
+        baseFunction.waitVisible();
         useContext("waitClickable", BUTTON_XPATH, "");
-        Assert.assertSame(baseFunction.waitClickable(), driver.element(BUTTON_XPATH));
+        baseFunction.waitClickable();
 
         useContext("verifyDisplayed", MESSAGE_XPATH, "");
         baseFunction.verifyDisplayed();
@@ -93,6 +87,10 @@ public class BaseFunctionTest {
         baseFunction.verifyTitle();
         useContext("verifyTitleContains", "", "Function");
         baseFunction.verifyTitleContains();
+
+        driver.element(MESSAGE_XPATH).displayed = false;
+        useContext("verifyNotDisplayed", MESSAGE_XPATH, "");
+        baseFunction.verifyNotDisplayed();
     }
 
     @Test

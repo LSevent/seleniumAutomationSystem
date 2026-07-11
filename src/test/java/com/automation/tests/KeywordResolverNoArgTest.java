@@ -13,6 +13,7 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
 import java.lang.reflect.Modifier;
+import java.util.HashSet;
 import java.util.Set;
 
 @Test(singleThreaded = true)
@@ -80,7 +81,7 @@ public class KeywordResolverNoArgTest {
         FakeWebDriver driver = driver();
         String resolvedXPath = "//button[@id='specific-click']";
         driver.addElement(resolvedXPath, "Login");
-        ResolvedStepContext step = step("BRS", "click", "btnLogin", resolvedXPath, "");
+        ResolvedStepContext step = step("RESOLVERTEST", "click", "btnLogin", resolvedXPath, "");
         StepContextHolder.set(step);
 
         KeywordExecutionResult result = new KeywordResolver(driver.driver()).execute(
@@ -91,7 +92,11 @@ public class KeywordResolverNoArgTest {
         Assert.assertEquals(result.getSourceType(), KeywordSourceType.SPECIFIC);
         Assert.assertEquals(
                 result.getExecutedByClass(),
-                "com.automation.functions.BRS.SpecificFunction"
+                "com.automation.functions.RESOLVERTEST.SpecificFunction"
+        );
+        Assert.assertEquals(
+                com.automation.functions.RESOLVERTEST.SpecificFunction.getInvocation(),
+                "specific-click"
         );
         Assert.assertTrue(driver.element(resolvedXPath).isClicked());
     }
@@ -141,22 +146,32 @@ public class KeywordResolverNoArgTest {
     @Test
     public void baseFunctionShouldExposeOnlyNoArgKeywordMethods() {
         Set<String> keywords = Set.of(
-                "openUrl", "click", "input", "clear", "getText", "verifyDisplayed",
+                "openUrl", "click", "input", "clear", "select", "verifyDisplayed", "verifyNotDisplayed",
                 "verifyText", "verifyTextContains", "verifyUrlContains", "verifyTitle",
                 "verifyTitleContains", "waitVisible", "waitClickable", "scrollToElement",
                 "safeClick", "pressEnter", "screenshot", "screenshotPartByObject",
-                "screenshotFullPart", "isDisplayed", "isNotDisplayed"
+                "screenshotFullPart"
         );
 
+        Set<String> actualKeywords = new HashSet<>();
+
         for (java.lang.reflect.Method method : BaseFunction.class.getDeclaredMethods()) {
-            if (Modifier.isPublic(method.getModifiers()) && keywords.contains(method.getName())) {
+            if (Modifier.isPublic(method.getModifiers()) && !Modifier.isStatic(method.getModifiers())) {
+                actualKeywords.add(method.getName());
                 Assert.assertEquals(
                         method.getParameterCount(),
                         0,
                         "Public keyword overload should be no-argument: " + method
                 );
+                Assert.assertEquals(
+                        method.getReturnType(),
+                        Void.TYPE,
+                        "Excel-facing keyword should not return an ignored value: " + method
+                );
             }
         }
+
+        Assert.assertEquals(actualKeywords, keywords);
     }
 
     @Test

@@ -41,6 +41,10 @@ public final class WaitUtil {
         return createWait(driver).until(ExpectedConditions.presenceOfElementLocated(locator));
     }
 
+    public static boolean waitForInvisible(WebDriver driver, By locator) {
+        return createWait(driver).until(ExpectedConditions.invisibilityOfElementLocated(locator));
+    }
+
     public static boolean waitForTitleContains(WebDriver driver, String title) {
         return createWait(driver).until(ExpectedConditions.titleContains(title));
     }

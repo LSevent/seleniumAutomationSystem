@@ -8,8 +8,4 @@ public class SpecificFunction extends BaseFunction {
     public SpecificFunction(WebDriver driver) {
         super(driver);
     }
-
-    public void waitForApplicationReady() {
-        currentStep();
-    }
 }

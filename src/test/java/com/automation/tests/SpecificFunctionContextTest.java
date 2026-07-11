@@ -19,7 +19,7 @@ public class SpecificFunctionContextTest {
     }
 
     @Test
-    public void brsNoArgClickShouldWinOverBaseAndUseResolvedXPath() {
+    public void brsClickShouldUseReusableBaseKeyword() {
         FakeWebDriver driver = new FakeWebDriver();
         String resolvedXPath = "//button[@id='resolved-login']";
         driver.addElement(resolvedXPath, "Login");
@@ -31,8 +31,8 @@ public class SpecificFunctionContextTest {
                 step.getKeyword()
         );
 
-        Assert.assertEquals(result.getSourceType(), KeywordSourceType.SPECIFIC);
-        Assert.assertEquals(result.getExecutedByClass(), "com.automation.functions.BRS.SpecificFunction");
+        Assert.assertEquals(result.getSourceType(), KeywordSourceType.BASE);
+        Assert.assertEquals(result.getExecutedByClass(), "com.automation.base.BaseFunction");
         Assert.assertTrue(driver.element(resolvedXPath).isClicked());
         Assert.assertSame(StepContextHolder.get(), step);
     }
@@ -63,7 +63,6 @@ public class SpecificFunctionContextTest {
 
     @Test
     public void productionSpecificKeywordsShouldExposeOnlyNoArgEntryPoints() {
-        assertNoArgKeyword(com.automation.functions.BRS.SpecificFunction.class, "click");
         assertNoArgKeyword(com.automation.functions.BRS.SpecificFunction.class, "selectRoomByName");
         assertNoArgKeyword(com.automation.functions.BRS.SpecificFunction.class, "verifyBookingCreated");
         assertNoArgKeyword(com.automation.functions.HRIS.SpecificFunction.class, "verifyEmployeeVisible");

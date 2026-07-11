@@ -50,6 +50,18 @@ public abstract class KeywordSupport {
         return waitForClickableElement(xpath(), keyword);
     }
 
+    protected void invisibleElement(String keyword) {
+        String targetXPath = xpath();
+        try {
+            WaitUtil.waitForInvisible(driver, By.xpath(targetXPath.trim()));
+        } catch (TimeoutException exception) {
+            throw new AssertionError(
+                    "Element is still displayed for keyword " + keyword + ". XPath: " + targetXPath,
+                    exception
+            );
+        }
+    }
+
     protected String visibleText(String keyword) {
         return visibleElement(keyword).getText();
     }

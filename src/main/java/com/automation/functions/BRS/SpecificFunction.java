@@ -9,15 +9,6 @@ public class SpecificFunction extends BaseFunction {
         super(driver);
     }
 
-    public void waitForApplicationReady() {
-        currentStep();
-    }
-
-    @Override
-    public void click() {
-        super.click();
-    }
-
     public void selectRoomByName() {
         safeClick();
     }

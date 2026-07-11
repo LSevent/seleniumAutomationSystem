@@ -44,10 +44,9 @@ public class KeywordResolverTest {
     public void shouldResolveUppercaseSpecificFunctionClassForKnownApplications() {
         KeywordResolver resolver = new KeywordResolver(testDriver().driver());
 
-        assertSpecificClass(resolver.resolve("brs", "waitForApplicationReady"), "BRS");
-        assertSpecificClass(resolver.resolve("Brs", "waitForApplicationReady"), "BRS");
-        assertSpecificClass(resolver.resolve("HRIS", "waitForApplicationReady"), "HRIS");
-        assertSpecificClass(resolver.resolve("crm", "waitForApplicationReady"), "CRM");
+        assertSpecificClass(resolver.resolve("brs", "selectRoomByName"), "BRS");
+        assertSpecificClass(resolver.resolve("Brs", "selectRoomByName"), "BRS");
+        assertSpecificClass(resolver.resolve("HRIS", "verifyEmployeeVisible"), "HRIS");
     }
 
     @Test
@@ -67,10 +66,10 @@ public class KeywordResolverTest {
         FakeDriver fakeDriver = testDriver();
         KeywordResolver resolver = new KeywordResolver(fakeDriver.driver());
 
-        KeywordExecutionResult result = execute(resolver, "BRS", "click", LOGIN_BUTTON_XPATH, "");
+        KeywordExecutionResult result = execute(resolver, "RESOLVERTEST", "click", LOGIN_BUTTON_XPATH, "");
 
         Assert.assertEquals(result.getSourceType(), KeywordSourceType.SPECIFIC);
-        Assert.assertEquals(result.getExecutedByClass(), "com.automation.functions.BRS.SpecificFunction");
+        Assert.assertEquals(result.getExecutedByClass(), "com.automation.functions.RESOLVERTEST.SpecificFunction");
         Assert.assertTrue(fakeDriver.element(LOGIN_BUTTON_XPATH).clicked);
     }
 
@@ -196,7 +195,7 @@ public class KeywordResolverTest {
     }
 
     @Test
-    public void shouldExecuteOtherApplicationSpecificFunctions() {
+    public void shouldExecuteHrisSpecificAndCrmBaseKeywords() {
         KeywordResolver resolver = new KeywordResolver(testDriver().driver());
 
         KeywordExecutionResult hrisResult = execute(
@@ -206,12 +205,12 @@ public class KeywordResolverTest {
                 PAGE_TITLE_XPATH,
                 "Dashboard"
         );
-        KeywordExecutionResult crmResult = execute(resolver, "CRM", "waitForApplicationReady", "", "");
+        KeywordExecutionResult crmResult = execute(resolver, "CRM", "verifyTitleContains", "", "Dashboard");
 
         Assert.assertEquals(hrisResult.getSourceType(), KeywordSourceType.SPECIFIC);
         Assert.assertEquals(hrisResult.getExecutedByClass(), "com.automation.functions.HRIS.SpecificFunction");
-        Assert.assertEquals(crmResult.getSourceType(), KeywordSourceType.SPECIFIC);
-        Assert.assertEquals(crmResult.getExecutedByClass(), "com.automation.functions.CRM.SpecificFunction");
+        Assert.assertEquals(crmResult.getSourceType(), KeywordSourceType.BASE);
+        Assert.assertEquals(crmResult.getExecutedByClass(), "com.automation.base.BaseFunction");
     }
 
     private void assertSpecificClass(ResolvedKeyword resolvedKeyword, String application) {

@@ -59,6 +59,12 @@ public class FakeWebDriver implements InvocationHandler {
         return element;
     }
 
+    public FakeWebElement addSelect(String xpath, String... optionTexts) {
+        FakeWebElement element = FakeWebElement.select(optionTexts);
+        elements.put(key(By.xpath(xpath)), element);
+        return element;
+    }
+
     public FakeWebElement element(String xpath) {
         return elements.get(key(By.xpath(xpath)));
     }
@@ -161,19 +167,36 @@ public class FakeWebDriver implements InvocationHandler {
 
         private final WebElement proxy;
         private final String text;
+        private final String tagName;
+        private final List<FakeWebElement> children;
         private String value = "";
         private boolean clicked;
         private boolean javascriptClicked;
         private boolean displayed = true;
         private boolean enabled = true;
+        private boolean selected;
 
         private FakeWebElement(String text) {
+            this(text, "input", List.of());
+        }
+
+        private FakeWebElement(String text, String tagName, List<FakeWebElement> children) {
             this.text = text;
+            this.tagName = tagName;
+            this.children = List.copyOf(children);
             this.proxy = (WebElement) Proxy.newProxyInstance(
                     FakeWebDriver.class.getClassLoader(),
                     new Class[]{WebElement.class},
                     this
             );
+        }
+
+        private static FakeWebElement select(String... optionTexts) {
+            List<FakeWebElement> options = new ArrayList<>();
+            for (String optionText : optionTexts) {
+                options.add(new FakeWebElement(optionText, "option", List.of()));
+            }
+            return new FakeWebElement("", "select", options);
         }
 
         public WebElement webElement() {
@@ -196,12 +219,21 @@ public class FakeWebDriver implements InvocationHandler {
             this.displayed = displayed;
         }
 
+        public String getSelectedOption() {
+            return children.stream()
+                    .filter(option -> option.selected)
+                    .map(option -> option.text)
+                    .findFirst()
+                    .orElse("");
+        }
+
         @Override
         public Object invoke(Object proxy, Method method, Object[] args) {
             Object[] safeArgs = args == null ? new Object[0] : args;
             return switch (method.getName()) {
                 case "click" -> {
                     clicked = true;
+                    selected = "option".equals(tagName) || selected;
                     yield null;
                 }
                 case "submit" -> null;
@@ -213,13 +245,13 @@ public class FakeWebDriver implements InvocationHandler {
                     value = "";
                     yield null;
                 }
-                case "getTagName" -> "input";
+                case "getTagName" -> tagName;
                 case "getAttribute", "getDomAttribute", "getDomProperty" -> "value".equals(safeArgs[0]) ? value : null;
                 case "getAriaRole", "getAccessibleName", "getCssValue" -> "";
-                case "isSelected" -> false;
+                case "isSelected" -> selected;
                 case "isEnabled" -> enabled;
                 case "getText" -> text;
-                case "findElements" -> List.of();
+                case "findElements" -> findChildren((By) safeArgs[0]);
                 case "findElement" -> throw new NoSuchElementException("Fake nested element missing: " + safeArgs[0]);
                 case "getShadowRoot" -> throw new UnsupportedOperationException("Fake element does not support shadow root.");
                 case "isDisplayed" -> displayed;
@@ -242,6 +274,14 @@ public class FakeWebDriver implements InvocationHandler {
                 builder.append(key);
             }
             value += builder;
+        }
+
+        private List<WebElement> findChildren(By by) {
+            String locator = by.toString();
+            return children.stream()
+                    .filter(child -> !locator.startsWith("By.xpath:") || locator.contains(child.text))
+                    .map(FakeWebElement::webElement)
+                    .toList();
         }
 
         private <X> X getScreenshot(OutputType<X> target) {

@@ -19,6 +19,13 @@ public class SpecificFunction extends BaseFunction {
         receivedContext = StepContextHolder.get();
     }
 
+    @Override
+    public void click() {
+        invocation = "specific-click";
+        receivedContext = StepContextHolder.get();
+        super.click();
+    }
+
     public static void reset() {
         invocation = "";
         receivedContext = null;

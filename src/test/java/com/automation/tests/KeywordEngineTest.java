@@ -67,7 +67,7 @@ public class KeywordEngineTest {
             Assert.assertTrue(result.isSuccess(), result.getMessage());
             Assert.assertEquals(result.getResolvedValue(), "Meeting Room A");
             Assert.assertEquals(result.getResolvedXPath(), "//button[contains(text(),'Meeting Room A')]");
-            Assert.assertEquals(result.getExecutionSource(), KeywordSourceType.SPECIFIC.name());
+            Assert.assertEquals(result.getExecutionSource(), KeywordSourceType.BASE.name());
             Assert.assertTrue(fakeDriver.element("//button[contains(text(),'Meeting Room A')]").isClicked());
         }
     }

@@ -119,7 +119,7 @@ public class ExcelExecutionReportTest {
             Assert.assertTrue(reportHtml.contains("//button[contains(text(),&#39;{ROOM_NAME}&#39;)]"));
             Assert.assertTrue(reportHtml.contains("//button[contains(text(),&#39;Meeting Room A&#39;)]"));
             Assert.assertTrue(reportHtml.contains("BaseFunction.input"));
-            Assert.assertTrue(reportHtml.contains("SpecificFunction.click"));
+            Assert.assertTrue(reportHtml.contains("BaseFunction.click"));
             Assert.assertTrue(reportHtml.contains("Manual screenshot"));
             Assert.assertTrue(reportHtml.contains("Evidence Gallery"));
             Assert.assertTrue(reportHtml.contains("Screenshots/"));

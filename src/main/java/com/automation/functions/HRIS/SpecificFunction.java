@@ -9,10 +9,6 @@ public class SpecificFunction extends BaseFunction {
         super(driver);
     }
 
-    public void waitForApplicationReady() {
-        currentStep();
-    }
-
     public void verifyEmployeeVisible() {
         verifyTextContains();
     }

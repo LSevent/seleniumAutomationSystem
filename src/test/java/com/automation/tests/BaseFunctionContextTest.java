@@ -73,6 +73,26 @@ public class BaseFunctionContextTest {
     }
 
     @Test
+    public void selectShouldUseResolvedXPathAndResolvedValue() {
+        FakeWebDriver driver = driver();
+        StepContextHolder.set(step(
+                "select",
+                "sltScheduleType",
+                "BOOKING_DATA.SCHEDULE_TYPE",
+                "Repeating Meeting",
+                "//select[@id='raw-schedule-type']",
+                "//select[@id='resolved-schedule-type']"
+        ));
+
+        new BaseFunction(driver.driver()).select();
+
+        Assert.assertEquals(
+                driver.element("//select[@id='resolved-schedule-type']").getSelectedOption(),
+                "Repeating Meeting"
+        );
+    }
+
+    @Test
     public void verifyDisplayedShouldUseResolvedXPath() {
         FakeWebDriver driver = driver();
         StepContextHolder.set(step(
@@ -85,6 +105,22 @@ public class BaseFunctionContextTest {
         ));
 
         new BaseFunction(driver.driver()).verifyDisplayed();
+    }
+
+    @Test
+    public void verifyNotDisplayedShouldAcceptHiddenResolvedElement() {
+        FakeWebDriver driver = driver();
+        driver.element("//div[@id='resolved-message']").setDisplayed(false);
+        StepContextHolder.set(step(
+                "verifyNotDisplayed",
+                "lblMessage",
+                "",
+                "",
+                "//div[@id='raw-message']",
+                "//div[@id='resolved-message']"
+        ));
+
+        new BaseFunction(driver.driver()).verifyNotDisplayed();
     }
 
     @Test
@@ -215,6 +251,11 @@ public class BaseFunctionContextTest {
         driver.addElement("//input[@id='resolved-password']", "");
         driver.addElement("//h1[@id='resolved-dashboard']", "Dashboard");
         driver.addElement("//div[@id='resolved-message']", "Ready");
+        driver.addSelect(
+                "//select[@id='resolved-schedule-type']",
+                "Single Meeting",
+                "Repeating Meeting"
+        );
         return driver;
     }
 

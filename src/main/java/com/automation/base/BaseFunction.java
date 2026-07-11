@@ -4,13 +4,11 @@ import com.automation.drivers.DriverFactory;
 import com.automation.utils.JavaScriptUtil;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.openqa.selenium.ElementClickInterceptedException;
 import org.openqa.selenium.Keys;
-import org.openqa.selenium.StaleElementReferenceException;
-import org.openqa.selenium.TimeoutException;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebDriverException;
 import org.openqa.selenium.WebElement;
+import org.openqa.selenium.support.ui.Select;
 
 public class BaseFunction extends KeywordSupport {
 
@@ -48,24 +46,38 @@ public class BaseFunction extends KeywordSupport {
         visibleElement("clear").clear();
     }
 
-    public String getText() {
-        return visibleText("getText");
+    public void select() {
+        new Select(visibleElement("select")).selectByVisibleText(value().trim());
     }
 
     public void verifyDisplayed() {
-        String targetXPath = xpath();
-        WebElement element = waitForVisibleElement(targetXPath, "verifyDisplayed");
-        if (!element.isDisplayed()) {
-            failWithCurrentStepContext("Element is not displayed. XPath: " + targetXPath);
-        }
+        visibleElement("verifyDisplayed");
+    }
+
+    public void verifyNotDisplayed() {
+        invisibleElement("verifyNotDisplayed");
     }
 
     public void verifyText() {
-        verifyElementTextEquals(value());
+        String targetXPath = xpath();
+        String expected = value();
+        String actual = waitForVisibleElement(targetXPath, "verifyText").getText();
+        if (!expected.equals(actual)) {
+            failWithCurrentStepContext(
+                    "Expected text '" + expected + "' but found '" + actual + "'. XPath: " + targetXPath
+            );
+        }
     }
 
     public void verifyTextContains() {
-        verifyElementTextContains(value());
+        String targetXPath = xpath();
+        String expected = value();
+        String actual = waitForVisibleElement(targetXPath, "verifyTextContains").getText();
+        if (!actual.contains(expected)) {
+            failWithCurrentStepContext(
+                    "Expected text to contain '" + expected + "' but found '" + actual + "'. XPath: " + targetXPath
+            );
+        }
     }
 
     public void verifyUrlContains() {
@@ -73,19 +85,25 @@ public class BaseFunction extends KeywordSupport {
     }
 
     public void verifyTitle() {
-        assertEquals("title", value().trim(), driver.getTitle());
+        String expected = value().trim();
+        String actual = driver.getTitle();
+        if (!expected.equals(actual)) {
+            failWithCurrentStepContext(
+                    "Expected title '" + expected + "' but actual title was '" + actual + "'."
+            );
+        }
     }
 
     public void verifyTitleContains() {
         assertContains("title", value().trim(), driver.getTitle());
     }
 
-    public WebElement waitVisible() {
-        return visibleElement("waitVisible");
+    public void waitVisible() {
+        visibleElement("waitVisible");
     }
 
-    public WebElement waitClickable() {
-        return clickableElement("waitClickable");
+    public void waitClickable() {
+        clickableElement("waitClickable");
     }
 
     public void scrollToElement() {
@@ -95,9 +113,7 @@ public class BaseFunction extends KeywordSupport {
     public void safeClick() {
         String targetXPath = xpath();
         try {
-            click();
-        } catch (ElementClickInterceptedException | StaleElementReferenceException | TimeoutException exception) {
-            clickUsingJavaScript(targetXPath, exception);
+            waitForClickableElement(targetXPath, "safeClick").click();
         } catch (WebDriverException exception) {
             clickUsingJavaScript(targetXPath, exception);
         }
@@ -119,18 +135,6 @@ public class BaseFunction extends KeywordSupport {
         captureFullPageInParts();
     }
 
-    public boolean isDisplayed() {
-        try {
-            return visibleElement("isDisplayed").isDisplayed();
-        } catch (AssertionError exception) {
-            return false;
-        }
-    }
-
-    public boolean isNotDisplayed() {
-        return !isDisplayed();
-    }
-
     private void clickUsingJavaScript(String xpath, RuntimeException originalException) {
         try {
             WebElement element = waitForVisibleElement(xpath, "safeClick");
@@ -139,34 +143,6 @@ public class BaseFunction extends KeywordSupport {
         } catch (RuntimeException fallbackException) {
             fallbackException.addSuppressed(originalException);
             throw new AssertionError("Safe click failed for XPath: " + xpath, fallbackException);
-        }
-    }
-
-    private void verifyElementTextEquals(String expectedText) {
-        String targetXPath = xpath();
-        String actual = waitForVisibleElement(targetXPath, "verifyText").getText();
-        if (!expectedText.equals(actual)) {
-            failWithCurrentStepContext(
-                    "Expected text '" + expectedText + "' but found '" + actual + "'. XPath: " + targetXPath
-            );
-        }
-    }
-
-    private void verifyElementTextContains(String expected) {
-        String targetXPath = xpath();
-        String actual = waitForVisibleElement(targetXPath, "verifyTextContains").getText();
-        if (!actual.contains(expected)) {
-            failWithCurrentStepContext(
-                    "Expected text to contain '" + expected + "' but found '" + actual + "'. XPath: " + targetXPath
-            );
-        }
-    }
-
-    private void assertEquals(String label, String expected, String actual) {
-        if (!expected.equals(actual)) {
-            failWithCurrentStepContext(
-                    "Expected " + label + " '" + expected + "' but actual " + label + " was '" + actual + "'."
-            );
         }
     }
 

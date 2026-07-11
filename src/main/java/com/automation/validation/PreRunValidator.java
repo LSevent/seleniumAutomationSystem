@@ -132,10 +132,10 @@ public class PreRunValidator {
             case "screenshotpartbyobject" -> requireObjectAndXPath(step, keyword, errors);
             case "openurl", "verifyurlcontains", "verifytitle", "verifytitlecontains" ->
                     requireValue(step, keyword, errors);
-            case "click", "verifydisplayed", "clear", "gettext", "waitvisible", "waitclickable",
-                    "scrolltoelement", "safeclick", "pressenter", "isdisplayed", "isnotdisplayed" ->
+            case "click", "verifydisplayed", "verifynotdisplayed", "clear", "waitvisible", "waitclickable",
+                    "scrolltoelement", "safeclick", "pressenter", "selectroombyname" ->
                     requireObjectAndXPath(step, keyword, errors);
-            case "input", "verifytext", "verifytextcontains", "selectroombyname",
+            case "input", "select", "verifytext", "verifytextcontains",
                     "verifybookingcreated", "verifyemployeevisible" -> {
                 requireObjectAndXPath(step, keyword, errors);
                 requireValue(step, keyword, errors);

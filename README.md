@@ -398,8 +398,9 @@ Supported common Excel commands:
 | `click` | Yes | No | Waits for the resolved object XPath to be clickable, then clicks it. |
 | `input` | Yes | Yes | Waits for the resolved object XPath, clears the element when possible, then types `Value`. |
 | `clear` | Yes | No | Clears the target element. |
-| `getText` | Yes | No | Reads text from the target element. As an Excel step, the returned value is not stored back into Excel. |
+| `select` | Yes | Yes | Selects an option from a native HTML `<select>` by its visible text. |
 | `verifyDisplayed` | Yes | No | Fails if the target element is not displayed. |
+| `verifyNotDisplayed` | Yes | No | Waits for the target element to become hidden or absent and fails if it remains displayed. |
 | `verifyText` | Yes | Yes | Fails unless the target element text exactly equals `Value`. |
 | `verifyTextContains` | Yes | Yes | Fails unless the target element text contains `Value`. |
 | `verifyUrlContains` | No | Yes | Fails unless the current browser URL contains `Value`. |
@@ -410,8 +411,8 @@ Supported common Excel commands:
 | `scrollToElement` | Yes | No | Scrolls the target element into view. |
 | `safeClick` | Yes | No | Tries a normal click first, then falls back to JavaScript click when Selenium click is intercepted or stale. |
 | `pressEnter` | Yes | No | Sends the Enter key to the target element. |
-| `isDisplayed` | Yes | No | Returns whether the target element is displayed. As an Excel step, the returned value is not stored back into Excel. |
-| `isNotDisplayed` | Yes | No | Returns the opposite of `isDisplayed`. As an Excel step, the returned value is not stored back into Excel. |
+
+Excel-facing keywords are no-argument `void` commands. Internal helpers may return text or elements for custom Java workflows, but return-only methods are intentionally not exposed as Excel keywords because Excel does not consume Java return values.
 
 Screenshot keywords are normal reusable `BaseFunction` keywords. `KeywordEngine` still owns the execution context and evidence collection, while `ScreenshotService` owns the actual screenshot file creation. This keeps screenshot keywords easy to reuse from `SpecificFunction` methods without adding special engine-only code for each screenshot command.
 
@@ -530,13 +531,9 @@ Currently implemented application-specific commands:
 
 | Application | Keyword | Purpose |
 | --- | --- | --- |
-| `BRS` | `click` | Overrides the common `click` keyword while currently delegating to the shared behavior. |
-| `BRS` | `selectRoomByName` | Uses the resolved object XPath and value flow for selecting a room. |
+| `BRS` | `selectRoomByName` | Uses the resolved object XPath to select a room, including dynamic XPath values when configured. |
 | `BRS` | `verifyBookingCreated` | Verifies booking success text using application-specific naming. |
-| `BRS` | `waitForApplicationReady` | Placeholder application-ready command for BRS-specific flows. |
 | `HRIS` | `verifyEmployeeVisible` | Verifies employee text using HRIS-specific naming. |
-| `HRIS` | `waitForApplicationReady` | Placeholder application-ready command for HRIS-specific flows. |
-| `CRM` | `waitForApplicationReady` | Placeholder application-ready command for CRM-specific flows. |
 
 To add a custom application command, add a public no-argument method to the matching `SpecificFunction` class, then use the method name in the Excel `Keyword` column.
 

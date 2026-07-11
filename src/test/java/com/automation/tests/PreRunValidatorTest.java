@@ -19,9 +19,11 @@ public class PreRunValidatorTest {
         validator.validate(plan(
                 step("openUrl", "", "CONFIG.BASE_URL", "file:///test.html", "", "", "BRS"),
                 step("input", "txtUsername", "LOGIN_DATA.USERNAME", "brs_admin", "//input[@id='username']", "//input[@id='username']", "BRS"),
+                step("select", "sltScheduleType", "BOOKING_DATA.SCHEDULE_TYPE", "Repeating Meeting", "//select[@id='scheduleType']", "//select[@id='scheduleType']", "BRS"),
                 step("click", "btnLogin", "", "", "//button[@id='login']", "//button[@id='login']", "BRS"),
                 step("verifyText", "message", "DATA.MESSAGE", "Success", "//div[@id='message']", "//div[@id='message']", "BRS"),
                 step("verifyDisplayed", "dashboard", "", "", "//h1", "//h1", "BRS"),
+                step("verifyNotDisplayed", "loading", "", "", "//div[@id='loading']", "//div[@id='loading']", "BRS"),
                 step("ifEquals", "", "BOOKING_DATA.SCHEDULE_TYPE = Single Meeting", "BOOKING_DATA.SCHEDULE_TYPE = Single Meeting", "", "", "BRS"),
                 step("else", "", "", "", "", "", "BRS"),
                 step("endIf", "", "", "", "", "", "BRS"),
@@ -38,17 +40,16 @@ public class PreRunValidatorTest {
         List<String> keywords = List.of(
                 "click",
                 "verifyDisplayed",
+                "verifyNotDisplayed",
                 "clear",
-                "getText",
                 "waitVisible",
                 "waitClickable",
                 "scrollToElement",
                 "safeClick",
                 "pressEnter",
-                "isDisplayed",
-                "isNotDisplayed",
                 "screenshotPartByObject",
                 "input",
+                "select",
                 "verifyText",
                 "verifyTextContains",
                 "selectRoomByName",
@@ -79,9 +80,9 @@ public class PreRunValidatorTest {
                 "verifyTitle",
                 "verifyTitleContains",
                 "input",
+                "select",
                 "verifyText",
                 "verifyTextContains",
-                "selectRoomByName",
                 "verifyBookingCreated",
                 "verifyEmployeeVisible"
         );
@@ -216,6 +217,19 @@ public class PreRunValidatorTest {
                 "Meeting Room A",
                 "//button[contains(text(),'{ROOM_NAME}')]",
                 "//button[contains(text(),'Meeting Room A')]",
+                "BRS"
+        )));
+    }
+
+    @Test
+    public void selectRoomByNameShouldNotRequireValueForStaticXPath() {
+        validator.validate(plan(step(
+                "selectRoomByName",
+                "btnDefaultRoom",
+                "",
+                "",
+                "//button[@id='default-room']",
+                "//button[@id='default-room']",
                 "BRS"
         )));
     }
