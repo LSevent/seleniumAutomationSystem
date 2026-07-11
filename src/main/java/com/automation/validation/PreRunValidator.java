@@ -1,6 +1,7 @@
 package com.automation.validation;
 
-import com.automation.base.BaseFunction;
+import com.automation.engine.KeywordCatalog;
+import com.automation.engine.KeywordRequirements;
 import com.automation.exceptions.ErrorContext;
 import com.automation.exceptions.FrameworkException;
 import com.automation.models.ConditionExpression;
@@ -10,18 +11,14 @@ import com.automation.models.ResolvedStepContext;
 import com.automation.models.ResolvedTestcaseContext;
 import com.automation.utils.XPathResolver;
 
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
+import java.util.Optional;
 
 public class PreRunValidator {
 
-    private static final String SPECIFIC_FUNCTION_PACKAGE_PREFIX = "com.automation.functions.";
-    private static final String SPECIFIC_FUNCTION_CLASS_SUFFIX = ".SpecificFunction";
-
     private final XPathResolver xpathResolver = new XPathResolver();
+    private final KeywordCatalog keywordCatalog = new KeywordCatalog();
 
     public void validate(List<ResolvedScenarioContext> executionPlan) {
         if (executionPlan == null) {
@@ -115,50 +112,40 @@ public class PreRunValidator {
             return;
         }
 
-        validateKeywordIsKnown(step, keyword, errors);
+        Optional<KeywordCatalog.KeywordDefinition> keywordDefinition = validateKeywordIsKnown(
+                step,
+                keyword,
+                errors
+        );
 
         validateDynamicXPath(step, errors);
-        if (keyword.isBlank()) {
+        if (keyword.isBlank() || keywordDefinition.isEmpty()) {
             return;
         }
 
-        String normalizedKeyword = keyword.toLowerCase(Locale.ROOT);
-        switch (normalizedKeyword) {
-            case "screenshot", "screenshotfullpart" -> {
-                // Screenshot keywords intentionally have no Object/XPath/Value requirement.
-            }
-            case "screenshotpartbyobject" -> requireObjectAndXPath(step, keyword, errors);
-            case "openurl", "verifyurlcontains", "verifytitle", "verifytitlecontains" ->
-                    requireValue(step, keyword, errors);
-            case "click", "verifydisplayed", "verifynotdisplayed", "clear", "waitvisible", "waitclickable",
-                    "scrolltoelement", "safeclick", "pressenter", "selectroombyname" ->
-                    requireObjectAndXPath(step, keyword, errors);
-            case "input", "select", "verifytext", "verifytextcontains",
-                    "verifybookingcreated", "verifyemployeevisible" -> {
-                requireObjectAndXPath(step, keyword, errors);
-                requireValue(step, keyword, errors);
-            }
-            default -> {
-                // Phase 13B intentionally validates only the simple keyword rules above.
-            }
+        KeywordRequirements requirements = keywordDefinition.get().requirements();
+        if (requirements.objectRequired()) {
+            requireObjectAndXPath(step, keyword, errors);
+        }
+        if (requirements.valueRequired()) {
+            requireValue(step, keyword, errors);
         }
     }
 
-    private void validateKeywordIsKnown(
+    private Optional<KeywordCatalog.KeywordDefinition> validateKeywordIsKnown(
             ResolvedStepContext step,
             String keyword,
             List<ValidationError> errors
     ) {
-        if (keyword.isBlank() || isBlank(step.getApplication()) || isScreenshotKeyword(keyword)) {
-            return;
+        if (keyword.isBlank() || isBlank(step.getApplication())) {
+            return Optional.empty();
         }
-        if (hasNoArgumentKeywordMethod(BaseFunction.class, keyword)) {
-            return;
-        }
-
-        Class<?> specificFunctionClass = loadSpecificFunctionClass(step.getApplication());
-        if (specificFunctionClass != null && hasNoArgumentKeywordMethod(specificFunctionClass, keyword)) {
-            return;
+        Optional<KeywordCatalog.KeywordDefinition> definition = keywordCatalog.discover(
+                step.getApplication(),
+                keyword
+        );
+        if (definition.isPresent()) {
+            return definition;
         }
 
         addStepError(
@@ -168,6 +155,7 @@ public class PreRunValidator {
                         + "SpecificFunction for application '" + safe(step.getApplication()) + "' or BaseFunction.",
                 step
         );
+        return Optional.empty();
     }
 
     private void validateConditionalDirective(
@@ -298,38 +286,6 @@ public class PreRunValidator {
 
     private String safe(String value) {
         return value == null ? "" : value.trim();
-    }
-
-    private boolean isScreenshotKeyword(String keyword) {
-        String normalizedKeyword = safe(keyword);
-        return "screenshot".equalsIgnoreCase(normalizedKeyword)
-                || "screenshotPartByObject".equalsIgnoreCase(normalizedKeyword)
-                || "screenshotFullPart".equalsIgnoreCase(normalizedKeyword);
-    }
-
-    private Class<?> loadSpecificFunctionClass(String application) {
-        try {
-            return Class.forName(
-                    SPECIFIC_FUNCTION_PACKAGE_PREFIX
-                            + safe(application).toUpperCase(Locale.ROOT)
-                            + SPECIFIC_FUNCTION_CLASS_SUFFIX,
-                    false,
-                    Thread.currentThread().getContextClassLoader()
-            );
-        } catch (ClassNotFoundException exception) {
-            return null;
-        }
-    }
-
-    private boolean hasNoArgumentKeywordMethod(Class<?> type, String keyword) {
-        for (Method method : type.getDeclaredMethods()) {
-            if (method.getName().equals(keyword)
-                    && Modifier.isPublic(method.getModifiers())
-                    && method.getParameterCount() == 0) {
-                return true;
-            }
-        }
-        return false;
     }
 
     private record ValidationError(

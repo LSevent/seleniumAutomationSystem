@@ -23,6 +23,7 @@
             <class name="com.automation.tests.ObjectRepositoryValidationTest"/>
             <class name="com.automation.tests.BaseFunctionTest"/>
             <class name="com.automation.tests.BaseFunctionContextTest"/>
+            <class name="com.automation.tests.KeywordCatalogTest"/>
             <class name="com.automation.tests.KeywordResolverTest"/>
             <class name="com.automation.tests.KeywordResolverNoArgTest"/>
             <class name="com.automation.tests.SpecificFunctionContextTest"/>

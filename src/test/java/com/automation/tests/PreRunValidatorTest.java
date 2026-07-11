@@ -58,8 +58,9 @@ public class PreRunValidatorTest {
         );
 
         for (String keyword : keywords) {
+            String application = keyword.equals("verifyEmployeeVisible") ? "HRIS" : "BRS";
             FrameworkException exception = validationFailure(step(
-                    keyword, "targetObject", "literal value", "resolved value", "", "", "BRS"
+                    keyword, "targetObject", "literal value", "resolved value", "", "", application
             ));
 
             assertContainsContext(
@@ -67,7 +68,7 @@ public class PreRunValidatorTest {
                     "XPath is required for keyword '" + keyword + "'.",
                     keyword,
                     "targetObject",
-                    "BRS"
+                    application
             );
         }
     }
@@ -88,6 +89,7 @@ public class PreRunValidatorTest {
         );
 
         for (String keyword : keywords) {
+            String application = keyword.equals("verifyEmployeeVisible") ? "HRIS" : "BRS";
             boolean xpathRequired = !keyword.equals("openUrl")
                     && !keyword.equals("verifyUrlContains")
                     && !keyword.equals("verifyTitle")
@@ -95,7 +97,7 @@ public class PreRunValidatorTest {
             String objectName = xpathRequired ? "targetObject" : "";
             String resolvedXPath = xpathRequired ? "//div[@id='target']" : "";
             FrameworkException exception = validationFailure(step(
-                    keyword, objectName, "", "", resolvedXPath, resolvedXPath, "BRS"
+                    keyword, objectName, "", "", resolvedXPath, resolvedXPath, application
             ));
 
             assertContainsContext(
@@ -103,7 +105,7 @@ public class PreRunValidatorTest {
                     "Value is required for keyword '" + keyword + "'.",
                     keyword,
                     objectName,
-                    "BRS"
+                    application
             );
         }
     }

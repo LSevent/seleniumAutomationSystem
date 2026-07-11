@@ -533,6 +533,8 @@ Keyword lookup order:
 
 If the same no-argument method exists in both `SpecificFunction` and `BaseFunction`, the application-specific method wins. Public parameter-based keyword fallback is no longer part of runtime resolution.
 
+`KeywordCatalog` is the shared source for this discovery order. Both `KeywordResolver` and `PreRunValidator` use the same catalog, so a keyword cannot be accepted during validation and then resolved differently at runtime. The catalog also keeps the required Excel inputs (`Object` and/or `Value`) in one place instead of repeating keyword-name switches across the framework.
+
 Currently implemented application-specific commands:
 
 | Application | Keyword | Purpose |
@@ -541,7 +543,7 @@ Currently implemented application-specific commands:
 | `BRS` | `verifyBookingCreated` | Verifies booking success text using application-specific naming. |
 | `HRIS` | `verifyEmployeeVisible` | Verifies employee text using HRIS-specific naming. |
 
-To add a custom application command, add a public no-argument method to the matching `SpecificFunction` class, then use the method name in the Excel `Keyword` column.
+To add a custom application command, add a public no-argument method to the matching `SpecificFunction` class, then use the method name in the Excel `Keyword` column. The method is discovered automatically. If it requires `Object`, `Value`, or both, add that early-validation requirement once in `KeywordCatalog`; a custom keyword without a registered requirement keeps the permissive no-required-input behavior.
 
 Custom application commands can also compose screenshot evidence. For example, a `SpecificFunction` method may call `screenshot()` for a normal screenshot, `screenshotPartByObject()` for multi-part object evidence, or `screenshotFullPart()` for full-page scroll evidence. The framework still collects the generated evidence through `KeywordEngine`, so the report behavior stays consistent.
 

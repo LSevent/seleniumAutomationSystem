@@ -15,18 +15,14 @@ import org.openqa.selenium.WebDriver;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
 import java.util.Locale;
-import java.util.Optional;
 
 public class KeywordResolver {
 
     private static final Logger LOGGER = LogManager.getLogger(KeywordResolver.class);
-    private static final String SPECIFIC_FUNCTION_PACKAGE_PREFIX = "com.automation.functions.";
-    private static final String SPECIFIC_FUNCTION_CLASS_SUFFIX = ".SpecificFunction";
-
     private final WebDriver driver;
     private final BaseFunction baseFunction;
+    private final KeywordCatalog keywordCatalog;
 
     public KeywordResolver(WebDriver driver) {
         if (driver == null) {
@@ -34,6 +30,7 @@ public class KeywordResolver {
         }
         this.driver = driver;
         this.baseFunction = new BaseFunction(driver);
+        this.keywordCatalog = new KeywordCatalog();
     }
 
     public ResolvedKeyword resolve(String application, String keywordName) {
@@ -81,69 +78,33 @@ public class KeywordResolver {
         validateKeywordName(keywordName);
         String keyword = keywordName.trim();
         String normalizedApplication = normalizeApplication(application, keyword);
-        String specificClassName = specificClassName(normalizedApplication);
 
         LOGGER.info("Resolving keyword '{}' for application '{}'.", keyword, normalizedApplication);
 
-        Class<?> specificClass = loadSpecificFunctionClass(specificClassName, normalizedApplication);
-        if (specificClass != null) {
-            Optional<Method> specificMethod = findNoArgMethod(specificClass, keyword, true);
-            if (specificMethod.isPresent()) {
-                return specificResolution(specificClass, normalizedApplication, keyword, specificMethod.get());
-            }
-        }
+        KeywordCatalog.KeywordDefinition definition = keywordCatalog.discover(normalizedApplication, keyword)
+                .orElseThrow(() -> new FrameworkException(withStepContext(
+                        "Keyword '" + keyword + "' not found in SpecificFunction for application '"
+                                + normalizedApplication + "' or BaseFunction.",
+                        step
+                )));
 
-        Optional<Method> baseMethod = findNoArgMethod(BaseFunction.class, keyword, true);
-        if (baseMethod.isPresent()) {
-            return baseResolution(normalizedApplication, keyword, baseMethod.get());
-        }
-
-        String missingKeywordMessage = "Keyword '" + keyword + "' not found in SpecificFunction for application '"
-                + normalizedApplication + "' or BaseFunction.";
-        throw new FrameworkException(withStepContext(missingKeywordMessage, step));
-    }
-
-    private MethodResolution specificResolution(
-            Class<?> specificClass,
-            String application,
-            String keyword,
-            Method method
-    ) {
-        Object target = createSpecificFunction(specificClass, application);
+        Object target = definition.sourceType() == KeywordSourceType.SPECIFIC
+                ? createSpecificFunction(definition.implementationClass(), normalizedApplication)
+                : baseFunction;
         ResolvedKeyword resolvedKeyword = new ResolvedKeyword(
-                application,
+                normalizedApplication,
                 keyword,
-                specificClass.getName(),
-                KeywordSourceType.SPECIFIC,
-                method.getName()
+                definition.implementationClass().getName(),
+                definition.sourceType(),
+                definition.method().getName()
         );
-        LOGGER.info("Selected SpecificFunction for keyword '{}': {}", keyword, specificClass.getName());
-        return new MethodResolution(resolvedKeyword, method, target);
-    }
-
-    private MethodResolution baseResolution(String application, String keyword, Method method) {
-        ResolvedKeyword resolvedKeyword = new ResolvedKeyword(
-                application,
+        LOGGER.info(
+                "Selected {} for keyword '{}': {}",
+                definition.sourceType() == KeywordSourceType.SPECIFIC ? "SpecificFunction" : "BaseFunction",
                 keyword,
-                BaseFunction.class.getName(),
-                KeywordSourceType.BASE,
-                method.getName()
+                definition.implementationClass().getName()
         );
-        LOGGER.info("Selected BaseFunction for keyword '{}'.", keyword);
-        return new MethodResolution(resolvedKeyword, method, baseFunction);
-    }
-
-    private Class<?> loadSpecificFunctionClass(String className, String application) {
-        try {
-            return Class.forName(className);
-        } catch (ClassNotFoundException exception) {
-            LOGGER.warn(
-                    "SpecificFunction not found for application '{}'. Expected class: {}. Checking BaseFunction.",
-                    application,
-                    className
-            );
-            return null;
-        }
+        return new MethodResolution(resolvedKeyword, definition.method(), target);
     }
 
     private Object createSpecificFunction(Class<?> functionClass, String application) {
@@ -156,18 +117,6 @@ public class KeywordResolver {
         } catch (InstantiationException | IllegalAccessException | InvocationTargetException exception) {
             throw new FrameworkException("Could not create SpecificFunction for application '" + application + "'.", exception);
         }
-    }
-
-    private Optional<Method> findNoArgMethod(Class<?> functionClass, String keyword, boolean declaredOnly) {
-        Method[] methods = declaredOnly ? functionClass.getDeclaredMethods() : functionClass.getMethods();
-        for (Method method : methods) {
-            if (method.getName().equals(keyword)
-                    && Modifier.isPublic(method.getModifiers())
-                    && method.getParameterCount() == 0) {
-                return Optional.of(method);
-            }
-        }
-        return Optional.empty();
     }
 
     private RuntimeException keywordExecutionFailure(
@@ -197,10 +146,6 @@ public class KeywordResolver {
         if (isBlank(keywordName)) {
             throw new FrameworkException("Keyword name is required.");
         }
-    }
-
-    private String specificClassName(String normalizedApplication) {
-        return SPECIFIC_FUNCTION_PACKAGE_PREFIX + normalizedApplication + SPECIFIC_FUNCTION_CLASS_SUFFIX;
     }
 
     private boolean isBlank(String value) {
