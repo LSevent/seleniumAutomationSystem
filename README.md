@@ -428,6 +428,8 @@ Screenshot keywords are normal reusable `BaseFunction` keywords. `KeywordEngine`
 | `screenshotPartByObject` | Yes | No | Scrolls the resolved object/page and captures one or more screenshot parts. `Description` is used as the screenshot/evidence label; when blank, the object name is used. |
 | `screenshotFullPart` | No | No | Scrolls the browser page using `document.scrollingElement` and captures one or more screenshot parts. `Description` is used as the screenshot/evidence label. |
 
+Multi-part evidence is shown as separate gallery items. Object captures use `Object screenshot` labels, while `screenshotFullPart` uses explicit `Full-page screenshot` labels. If a custom keyword captures evidence and later fails, the report preserves the collected evidence and adds the failure screenshot beside it instead of replacing it.
+
 Conditional flow directives are handled by `ScenarioRunner`, not by `BaseFunction` or `SpecificFunction`.
 
 | Keyword | Object required | Value required | Purpose |

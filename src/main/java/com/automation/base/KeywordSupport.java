@@ -91,62 +91,46 @@ public abstract class KeywordSupport {
     }
 
     protected String captureScreen() {
-        return captureScreen(ScreenshotContextHolder.service().manualLabel(currentStep()));
-    }
-
-    protected String captureScreen(String label) {
         if (!ScreenshotContextHolder.isManualScreenshotEnabled()) {
             return "";
         }
 
+        ResolvedStepContext step = currentStep();
         String screenshotPath = ScreenshotContextHolder.service().captureScreen(
                 driver,
-                currentStep(),
-                label
+                step,
+                ScreenshotContextHolder.service().manualLabel(step)
         );
         registerEvidence(screenshotPath);
         return screenshotPath == null ? "" : screenshotPath;
     }
 
     protected List<String> captureObjectInParts() {
-        return captureObjectInParts(ScreenshotContextHolder.service().objectLabel(currentStep()));
-    }
-
-    protected List<String> captureObjectInParts(String label) {
-        return captureObjectInParts(
-                visibleElement("screenshotPartByObject"),
-                label
-        );
-    }
-
-    protected List<String> captureObjectInParts(WebElement element, String label) {
         if (!ScreenshotContextHolder.isManualScreenshotEnabled()) {
             return List.of();
         }
 
+        ResolvedStepContext step = currentStep();
         List<String> screenshotPaths = ScreenshotContextHolder.service().captureObjectInParts(
                 driver,
-                element,
-                currentStep(),
-                label
+                visibleElement("screenshotPartByObject"),
+                step,
+                ScreenshotContextHolder.service().objectLabel(step)
         );
         registerEvidence(screenshotPaths);
         return screenshotPaths;
     }
 
     protected List<String> captureFullPageInParts() {
-        return captureFullPageInParts(ScreenshotContextHolder.service().fullPageLabel(currentStep()));
-    }
-
-    protected List<String> captureFullPageInParts(String label) {
         if (!ScreenshotContextHolder.isManualScreenshotEnabled()) {
             return List.of();
         }
 
+        ResolvedStepContext step = currentStep();
         List<String> screenshotPaths = ScreenshotContextHolder.service().captureFullPageInParts(
                 driver,
-                currentStep(),
-                label
+                step,
+                ScreenshotContextHolder.service().fullPageLabel(step)
         );
         registerEvidence(screenshotPaths);
         return screenshotPaths;

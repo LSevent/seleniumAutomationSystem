@@ -166,7 +166,7 @@ public class ExcelExecutionReporter {
         }
     }
 
-    public void attachScreenshot(ExecutionResult result, String screenshotPath, String label) {
+    private void attachScreenshot(String screenshotPath, String label) {
         if (testCaseNode == null || screenshotPath == null || screenshotPath.isBlank()) {
             return;
         }
@@ -229,27 +229,29 @@ public class ExcelExecutionReporter {
     }
 
     private String evidenceFor(ExecutionResult result) {
-        if (!result.isSuccess() && config.isScreenshotOnFailure()) {
-            String screenshotPath = captureFailureScreenshot(result);
-            if (!screenshotPath.isBlank()) {
-                attachScreenshot(result, screenshotPath, "Failure screenshot");
-                return screenshotLink(screenshotPath, "Failure screenshot");
-            }
-        }
-
         String evidence = safe(result.getEvidence());
         List<String> screenshotPaths = screenshotEvidencePaths(evidence);
+        List<String> renderedEvidence = new ArrayList<>();
         if (!screenshotPaths.isEmpty()) {
-            List<String> links = new ArrayList<>();
             for (int index = 0; index < screenshotPaths.size(); index++) {
                 String label = screenshotLabel(result, screenshotPaths.size(), index + 1);
                 String screenshotPath = screenshotPaths.get(index);
-                attachScreenshot(result, screenshotPath, label);
-                links.add(screenshotLink(screenshotPath, label));
+                attachScreenshot(screenshotPath, label);
+                renderedEvidence.add(screenshotLink(screenshotPath, label));
             }
-            return String.join("<br>", links);
+        } else if (!evidence.isBlank()) {
+            renderedEvidence.add(evidence);
         }
-        return evidence;
+
+        if (!result.isSuccess() && config.isScreenshotOnFailure()) {
+            String failureScreenshotPath = captureFailureScreenshot(result);
+            if (!failureScreenshotPath.isBlank()) {
+                attachScreenshot(failureScreenshotPath, "Failure screenshot");
+                renderedEvidence.add(screenshotLink(failureScreenshotPath, "Failure screenshot"));
+            }
+        }
+
+        return String.join("<br>", renderedEvidence);
     }
 
     private List<String> screenshotEvidencePaths(String evidence) {
@@ -519,6 +521,10 @@ public class ExcelExecutionReporter {
                 label = safe(result.getObjectName());
             }
             return (label.isBlank() ? "Object screenshot" : "Object screenshot: " + label) + suffix;
+        }
+        if ("screenshotFullPart".equalsIgnoreCase(safe(result.getKeywordName()).trim())) {
+            String label = safe(result.getDescription());
+            return (label.isBlank() ? "Full-page screenshot" : "Full-page screenshot: " + label) + suffix;
         }
         String label = safe(result.getDescription()).isBlank()
                 ? "Screenshot"

@@ -59,7 +59,7 @@ public class ScreenshotKeywordSupportTest {
         NamingProbeScreenshotService service = new NamingProbeScreenshotService();
         ResolvedStepContext step = step("screenshot", "", "Value should not label screenshot", "After login");
 
-        service.captureScreen(null, step);
+        service.captureScreen(null, step, service.manualLabel(step));
 
         Assert.assertEquals(service.observedScreenshotName, "25F_Login BRS_step3_row9_After login");
         Assert.assertFalse(service.observedScreenshotName.contains("Value should not label screenshot"));

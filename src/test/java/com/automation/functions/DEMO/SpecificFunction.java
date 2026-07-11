@@ -16,4 +16,9 @@ public class SpecificFunction extends BaseFunction {
     public void captureObjectScreenshotEvidence() {
         screenshotPartByObject();
     }
+
+    public void captureScreenshotThenFail() {
+        screenshot();
+        throw new AssertionError("Intentional failure after screenshot evidence.");
+    }
 }

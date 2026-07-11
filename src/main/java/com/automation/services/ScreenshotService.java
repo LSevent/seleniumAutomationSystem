@@ -32,16 +32,8 @@ public class ScreenshotService {
         return ScreenshotUtil.captureScreenshot(driver, screenshotName, outputDirectory);
     }
 
-    public String captureScreen(WebDriver driver, ResolvedStepContext step) {
-        return captureScreen(driver, step, manualLabel(step));
-    }
-
     public String captureScreen(WebDriver driver, ResolvedStepContext step, String label) {
         return capture(driver, screenshotName(step, label, "ManualScreenshot"));
-    }
-
-    public List<String> captureObjectInParts(WebDriver driver, WebElement element, ResolvedStepContext step) {
-        return captureObjectInParts(driver, element, step, objectLabel(step));
     }
 
     public List<String> captureObjectInParts(WebDriver driver, WebElement element, ResolvedStepContext step, String label) {
@@ -129,10 +121,6 @@ public class ScreenshotService {
         }
 
         return screenshotPaths;
-    }
-
-    public List<String> captureFullPageInParts(WebDriver driver, ResolvedStepContext step) {
-        return captureFullPageInParts(driver, step, fullPageLabel(step));
     }
 
     public List<String> captureFullPageInParts(WebDriver driver, ResolvedStepContext step, String label) {
@@ -229,7 +217,7 @@ public class ScreenshotService {
         );
     }
 
-    private void pauseAfterScroll() {
+    protected void pauseAfterScroll() {
         try {
             Thread.sleep(SCROLL_PAUSE_MILLIS);
         } catch (InterruptedException exception) {

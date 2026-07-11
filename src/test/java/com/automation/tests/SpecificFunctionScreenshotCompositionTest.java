@@ -105,6 +105,28 @@ public class SpecificFunctionScreenshotCompositionTest {
         Assert.assertTrue(StepContextHolder.current().isEmpty());
     }
 
+    @Test
+    public void collectedEvidenceShouldRemainOnResultWhenSpecificKeywordFails() {
+        FakeWebDriver driver = driver();
+        RecordingScreenshotService screenshotService = new RecordingScreenshotService();
+        ResolvedStepContext step = step(
+                "captureScreenshotThenFail",
+                "",
+                "",
+                "",
+                "",
+                ""
+        );
+
+        ExecutionResult result = engine(driver, screenshotService).execute(step);
+
+        Assert.assertFalse(result.isSuccess());
+        Assert.assertEquals(result.getEvidence(), "target/screenshots/specific-manual.png");
+        Assert.assertTrue(result.getMessage().contains("Intentional failure after screenshot evidence."));
+        Assert.assertTrue(EvidenceContextHolder.getAll().isEmpty());
+        Assert.assertTrue(StepContextHolder.current().isEmpty());
+    }
+
     private KeywordEngine engine(FakeWebDriver driver, ScreenshotService screenshotService) {
         excelReader = new ExcelReader(TEMPLATE_FILE.toString());
         DataReader dataReader = new DataReader(excelReader);

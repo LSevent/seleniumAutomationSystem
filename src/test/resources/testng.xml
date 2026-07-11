@@ -40,6 +40,8 @@
             <class name="com.automation.tests.ScenarioRunnerForEachDataRowExecutionTest"/>
             <class name="com.automation.tests.ScreenshotResolvedPlanRegressionTest"/>
             <class name="com.automation.tests.ScreenshotKeywordSupportTest"/>
+            <class name="com.automation.tests.ScreenshotServiceScrollingTest"/>
+            <class name="com.automation.tests.ScreenshotReportPolishTest"/>
             <class name="com.automation.tests.StepContextLeakRegressionTest"/>
             <class name="com.automation.tests.SensitiveDataMaskerTest"/>
             <class name="com.automation.tests.ExcelExecutionReportTest"/>
