@@ -1,271 +1,225 @@
-# How to Add Screenshot / Evidence Keywords
+# How to Add Screenshot and Evidence Keywords
 
-This framework treats screenshot and evidence commands as engine-level keywords.
-They should not be added to `BaseFunction` or `SpecificFunction`.
+Screenshot commands are normal reusable Excel keywords. Their public entry
+points live in `BaseFunction`, while screenshot mechanics stay in
+`ScreenshotService`.
 
-The reason is simple: screenshot keywords need report configuration, screenshot
-folder paths, evidence links, scenario/testcase/row context, and consistent
-failure handling. That belongs near `KeywordEngine`, `ScreenshotKeywordHandler`,
-`ScreenshotService`, and the report layer.
+This gives a custom keyword the simple usage expected by framework users:
+
+```java
+public void captureBookingEvidence() {
+    screenshot();
+}
+```
+
+`KeywordEngine` starts the screenshot and evidence context before invoking the
+keyword, then collects the generated evidence paths for the report. A keyword
+developer does not need to build `ExecutionResult` or report HTML.
 
 ## Current screenshot keywords
 
-| Keyword | Object | Value | Purpose |
+| Keyword | Object required | Value required | Purpose |
 | --- | --- | --- | --- |
-| `screenshot` | Optional | Optional | Captures the current browser viewport as manual evidence. |
-| `screenshotPartByObject` | Required | Optional | Captures the resolved object as one or more image parts. |
+| `screenshot` | No | No | Captures the current browser viewport. |
+| `screenshotPartByObject` | Yes | No | Scrolls through the resolved object or its page area and captures multiple viewport screenshots when needed. |
+| `screenshotFullPart` | No | No | Scrolls the full browser page through `document.scrollingElement` and captures multiple viewport screenshots when needed. |
 
-`Value` is normally used as the evidence label. If it is blank, the keyword can
-fall back to a safe default such as the object name.
+Use the scenario row's `Description` as the evidence label. Screenshot
+keywords do not use `Value` as their label. For
+`screenshotPartByObject`, a blank description falls back to the object name.
 
-## Where screenshot keyword code belongs
-
-Use this split:
+## Current responsibility split
 
 ```text
-KeywordEngine
-  Owns keyword lifecycle:
-  - set StepContextHolder
-  - log start/completion/failure/skip
-  - clear StepContextHolder
-  - delegate screenshot/evidence keywords
+BaseFunction
+  Public no-argument Excel keywords:
+  - screenshot()
+  - screenshotPartByObject()
+  - screenshotFullPart()
 
-ScreenshotKeywordHandler
-  Owns screenshot/evidence keyword decisions:
-  - supports("screenshot")
-  - supports("screenshotPartByObject")
-  - build ExecutionResult
-  - decide evidence label
-  - handle skip when manual screenshots are disabled
+KeywordSupport
+  Shared protected support:
+  - access the current resolved step
+  - access the current ScreenshotService
+  - register one or more evidence paths
 
 ScreenshotService
-  Owns screenshot mechanics:
-  - take browser screenshot
-  - take element screenshot
-  - split/crop long element screenshots
-  - save files
+  Screenshot mechanics:
+  - save a browser screenshot
+  - scroll an object and capture its visible parts
+  - scroll the full page and capture its visible parts
+  - return saved PNG paths
+
+KeywordEngine
+  Per-step lifecycle:
+  - set StepContextHolder and screenshot/evidence context
+  - invoke the resolved keyword
+  - attach collected evidence to ExecutionResult
+  - clear every context in finally
 
 ExcelExecutionReporter
-  Owns report rendering:
-  - turn evidence paths into links
-  - add screenshots to Evidence Gallery
-  - preserve report layout
+  Report presentation:
+  - render evidence links
+  - render the Evidence Gallery
+  - create failure screenshots when enabled
 ```
 
-## Steps to add a new evidence keyword
+## Reuse an existing screenshot keyword in SpecificFunction
 
-Example new keyword:
-
-```text
-screenshotFullPage
-```
-
-### 1. Add keyword detection in `ScreenshotKeywordHandler`
-
-Add the keyword to `supports(...)`.
+Application-specific keywords extend `BaseFunction`, so they can compose the
+existing screenshot commands directly:
 
 ```java
-public boolean supports(String keywordName) {
-    return isManualScreenshotKeyword(keywordName)
-            || isScreenshotPartByObjectKeyword(keywordName)
-            || isScreenshotFullPageKeyword(keywordName);
+public void captureApprovedBooking() {
+    click();
+    screenshot();
 }
 ```
 
-Then route it inside `execute(...)`.
+For object evidence:
 
 ```java
-if (isScreenshotFullPageKeyword(step.getKeyword())) {
-    return executeScreenshotFullPage(step);
+public void captureLongBookingPanel() {
+    screenshotPartByObject();
 }
 ```
 
-Add a small matcher:
+For full-page evidence:
 
 ```java
-private boolean isScreenshotFullPageKeyword(String keywordName) {
-    return keywordName != null && "screenshotFullPage".equalsIgnoreCase(keywordName.trim());
+public void captureCompleteBookingPage() {
+    screenshotFullPart();
 }
 ```
 
-### 2. Implement the handler method
+The active Excel row still supplies the resolved object, XPath, description,
+scenario, testcase, and row context. Every screenshot produced during the
+custom keyword is attached to that step's report evidence.
 
-The handler should return an `ExecutionResult`.
+## Add a new reusable screenshot keyword
 
-Use this pattern:
+Use this process only when the existing three screenshot commands do not cover
+the required capture behavior.
+
+### 1. Add the capture mechanic to ScreenshotService
+
+Keep browser scrolling and file creation in `ScreenshotService`. Return the
+saved path for one image or a list of paths for multiple images.
+
+Example shape:
 
 ```java
-private ExecutionResult executeScreenshotFullPage(ResolvedStepContext step) {
-    String executedBy = executedBy(step);
-    if (!reportConfig.isManualScreenshotEnabled()) {
-        return skipped(step, executedBy);
-    }
-
-    try {
-        String label = isBlank(step.getResolvedValue())
-                ? "FullPageScreenshot"
-                : step.getResolvedValue();
-
-        String screenshotPath = screenshotService.captureFullPage(
-                driver,
-                screenshotBaseName(step, label)
-        );
-
-        String evidence = screenshotPath == null
-                ? "Screenshot not available: driver does not support full-page screenshots."
-                : screenshotPath;
-
-        return ExecutionResult.success(
-                step,
-                executedBy,
-                "REPORT",
-                evidence,
-                "Full-page screenshot captured."
-        );
-    } catch (RuntimeException exception) {
-        return ExecutionResult.failure(
-                step,
-                executedBy,
-                "REPORT",
-                failureMessage(
-                        "Failed to capture full-page screenshot for step row " + step.getExcelRow() + ".",
-                        step,
-                        exception
-                )
-        );
-    }
+public List<String> captureModalInParts(
+        WebDriver driver,
+        WebElement modal,
+        ResolvedStepContext step,
+        String label
+) {
+    // Scroll the modal, call the normal screenshot saver for each part,
+    // and return the saved PNG paths.
 }
 ```
 
-Keep the `executionSource` as:
+Do not create report HTML in this service.
 
-```text
-REPORT
-```
+### 2. Add one protected evidence bridge when needed
 
-That keeps the report’s `Executed By` / source behavior consistent.
+If the new service method returns evidence paths, add one focused protected
+helper in `KeywordSupport`. It should:
 
-### 3. Add screenshot mechanics in `ScreenshotService`
+1. read the current step and screenshot service;
+2. call the new `ScreenshotService` method;
+3. register the returned paths through `EvidenceContextHolder`;
+4. return the paths only when custom Java composition needs them.
 
-If the keyword needs a new capture technique, add it to `ScreenshotService`.
+Avoid chains of several keyword-specific overloads. Keep one simple default
+path and, only when useful, one advanced overload for custom composition.
 
-Examples:
+### 3. Add the public Excel keyword to BaseFunction
+
+For a command reusable by every application, add a public no-argument method:
 
 ```java
-public String captureFullPage(WebDriver driver, String screenshotName) {
-    // save screenshot and return absolute path
+public void screenshotModalInParts() {
+    captureModalInParts();
 }
 ```
 
-or, for multiple images:
+Keep the public method small. It represents the command that Excel users see.
 
-```java
-public List<String> captureSomethingInParts(...) {
-    // save each part and return absolute paths
-}
-```
+If the behavior only makes sense for one application, put the public method in
+that application's `SpecificFunction` instead.
 
-Return saved PNG paths. Do not build report HTML here.
+### 4. Update pre-run validation
 
-### 4. Return evidence in report-friendly format
+Document and enforce the minimum required Excel fields:
 
-For one screenshot:
+- no target element: no Object/XPath requirement;
+- target element: require Object and resolved XPath;
+- business input: require Value only when the keyword actually consumes it.
 
-```java
-evidence = screenshotPath;
-```
+Screenshot labels belong in `Description`, so do not require `Value` only for
+labeling.
 
-For multiple screenshots:
+### 5. Add focused tests
 
-```java
-evidence = String.join(System.lineSeparator(), screenshotPaths);
-```
+At minimum verify:
 
-`ExcelExecutionReporter` already understands multiple `.png` evidence paths
-separated by new lines. It renders them as separate links and gallery images.
+- the new public keyword is a no-argument method;
+- the resolved XPath is used when an object is required;
+- one or multiple screenshot paths are registered as evidence;
+- evidence appears in the report and Evidence Gallery;
+- screenshot-disabled behavior is clear;
+- scroll loops stop when the position no longer changes;
+- scroll position is restored when required;
+- `StepContextHolder`, screenshot context, and evidence context are cleared.
 
-### 5. Update pre-run validation
+### 6. Update user documentation
 
-Update `PreRunValidator` so the keyword is known before runtime.
+Add the command to the supported keyword table with:
 
-For a keyword that does not need an object:
-
-```java
-case "screenshotfullscreen" -> {
-    // no Object/XPath/Value requirement
-}
-```
-
-For a keyword that needs an object:
-
-```java
-case "screenshotpartbyobject" -> requireObjectAndXPath(step, keyword, errors);
-```
-
-Also make sure screenshot/evidence keywords are treated as known engine-level
-keywords, not normal `BaseFunction` methods.
-
-### 6. Update tests
-
-Add focused tests:
-
-- `KeywordEngineResolvedContextTest`
-  - keyword is handled by the screenshot handler path
-  - `StepContextHolder` is available during capture
-  - result source is `REPORT`
-  - evidence path is returned
-
-- `PreRunValidatorTest`
-  - required Object/XPath/Value rules are enforced
-  - keyword is not reported as unknown
-
-- `ExcelExecutionReportTest`
-  - evidence appears as links
-  - evidence gallery contains screenshots
-  - multiple screenshot paths render as multiple items when applicable
-
-### 7. Update documentation
-
-Update the supported keyword table in `README.md`.
-
-At minimum document:
-
-- keyword name
-- whether `Object` is required
-- whether `Value` is required
-- what evidence is created
-- what `Value` means as a label
+- keyword name;
+- Object requirement;
+- Value requirement;
+- Description/label behavior;
+- expected screenshot behavior.
 
 ## Design rules
 
-Keep these rules unless the framework architecture changes later:
+- Keep public Excel-facing screenshot keywords in `BaseFunction` when they are
+  reusable across applications.
+- Keep application-specific screenshot workflows in `SpecificFunction`.
+- Keep scrolling and file-saving mechanics in `ScreenshotService`.
+- Keep report HTML in `ExcelExecutionReporter`.
+- Use `Description`, not `Value`, for evidence labels.
+- Return PNG paths from screenshot mechanics.
+- Register every saved path as step evidence.
+- Keep the maximum-part guard so a broken or continuously growing page cannot
+  create an endless screenshot loop.
+- Do not access report internals from a keyword method.
 
-- Do not add screenshot/evidence keywords to `BaseFunction`.
-- Do not add screenshot/evidence keywords to `SpecificFunction`.
-- Do not build report HTML inside `ScreenshotService`.
-- Do not write screenshot files directly inside `KeywordEngine`.
-- Use `ScreenshotKeywordHandler` for evidence keyword decisions.
-- Use `ScreenshotService` for image capture and saving.
-- Use `ExecutionResult.evidence` to pass file paths to the report.
-- Keep screenshot paths as PNG files.
-- Use one path for one screenshot.
-- Use newline-separated paths for multiple screenshots.
+## Excel examples
 
-## User-facing Excel example
-
-Manual screenshot:
-
-```text
-Keyword     | Object | Value
-screenshot  |        | After login
-```
-
-Object screenshot:
+Normal screenshot:
 
 ```text
-Keyword                 | Object       | Value
-screenshotPartByObject  | pnlBooking   | Booking panel
+Keyword    | Object | Value | Description
+screenshot |        |       | After login
 ```
 
-The report will show the screenshot evidence in the `Evidence` column and in
-the `Evidence Gallery`.
+Object screenshot in parts:
+
+```text
+Keyword                 | Object     | Value | Description
+screenshotPartByObject  | pnlBooking |       | Booking panel
+```
+
+Full-page screenshot in parts:
+
+```text
+Keyword            | Object | Value | Description
+screenshotFullPart |        |       | Complete booking page
+```
+
+The report displays each saved image in the `Evidence` column and the Evidence
+Gallery.

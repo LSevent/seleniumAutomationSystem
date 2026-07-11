@@ -15,6 +15,58 @@ The Excel runner is the main workflow. A scenario is selected from the `SCENARIO
 
 The important idea: Excel describes what should happen, and Java owns how it happens.
 
+## Start Here: Run an Excel Workbook
+
+For normal Excel-driven usage, you only need five steps:
+
+1. Copy `src/test/resources/testdata/Final Excel Template.xlsx` and update its
+   scenarios, data, and object repository.
+2. Set the workbook and report-root paths in
+   `src/test/resources/excelConfig.properties`.
+3. Set each scenario/testcase that should run to `Y` or `Yes`.
+4. Run the configured Excel suite.
+5. Open the generated report inside the new timestamped report folder.
+
+Example configuration:
+
+```properties
+excel.scenarioFilePath=C:/Automation/BRS/Booking Room System.xlsx
+report.outputDirectory=C:/Automation/BRS/Reports
+```
+
+PowerShell command:
+
+```powershell
+mvn test "-DsuiteXmlFile=src/test/resources/excel-runner.xml"
+```
+
+VS Code users can also run the `maven-excel-runner` task or select
+`Debug Configured Excel Runner` from Run and Debug.
+
+Generated output:
+
+```text
+C:/Automation/BRS/Reports/yyyy-MM-dd_HH-mm-ss-SSS/Report-Booking Room System.html
+C:/Automation/BRS/Reports/yyyy-MM-dd_HH-mm-ss-SSS/Screenshots
+```
+
+`mvn clean test` has a different purpose: it runs the framework's Java
+regression suite and does not execute the real configured workbook.
+
+## Files You Actually Touch
+
+| User | Files normally touched |
+| --- | --- |
+| Excel scenario user | Scenario workbook and `excelConfig.properties` |
+| Object/data maintainer | `OBJECT_REPOSITORY`, `CONFIG`, and application data sheets in the workbook |
+| Application keyword developer | `src/main/java/com/automation/functions/{APPLICATION}/SpecificFunction.java` |
+| Common keyword maintainer | `BaseFunction`, and `ScreenshotService` only when a new screenshot mechanic is required |
+| Framework maintainer | Engine, context holders, readers, validators, models, and report classes |
+
+Normal Excel users do not need to understand `KeywordEngine`,
+`ResolvedStepContext`, context holders, reflection, or report internals. Those
+classes support execution behind the workbook-facing API.
+
 ## Tech Stack
 
 - Java 17 or newer
@@ -56,6 +108,7 @@ src
 |           |-- base
 |           |-- config
 |           |-- constants
+|           |-- context
 |           |-- drivers
 |           |-- engine
 |           |-- excel
@@ -88,11 +141,11 @@ src
 
 ## Excel Execution Flow
 
-1. `ExcelExecutionConfig` loads the Excel file path, report path, screenshot path, and report flags.
+1. `ExcelExecutionConfig` loads the Excel file path, report root, browser settings, and report flags, then derives the timestamped run folder, report file, and screenshot folder.
 2. `ScenarioReader` reads `SCENARIOS` and selects active rows where `RUN` is `Y`, `YES`, or `TRUE`.
 3. `StepReader` parses the scenario sheet named by `SCENARIOS.ACTION`.
 4. Parent testcase rows define testcase name, run flag, application, and description.
-5. Step rows inherit `Run` and `Application` from the latest parent testcase row unless the step overrides them.
+5. The testcase parent row controls whether all of its steps run. Step rows inherit `Application` from that parent unless they override it.
 6. `DataReader` resolves step `Value` cells that use `SHEET_NAME.COLUMN_NAME` or formula-header references such as `=LOGIN_DATA!$B$1`.
 7. `ObjectRepositoryReader` resolves step `Object` names into XPath values for the current application.
 8. `KeywordEngine` executes the step and provides step context, screenshot context, lifecycle logging, and evidence collection.
@@ -258,7 +311,7 @@ Rules:
 - A row with `Testcase` filled is a testcase parent row.
 - Rows below a parent row are step rows.
 - Parent rows require `Application`.
-- Step rows inherit `Run` and `Application` from the latest parent row.
+- The parent testcase row controls `Run` for all of its steps. Leave `Run` blank on step rows; individual step-level `Run` overrides are not currently supported.
 - Step row `Application` can override the parent only when needed.
 - `Description` is optional.
 
@@ -290,7 +343,11 @@ Examples:
 - `BOOKING_DATA.SCHEDULE_TYPE`
 - `BOOKING_DATA.GUEST_QTY`
 
-If a step `Value` does not match a data reference, the framework treats it as literal text.
+Values without dot notation are treated as literal text. A value containing one
+dot is currently interpreted as `SHEET_NAME.COLUMN_NAME`; malformed or
+multi-dot references fail validation. If a literal itself contains a dot, such
+as `john.doe` or `document.pdf`, store it in a data-sheet cell and reference
+that column until explicit literal escaping is added.
 
 A `Value` cell can also point to a data-sheet header cell with a simple Excel formula:
 
@@ -564,9 +621,10 @@ Current validation coverage includes:
 - `SCENARIOS` contains `NO`, `RUN`, `ACTION`, and `SCENARIOS`.
 - Active scenario `NO` is required and unique.
 - Active scenario `ACTION` matches an existing sheet.
-- Scenario sheets contain `Testcase`, `Run`, `Keyword`, `Object`, `Value`, `Application`, and `Description`. `Keyword` is the preferred step column; the legacy `Function` header remains supported for older workbooks.
+- Scenario sheets require `Testcase`, `Run`, `Keyword`, `Object`, `Value`, and `Application`. `Description` is optional. `Keyword` is preferred; the legacy `Function` header remains supported for older workbooks.
 - Active testcase parent rows require `Application`.
-- Step rows inherit parent `Run` and `Application`.
+- Active testcase parent rows control whether their steps run. Step-level `Run` overrides are not currently supported.
+- Step rows inherit parent `Application` unless explicitly overridden.
 - Data references use `SHEET_NAME.COLUMN_NAME`.
 - Data sheets contain `NO`.
 - Object repository rows are unique by `Application + Object`.
