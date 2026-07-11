@@ -19,6 +19,7 @@ public final class ResolvedStepContext {
     private final String rawXPath;
     private final String resolvedXPath;
     private final String executedBy;
+    private final boolean run;
     private final FlowDirectiveType flowDirective;
 
     public static Builder builder() {
@@ -43,6 +44,7 @@ public final class ResolvedStepContext {
         this.rawXPath = builder.rawXPath;
         this.resolvedXPath = builder.resolvedXPath;
         this.executedBy = builder.executedBy;
+        this.run = builder.run;
         this.flowDirective = builder.flowDirective == null
                 ? FlowDirectiveType.fromKeyword(builder.keyword)
                 : builder.flowDirective;
@@ -114,6 +116,10 @@ public final class ResolvedStepContext {
 
     public String getExecutedBy() {
         return executedBy;
+    }
+
+    public boolean isRun() {
+        return run;
     }
 
     public FlowDirectiveType getFlowDirective() {
@@ -194,6 +200,7 @@ public final class ResolvedStepContext {
                 ", rawXPath='" + rawXPath + '\'' +
                 ", resolvedXPath='" + resolvedXPath + '\'' +
                 ", executedBy='" + executedBy + '\'' +
+                ", run=" + run +
                 ", flowDirective=" + flowDirective +
                 '}';
     }
@@ -217,6 +224,7 @@ public final class ResolvedStepContext {
         private String rawXPath;
         private String resolvedXPath;
         private String executedBy;
+        private boolean run = true;
         private FlowDirectiveType flowDirective;
 
         private Builder() {
@@ -304,6 +312,11 @@ public final class ResolvedStepContext {
 
         public Builder executedBy(String executedBy) {
             this.executedBy = executedBy;
+            return this;
+        }
+
+        public Builder run(boolean run) {
+            this.run = run;
             return this;
         }
 

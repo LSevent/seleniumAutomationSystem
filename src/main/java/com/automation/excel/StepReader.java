@@ -116,6 +116,15 @@ public class StepReader {
     private TestStep toTestStep(Scenario scenario, TestCaseBlock testCaseBlock, RowData rowData, int excelRowNumber) {
         int stepOrder = testCaseBlock.getSteps().size() + 1;
         String application = rowData.application().isBlank() ? testCaseBlock.getApplication() : rowData.application();
+        boolean run = parseStepRunValue(rowData.run(), scenario.getAction(), excelRowNumber);
+        FlowDirectiveType flowDirective = FlowDirectiveType.fromKeyword(rowData.keyword());
+        if (!run && flowDirective.isFlowDirective()) {
+            throw new FrameworkException(
+                    "Run=No is not supported for flow directive '" + rowData.keyword()
+                            + "' in sheet " + scenario.getAction() + " row " + excelRowNumber
+                            + ". Keep flow directive rows active and use conditions to control their blocks."
+            );
+        }
 
         return TestStep.builder()
                 .scenarioNo(scenario.getNo())
@@ -127,10 +136,26 @@ public class StepReader {
                 .value(rowData.value())
                 .application(application)
                 .description(rowData.description())
+                .run(run)
                 .excelRowNumber(excelRowNumber)
                 .stepOrder(stepOrder)
-                .flowDirective(FlowDirectiveType.fromKeyword(rowData.keyword()))
+                .flowDirective(flowDirective)
                 .build();
+    }
+
+    private boolean parseStepRunValue(String runValue, String sheetName, int excelRowNumber) {
+        String normalizedValue = normalize(runValue);
+        if (normalizedValue.isEmpty() || "Y".equals(normalizedValue)
+                || "YES".equals(normalizedValue) || "TRUE".equals(normalizedValue)) {
+            return true;
+        }
+        if ("N".equals(normalizedValue) || "NO".equals(normalizedValue) || "FALSE".equals(normalizedValue)) {
+            return false;
+        }
+        throw new FrameworkException(
+                "Invalid Run value '" + runValue + "' for step in sheet " + sheetName + " row "
+                        + excelRowNumber + ". Allowed values: " + ALLOWED_RUN_VALUES + "."
+        );
     }
 
     private boolean parseRunValue(String runValue, String sheetName, int excelRowNumber) {

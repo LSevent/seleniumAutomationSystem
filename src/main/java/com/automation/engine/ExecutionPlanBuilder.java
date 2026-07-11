@@ -149,20 +149,22 @@ public class ExecutionPlanBuilder {
             String flowResolvedValueOverride
     ) {
         String rawValue = safe(step.getValue());
-        String resolvedValue;
-        try {
-            resolvedValue = flowResolvedValueOverride != null
-                    ? flowResolvedValueOverride
-                    : step.isFlowDirective()
-                    ? resolveFlowDirectiveValue(step, scenario, loopDataContext)
-                    : resolveValue(rawValue, scenario, loopDataContext);
-        } catch (RuntimeException exception) {
-            throw resolutionFailure("Value could not be resolved while building the execution plan.", scenario, testcase, step, exception);
+        String resolvedValue = rawValue;
+        if (step.isRun()) {
+            try {
+                resolvedValue = flowResolvedValueOverride != null
+                        ? flowResolvedValueOverride
+                        : step.isFlowDirective()
+                        ? resolveFlowDirectiveValue(step, scenario, loopDataContext)
+                        : resolveValue(rawValue, scenario, loopDataContext);
+            } catch (RuntimeException exception) {
+                throw resolutionFailure("Value could not be resolved while building the execution plan.", scenario, testcase, step, exception);
+            }
         }
 
         String rawXPath = "";
         String resolvedXPath = "";
-        if (!step.isFlowDirective() && !isBlank(step.getObject())) {
+        if (step.isRun() && !step.isFlowDirective() && !isBlank(step.getObject())) {
             try {
                 ResolvedObject resolvedObject = objectRepositoryReader.resolveObject(step, rawValue, resolvedValue);
                 if (resolvedObject != null) {
@@ -193,6 +195,7 @@ public class ExecutionPlanBuilder {
                 .rawXPath(rawXPath)
                 .resolvedXPath(resolvedXPath)
                 .executedBy("")
+                .run(step.isRun())
                 .flowDirective(step.getFlowDirective())
                 .build();
     }

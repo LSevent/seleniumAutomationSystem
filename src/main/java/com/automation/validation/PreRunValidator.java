@@ -18,7 +18,6 @@ import java.util.Locale;
 
 public class PreRunValidator {
 
-    private static final String DATA_REFERENCE_FORMAT = "SHEET_NAME.COLUMN_NAME";
     private static final String SPECIFIC_FUNCTION_PACKAGE_PREFIX = "com.automation.functions.";
     private static final String SPECIFIC_FUNCTION_CLASS_SUFFIX = ".SpecificFunction";
 
@@ -94,6 +93,10 @@ public class PreRunValidator {
             return;
         }
 
+        if (!step.isRun()) {
+            return;
+        }
+
         String keyword = safe(step.getKeyword());
         if (keyword.isBlank()) {
             addStepError(errors, "Keyword is required for active step.", step);
@@ -113,11 +116,6 @@ public class PreRunValidator {
         }
 
         validateKeywordIsKnown(step, keyword, errors);
-
-        String dataReferenceError = dataReferenceError(step.getRawValue());
-        if (!dataReferenceError.isBlank()) {
-            addStepError(errors, dataReferenceError, step);
-        }
 
         validateDynamicXPath(step, errors);
         if (keyword.isBlank()) {
@@ -186,14 +184,6 @@ public class PreRunValidator {
         if (flowDirective == FlowDirectiveType.IF_EQUALS || flowDirective == FlowDirectiveType.ELSE_IF_EQUALS) {
             try {
                 ConditionExpression condition = ConditionExpression.parse(step.getRawValue());
-                String leftReferenceError = dataReferenceError(condition.getLeftOperand());
-                if (!leftReferenceError.isBlank()) {
-                    addStepError(errors, leftReferenceError, step);
-                }
-                String rightReferenceError = dataReferenceError(condition.getRightOperand());
-                if (!rightReferenceError.isBlank()) {
-                    addStepError(errors, rightReferenceError, step);
-                }
             } catch (FrameworkException exception) {
                 addStepError(errors, exception.getMessage(), step);
             }
@@ -257,51 +247,11 @@ public class PreRunValidator {
             return;
         }
 
-        String dataColumn = dataReferenceColumn(step.getRawValue());
-        if (!dataColumn.isBlank() && !placeholderName.equalsIgnoreCase(dataColumn)) {
-            addStepError(errors, "XPath placeholder " + placeholder + " does not match data column '" + dataColumn + "'.", step);
-        }
         if (isBlank(step.getResolvedValue())
                 || isBlank(step.getResolvedXPath())
                 || xpathResolver.hasPlaceholder(step.getResolvedXPath())) {
             addStepError(errors, "XPath placeholder " + placeholder + " was not resolved.", step);
         }
-    }
-
-    private String dataReferenceError(String rawValue) {
-        String value = safe(rawValue);
-        if (value.isBlank()) {
-            return "";
-        }
-        if (value.contains("[") || value.contains("]")) {
-            return invalidReferenceMessage(value);
-        }
-
-        long dotCount = value.chars().filter(character -> character == '.').count();
-        if (dotCount == 0) {
-            return "";
-        }
-        if (dotCount != 1) {
-            return invalidReferenceMessage(value);
-        }
-
-        String[] parts = value.split("\\.", -1);
-        return parts[0].trim().isBlank() || parts[1].trim().isBlank()
-                ? invalidReferenceMessage(value)
-                : "";
-    }
-
-    private String dataReferenceColumn(String rawValue) {
-        String value = safe(rawValue);
-        if (!dataReferenceError(value).isBlank()) {
-            return "";
-        }
-        String[] parts = value.split("\\.", -1);
-        return parts.length == 2 ? parts[1].trim() : "";
-    }
-
-    private String invalidReferenceMessage(String rawValue) {
-        return "Invalid data reference format: " + rawValue + ". Expected format: " + DATA_REFERENCE_FORMAT + ".";
     }
 
     private void addStepError(List<ValidationError> errors, String message, ResolvedStepContext step) {

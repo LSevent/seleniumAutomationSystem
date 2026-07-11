@@ -30,6 +30,7 @@ public class ResolvedStepContextBuilderTest {
         Assert.assertEquals(step.getRawXPath(), "//button[@id='loginButton']");
         Assert.assertEquals(step.getResolvedXPath(), "//button[@id='loginButton']");
         Assert.assertEquals(step.getExecutedBy(), "BaseFunction");
+        Assert.assertTrue(step.isRun());
     }
 
     @Test
@@ -57,6 +58,11 @@ public class ResolvedStepContextBuilderTest {
         Assert.assertFalse(ResolvedStepContext.builder().resolvedValue("").build().hasValue());
         Assert.assertFalse(ResolvedStepContext.builder().resolvedValue("   ").build().hasValue());
         Assert.assertFalse(ResolvedStepContext.builder().resolvedValue(null).build().hasValue());
+    }
+
+    @Test
+    public void builderShouldSupportSkippedStepRunState() {
+        Assert.assertFalse(ResolvedStepContext.builder().run(false).build().isRun());
     }
 
     @Test

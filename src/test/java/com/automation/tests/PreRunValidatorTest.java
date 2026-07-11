@@ -317,14 +317,16 @@ public class PreRunValidatorTest {
     }
 
     @Test
-    public void invalidDataReferenceShouldFailClearly() {
-        FrameworkException exception = validationFailure(step(
-                "input", "txtUsername", "LOGIN_DATA.USER.NAME", "", "//input", "//input", "BRS"
-        ));
-
-        Assert.assertTrue(exception.getMessage().contains(
-                "Invalid data reference format: LOGIN_DATA.USER.NAME. Expected format: SHEET_NAME.COLUMN_NAME."
-        ));
+    public void multiDotLiteralShouldPassValidationWhenAlreadyResolved() {
+        validator.validate(plan(step(
+                "input",
+                "txtUsername",
+                "john.middle.doe",
+                "john.middle.doe",
+                "//input",
+                "//input",
+                "BRS"
+        )));
     }
 
     @Test

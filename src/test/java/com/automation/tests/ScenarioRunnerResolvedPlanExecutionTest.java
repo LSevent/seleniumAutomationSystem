@@ -112,6 +112,59 @@ public class ScenarioRunnerResolvedPlanExecutionTest {
     }
 
     @Test
+    public void stepRunNoShouldSkipWithoutResolutionValidationOrKeywordExecution() throws IOException {
+        Path stepRunWorkbook = ValidationWorkbookFactory.createWorkbook(
+                TEMP_DIR.resolve("step-run-skip.xlsx"),
+                ValidationWorkbookFactory.scenarios(new Object[][]{
+                        {1, "Y", "Step Run Flow", "Step-level Run test"}
+                }),
+                ValidationWorkbookFactory.scenarioSheet("Step Run Flow", new Object[][]{
+                        {"Step Run Testcase", "Y", "", "", "", "BRS", "Step Run testcase"},
+                        {"", "", "openUrl", "", "about:before-skip", "", "Runs by inherited default"},
+                        {"", "N", "unknownKeyword", "missingObject", "LOGIN_DATA[INVALID]", "", "Skipped step"},
+                        {"", "YES", "openUrl", "", "about:after-skip", "", "Explicitly runs"}
+                }),
+                ValidationWorkbookFactory.objectRepository(new Object[][]{})
+        );
+        FakeWebDriver driver = driver();
+        AtomicReference<RecordingKeywordEngine> engineReference = new AtomicReference<>();
+
+        try (ExcelReader excelReader = new ExcelReader(stepRunWorkbook.toString())) {
+            DataReader dataReader = new DataReader(excelReader);
+            ObjectRepositoryReader objectRepositoryReader = new ObjectRepositoryReader(excelReader, dataReader);
+            ScenarioRunner runner = new ScenarioRunner(
+                    new ScenarioReader(excelReader),
+                    new StepReader(excelReader),
+                    dataReader,
+                    objectRepositoryReader,
+                    () -> {
+                        RecordingKeywordEngine engine = new RecordingKeywordEngine(
+                                dataReader,
+                                objectRepositoryReader,
+                                new KeywordResolver(driver.driver()),
+                                executionConfig(stepRunWorkbook)
+                        );
+                        engineReference.set(engine);
+                        return engine;
+                    }
+            );
+
+            List<ExecutionResult> results = runner.runActiveScenarios();
+
+            Assert.assertEquals(results.size(), 3);
+            Assert.assertEquals(results.get(0).getStatus(), ExecutionResult.STATUS_PASS);
+            Assert.assertEquals(results.get(1).getStatus(), ExecutionResult.STATUS_SKIP);
+            Assert.assertEquals(results.get(1).getExecutionSource(), "RUN");
+            Assert.assertTrue(results.get(1).getMessage().contains("Run is No"));
+            Assert.assertEquals(results.get(1).getRawValue(), "LOGIN_DATA[INVALID]");
+            Assert.assertEquals(results.get(1).getResolvedValue(), "LOGIN_DATA[INVALID]");
+            Assert.assertEquals(results.get(2).getStatus(), ExecutionResult.STATUS_PASS);
+            Assert.assertEquals(engineReference.get().executedSteps.size(), 2);
+            Assert.assertEquals(driver.getCurrentUrl(), "about:after-skip");
+        }
+    }
+
+    @Test
     public void validationFailureShouldPreventRuntimeEngineStartup() throws IOException {
         Path invalidWorkbook = ValidationWorkbookFactory.createWorkbook(
                 TEMP_DIR.resolve("validation-before-runtime.xlsx"),

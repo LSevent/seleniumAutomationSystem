@@ -317,6 +317,77 @@ public class StepReaderTest {
     }
 
     @Test
+    public void stepRunShouldDefaultToYesAndSupportExplicitYesOrNo() throws IOException {
+        Path workbookPath = createWorkbook(
+                "step-run-values.xlsx",
+                CREATE_BOOKING_SHEET,
+                REQUIRED_HEADERS,
+                new Object[][]{
+                        {"Login BRS", "Yes", "", "", "", "BRS", "Login to BRS"},
+                        {"", "", "click", "btnLogin", "", "", "Blank inherits active testcase"},
+                        {"", "No", "input", "txtOptional", "optional", "", "Explicitly skipped"},
+                        {"", "TRUE", "clear", "txtUsername", "", "", "Explicitly active"}
+                }
+        );
+
+        try (ExcelReader excelReader = new ExcelReader(workbookPath.toString())) {
+            List<TestStep> steps = new StepReader(excelReader)
+                    .getActiveSteps(scenario(CREATE_BOOKING_SHEET));
+
+            Assert.assertTrue(steps.get(0).isRun());
+            Assert.assertFalse(steps.get(1).isRun());
+            Assert.assertTrue(steps.get(2).isRun());
+        }
+    }
+
+    @Test
+    public void invalidStepRunValueShouldFailClearly() throws IOException {
+        Path workbookPath = createWorkbook(
+                "invalid-step-run.xlsx",
+                CREATE_BOOKING_SHEET,
+                REQUIRED_HEADERS,
+                new Object[][]{
+                        {"Login BRS", "Yes", "", "", "", "BRS", "Login to BRS"},
+                        {"", "MAYBE", "click", "btnLogin", "", "", "Invalid step Run"}
+                }
+        );
+
+        IllegalArgumentException exception = Assert.expectThrows(IllegalArgumentException.class, () -> {
+            try (ExcelReader excelReader = new ExcelReader(workbookPath.toString())) {
+                new StepReader(excelReader).getTestCases(scenario(CREATE_BOOKING_SHEET));
+            }
+        });
+
+        Assert.assertTrue(exception.getMessage().contains(
+                "Invalid Run value 'MAYBE' for step in sheet Create New Booking row 3."
+        ));
+    }
+
+    @Test
+    public void flowDirectiveCannotBeDisabledWithStepRun() throws IOException {
+        Path workbookPath = createWorkbook(
+                "disabled-flow-directive.xlsx",
+                CREATE_BOOKING_SHEET,
+                REQUIRED_HEADERS,
+                new Object[][]{
+                        {"Booking", "Yes", "", "", "", "BRS", "Booking flow"},
+                        {"", "No", "ifEquals", "", "CONFIG.RUN = Yes", "", "Invalid disabled directive"},
+                        {"", "", "endIf", "", "", "", "End condition"}
+                }
+        );
+
+        IllegalArgumentException exception = Assert.expectThrows(IllegalArgumentException.class, () -> {
+            try (ExcelReader excelReader = new ExcelReader(workbookPath.toString())) {
+                new StepReader(excelReader).getTestCases(scenario(CREATE_BOOKING_SHEET));
+            }
+        });
+
+        Assert.assertTrue(exception.getMessage().contains(
+                "Run=No is not supported for flow directive 'ifEquals' in sheet Create New Booking row 3."
+        ));
+    }
+
+    @Test
     public void activeTestcaseWithNoStepsShouldThrowClearError() throws IOException {
         Path workbookPath = createWorkbook(
                 "no-steps.xlsx",

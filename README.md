@@ -145,7 +145,7 @@ src
 2. `ScenarioReader` reads `SCENARIOS` and selects active rows where `RUN` is `Y`, `YES`, or `TRUE`.
 3. `StepReader` parses the scenario sheet named by `SCENARIOS.ACTION`.
 4. Parent testcase rows define testcase name, run flag, application, and description.
-5. The testcase parent row controls whether all of its steps run. Step rows inherit `Application` from that parent unless they override it.
+5. The testcase parent row controls whether the testcase is active. Within an active testcase, a blank/Yes step `Run` executes and a No step `Run` is reported as skipped. Step rows inherit `Application` from the parent unless they override it.
 6. `DataReader` resolves step `Value` cells that use `SHEET_NAME.COLUMN_NAME` or formula-header references such as `=LOGIN_DATA!$B$1`.
 7. `ObjectRepositoryReader` resolves step `Object` names into XPath values for the current application.
 8. `KeywordEngine` executes the step and provides step context, screenshot context, lifecycle logging, and evidence collection.
@@ -311,7 +311,9 @@ Rules:
 - A row with `Testcase` filled is a testcase parent row.
 - Rows below a parent row are step rows.
 - Parent rows require `Application`.
-- The parent testcase row controls `Run` for all of its steps. Leave `Run` blank on step rows; individual step-level `Run` overrides are not currently supported.
+- The parent testcase row controls whether the complete testcase is active.
+- On step rows, blank/`Yes` means run and `No` means skip. Skipped steps remain visible in the report with status `SKIP` and are not resolved or sent to the browser.
+- Keep flow directive rows (`ifEquals`, `elseIfEquals`, `else`, `endIf`, `forEachDataRow`, and `endForEachDataRow`) active. `Run=No` is rejected for these structural rows; use conditions to control their blocks.
 - Step row `Application` can override the parent only when needed.
 - `Description` is optional.
 
@@ -343,11 +345,15 @@ Examples:
 - `BOOKING_DATA.SCHEDULE_TYPE`
 - `BOOKING_DATA.GUEST_QTY`
 
-Values without dot notation are treated as literal text. A value containing one
-dot is currently interpreted as `SHEET_NAME.COLUMN_NAME`; malformed or
-multi-dot references fail validation. If a literal itself contains a dot, such
-as `john.doe` or `document.pdf`, store it in a data-sheet cell and reference
-that column until explicit literal escaping is added.
+Dot notation is treated as a data reference only when the part before the dot
+matches an existing workbook sheet. Otherwise, the complete value remains
+literal text. This means values such as `john.doe`, `document.pdf`, `123.45`,
+and `https://example.com/login` can be entered directly. When a sheet exists,
+the referenced column and matching `NO` row are still validated normally.
+
+Because a missing dot-notation sheet now means literal text, check spelling when
+you intend to use a data reference. Formula-header references remain explicit
+and fail clearly when their target sheet or header is missing.
 
 A `Value` cell can also point to a data-sheet header cell with a simple Excel formula:
 
@@ -620,7 +626,7 @@ Current validation coverage includes:
 - Active scenario `ACTION` matches an existing sheet.
 - Scenario sheets require `Testcase`, `Run`, `Keyword`, `Object`, `Value`, and `Application`. `Description` is optional. `Keyword` is preferred; the legacy `Function` header remains supported for older workbooks.
 - Active testcase parent rows require `Application`.
-- Active testcase parent rows control whether their steps run. Step-level `Run` overrides are not currently supported.
+- Active testcase parent rows control whether the testcase runs. Step rows may use `No` to produce a reported `SKIP`; blank and `Yes` execute normally.
 - Step rows inherit parent `Application` unless explicitly overridden.
 - Data references use `SHEET_NAME.COLUMN_NAME`.
 - Data sheets contain `NO`.

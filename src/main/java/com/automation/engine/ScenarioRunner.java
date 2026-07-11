@@ -139,7 +139,9 @@ public class ScenarioRunner {
             ConditionalFlowController conditionalFlowController = new ConditionalFlowController();
             for (ResolvedStepContext step : resolvedTestcase.getSteps()) {
                 ExecutionResult result;
-                if (step.isConditionalDirective()) {
+                if (!step.isRun()) {
+                    result = skippedByRunSetting(step);
+                } else if (step.isConditionalDirective()) {
                     result = executeConditionalDirective(conditionalFlowController, step);
                 } else if (!conditionalFlowController.shouldExecuteCurrentStep()) {
                     result = skippedByConditionalFlow(step);
@@ -294,6 +296,16 @@ public class ScenarioRunner {
                 "FLOW",
                 "",
                 "Skipped because the active conditional branch does not include this step."
+        );
+    }
+
+    private ExecutionResult skippedByRunSetting(ResolvedStepContext step) {
+        return ExecutionResult.skipped(
+                step,
+                ScenarioRunner.class.getName(),
+                "RUN",
+                "",
+                "Skipped because Run is No for this step."
         );
     }
 

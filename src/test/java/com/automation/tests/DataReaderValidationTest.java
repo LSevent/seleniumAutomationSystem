@@ -26,12 +26,14 @@ public class DataReaderValidationTest {
     }
 
     @Test
-    public void tooManyDotsShouldFailClearly() throws IOException {
-        assertResolveFails(
-                workbook("too-many-dots.xlsx", loginData(new Object[][]{{1, "brs_admin", "brs123"}})),
-                "LOGIN_DATA.USER.NAME",
-                "Invalid data reference format: LOGIN_DATA.USER.NAME. Expected format: SHEET_NAME.COLUMN_NAME."
-        );
+    public void multiDotValueShouldRemainLiteral() throws IOException {
+        Path workbookPath = workbook("multi-dot-literal.xlsx", loginData(new Object[][]{{1, "brs_admin", "brs123"}}));
+        try (ExcelReader excelReader = new ExcelReader(workbookPath.toString())) {
+            Assert.assertEquals(
+                    new DataReader(excelReader).resolveValue("LOGIN_DATA.USER.NAME", "1"),
+                    "LOGIN_DATA.USER.NAME"
+            );
+        }
     }
 
     @Test
@@ -53,11 +55,25 @@ public class DataReaderValidationTest {
     }
 
     @Test
-    public void missingDataSheetShouldFailClearly() throws IOException {
+    public void dotNotationWithMissingSheetShouldRemainLiteral() throws IOException {
+        Path workbookPath = workbook(
+                "missing-data-sheet-literal.xlsx",
+                sheet("OTHER_DATA", new String[]{"NO", "USERNAME"}, new Object[][]{{1, "brs_admin"}})
+        );
+        try (ExcelReader excelReader = new ExcelReader(workbookPath.toString())) {
+            Assert.assertEquals(
+                    new DataReader(excelReader).resolveValue("LOGIN_DATA.USERNAME", "1"),
+                    "LOGIN_DATA.USERNAME"
+            );
+        }
+    }
+
+    @Test
+    public void formulaReferenceWithMissingSheetShouldFailClearly() throws IOException {
         assertResolveFails(
-                workbook("missing-data-sheet.xlsx", sheet("OTHER_DATA", new String[]{"NO", "USERNAME"}, new Object[][]{{1, "brs_admin"}})),
-                "LOGIN_DATA.USERNAME",
-                "Data sheet not found: LOGIN_DATA. Referenced by value LOGIN_DATA.USERNAME."
+                workbook("missing-formula-sheet.xlsx", sheet("OTHER_DATA", new String[]{"NO", "USERNAME"}, new Object[][]{{1, "brs_admin"}})),
+                "=LOGIN_DATA!$B$1",
+                "Data sheet not found: LOGIN_DATA. Referenced by value =LOGIN_DATA!$B$1."
         );
     }
 

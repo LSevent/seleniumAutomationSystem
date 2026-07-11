@@ -47,6 +47,10 @@ public class DataReaderTest {
 
             Assert.assertFalse(dataReader.isDataReference("Booking created successfully"));
             Assert.assertEquals(dataReader.resolveValue("Booking created successfully", "1"), "Booking created successfully");
+            Assert.assertEquals(dataReader.resolveValue("john.doe", "1"), "john.doe");
+            Assert.assertEquals(dataReader.resolveValue("document.pdf", "1"), "document.pdf");
+            Assert.assertEquals(dataReader.resolveValue("123.45", "1"), "123.45");
+            Assert.assertEquals(dataReader.resolveValue("https://example.com/login", "1"), "https://example.com/login");
         }
     }
 
@@ -189,19 +193,17 @@ public class DataReaderTest {
     }
 
     @Test
-    public void missingDataSheetShouldThrowClearError() throws IOException {
+    public void dotNotationWithMissingSheetShouldRemainLiteral() throws IOException {
         Path workbookPath = createWorkbook(
                 "missing-data-sheet.xlsx",
                 new SheetData("OTHER_DATA", new String[]{"NO", "USERNAME"}, new Object[][]{{1, "brs_admin"}})
         );
 
-        IllegalArgumentException exception = Assert.expectThrows(IllegalArgumentException.class, () -> {
-            try (ExcelReader excelReader = new ExcelReader(workbookPath.toString())) {
-                new DataReader(excelReader).resolveValue("LOGIN_DATA.USERNAME", "1");
-            }
-        });
-
-        Assert.assertEquals(exception.getMessage(), "Data sheet not found: LOGIN_DATA. Referenced by value LOGIN_DATA.USERNAME.");
+        try (ExcelReader excelReader = new ExcelReader(workbookPath.toString())) {
+            DataReader dataReader = new DataReader(excelReader);
+            Assert.assertFalse(dataReader.isDataReference("LOGIN_DATA.USERNAME"));
+            Assert.assertEquals(dataReader.resolveValue("LOGIN_DATA.USERNAME", "1"), "LOGIN_DATA.USERNAME");
+        }
     }
 
     @Test
@@ -267,16 +269,15 @@ public class DataReaderTest {
     }
 
     @Test
-    public void tooManyDotsShouldThrowClearError() {
+    public void multiDotValueShouldRemainLiteral() {
         try (ExcelReader excelReader = new ExcelReader(TEMPLATE_FILE.toString())) {
             DataReader dataReader = new DataReader(excelReader);
 
-            IllegalArgumentException exception = Assert.expectThrows(
-                    IllegalArgumentException.class,
-                    () -> dataReader.resolveValue("LOGIN_DATA.USER.NAME", "1")
+            Assert.assertFalse(dataReader.isDataReference("LOGIN_DATA.USER.NAME"));
+            Assert.assertEquals(
+                    dataReader.resolveValue("LOGIN_DATA.USER.NAME", "1"),
+                    "LOGIN_DATA.USER.NAME"
             );
-
-            Assert.assertEquals(exception.getMessage(), "Invalid data reference format: LOGIN_DATA.USER.NAME. Expected format: SHEET_NAME.COLUMN_NAME.");
         }
     }
 

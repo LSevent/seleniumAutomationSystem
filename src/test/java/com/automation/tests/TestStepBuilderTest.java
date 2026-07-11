@@ -20,6 +20,7 @@ public class TestStepBuilderTest {
                 .value(SENSITIVE_VALUE)
                 .application("BRS")
                 .description("Enter password")
+                .run(false)
                 .excelRowNumber(7)
                 .stepOrder(2)
                 .build();
@@ -33,6 +34,7 @@ public class TestStepBuilderTest {
         Assert.assertEquals(step.getValue(), SENSITIVE_VALUE);
         Assert.assertEquals(step.getApplication(), "BRS");
         Assert.assertEquals(step.getDescription(), "Enter password");
+        Assert.assertFalse(step.isRun());
         Assert.assertEquals(step.getExcelRowNumber(), 7);
         Assert.assertEquals(step.getStepOrder(), 2);
     }
@@ -48,6 +50,7 @@ public class TestStepBuilderTest {
         Assert.assertEquals(step.getKeyword(), "click");
         Assert.assertEquals(step.getExcelRowNumber(), 8);
         Assert.assertEquals(step.getStepOrder(), 3);
+        Assert.assertTrue(step.isRun());
     }
 
     @Test

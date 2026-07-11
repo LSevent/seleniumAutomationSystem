@@ -40,11 +40,11 @@ public class DataReader {
             return false;
         }
         if (dotCount > 1) {
-            throw invalidReferenceFormat(trimmedValue);
+            return false;
         }
 
-        parseReference(trimmedValue);
-        return true;
+        DataReference reference = parseReference(trimmedValue);
+        return excelReader.isSheetExists(reference.getSheetName());
     }
 
     public DataReference parseReference(String value) {

@@ -15,6 +15,7 @@ public class TestStep {
     private final String value;
     private final String application;
     private final String description;
+    private final boolean run;
     private final int excelRowNumber;
     private final int stepOrder;
     private final FlowDirectiveType flowDirective;
@@ -41,6 +42,7 @@ public class TestStep {
         this.value = value;
         this.application = application;
         this.description = description;
+        this.run = true;
         this.excelRowNumber = excelRowNumber;
         this.stepOrder = stepOrder;
         this.flowDirective = FlowDirectiveType.fromKeyword(keyword);
@@ -56,6 +58,7 @@ public class TestStep {
         this.value = builder.value;
         this.application = builder.application;
         this.description = builder.description;
+        this.run = builder.run;
         this.excelRowNumber = builder.excelRowNumber;
         this.stepOrder = builder.stepOrder;
         this.flowDirective = builder.flowDirective == null
@@ -99,6 +102,10 @@ public class TestStep {
         return description;
     }
 
+    public boolean isRun() {
+        return run;
+    }
+
     public int getExcelRowNumber() {
         return excelRowNumber;
     }
@@ -134,6 +141,7 @@ public class TestStep {
                 ", object='" + object + '\'' +
                 ", application='" + application + '\'' +
                 ", description='" + description + '\'' +
+                ", run=" + run +
                 ", excelRowNumber=" + excelRowNumber +
                 ", stepOrder=" + stepOrder +
                 ", flowDirective=" + flowDirective +
@@ -151,6 +159,7 @@ public class TestStep {
         private String value;
         private String application;
         private String description;
+        private boolean run = true;
         private int excelRowNumber;
         private int stepOrder;
         private FlowDirectiveType flowDirective;
@@ -200,6 +209,11 @@ public class TestStep {
 
         public Builder description(String description) {
             this.description = description;
+            return this;
+        }
+
+        public Builder run(boolean run) {
+            this.run = run;
             return this;
         }
 
