@@ -205,7 +205,14 @@ public class ExecutionPlanBuilder {
             return safe(step.getValue());
         }
 
-        ConditionExpression condition = ConditionExpression.parse(step.getValue());
+        String rawConditionValue = safe(step.getValue());
+        if (!ConditionExpression.hasComparisonOperator(rawConditionValue)) {
+            String leftValue = resolveValue(rawConditionValue, scenario, loopDataContext);
+            String rightValue = resolveValue(step.getDescription(), scenario, loopDataContext);
+            return safe(leftValue) + " = " + safe(rightValue);
+        }
+
+        ConditionExpression condition = ConditionExpression.parse(rawConditionValue);
         String leftValue = resolveValue(condition.getLeftOperand(), scenario, loopDataContext);
         String rightValue = resolveValue(condition.getRightOperand(), scenario, loopDataContext);
         return safe(leftValue) + " = " + safe(rightValue);

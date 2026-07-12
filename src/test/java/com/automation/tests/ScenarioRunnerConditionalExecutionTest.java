@@ -127,9 +127,9 @@ public class ScenarioRunnerConditionalExecutionTest {
                 scenarios(new Object[][]{{1, "Y", "Conditional Flow", "Conditional execution"}}),
                 scenarioSheet("Conditional Flow", new Object[][]{
                         {"Create Booking", "Y", "", "", "", "BRS", "Active testcase"},
-                        {"", "", "ifEquals", "", "BOOKING_DATA.SCHEDULE_TYPE = Single Meeting", "", "Single meeting condition"},
+                        {"", "", "ifEquals", "", "BOOKING_DATA.SCHEDULE_TYPE", "", "Single Meeting"},
                         {"", "", "click", "btnSingleMeeting", "", "", "Single meeting step"},
-                        {"", "", "elseIfEquals", "", "BOOKING_DATA.SCHEDULE_TYPE = Repeating Meeting", "", "Repeating meeting condition"},
+                        {"", "", "elseIfEquals", "", "BOOKING_DATA.SCHEDULE_TYPE", "", "Repeating Meeting"},
                         {"", "", "click", "btnRepeatingMeeting", "", "", "Repeating meeting step"},
                         {"", "", "else", "", "", "", "Fallback condition"},
                         {"", "", "click", "btnFallbackMeeting", "", "", "Fallback step"},
@@ -219,7 +219,7 @@ public class ScenarioRunnerConditionalExecutionTest {
                 scenarios(new Object[][]{{1, "Y", "Nested Conditional Flow", "Nested conditional execution"}}),
                 scenarioSheet("Nested Conditional Flow", new Object[][]{
                         {"Create Booking", "Y", "", "", "", "BRS", "Active testcase"},
-                        {"", "", "ifEquals", "", "BOOKING_DATA.SCHEDULE_TYPE = Single Meeting", "", "Outer condition"},
+                        {"", "", "ifEquals", "", "BOOKING_DATA.SCHEDULE_TYPE", "", "Single Meeting"},
                         {"", "", "click", "btnOuterTrue", "", "", "Outer true step"},
                         {"", "", "ifDisplayed", "dlgWarning", "", "", "Inner displayed condition"},
                         {"", "", "click", "btnInnerTrue", "", "", "Inner true step"},

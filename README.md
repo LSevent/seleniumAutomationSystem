@@ -156,13 +156,15 @@ src
 
 Before browser keyword execution starts, the framework builds a resolved execution plan for active scenarios and active testcases. The plan resolves data references, object repository references, raw and resolved XPath values, and dynamic XPath placeholders.
 
-Pre-run validation checks data references, object and XPath availability, unknown keyword names, and simple keyword requirements such as the value required by `openUrl` and the XPath/value required by `input`. This catches Excel mistakes before Selenium steps begin. Inactive scenarios and inactive testcases are not included in the resolved plan and do not block execution.
+Pre-run validation is intentionally lightweight. It checks that the resolved plan is structurally usable, such as active scenarios having active testcases, active testcases having steps, active steps having `Keyword` and `Application`, and flow directives having readable basic syntax.
+
+Runtime keyword execution owns browser/action validation. Missing `Object`, missing XPath, blank `Value`, unknown custom keywords, and Selenium failures are reported only when the step actually runs. This keeps conditional branches and draft rows from blocking the whole workbook before execution starts.
 
 ## Step Execution Context
 
 Public keyword methods are context-based, no-argument entry points. They read the current `ResolvedStepContext` from `StepContextHolder`, so common keywords such as `openUrl()`, `click()`, `input()`, `verifyDisplayed()`, and `verifyText()` use the resolved Excel step instead of receiving XPath or value arguments directly.
 
-`PreRunValidator` validates required XPath and Value data before runtime. `BaseFunction` and `SpecificFunction` then read the already-validated resolved data through holder-backed helpers such as `xpath()` and `value()`, keeping runtime keyword methods focused on browser actions.
+`BaseFunction` and `SpecificFunction` read resolved data through holder-backed helpers such as `xpath()` and `value()`. Required runtime data is checked naturally by the keyword/action that actually executes, so skipped conditional branches can contain incomplete draft rows without blocking the run.
 
 `ResolvedStepContext` is an immutable model for one resolved Excel step and should be created through `builder()`. Its long constructor is intentionally private to prevent parameter-order mistakes, while convenience accessors such as `xpath()` and `value()` keep consumers concise. During execution, `StepContextHolder` stores that single context in a `ThreadLocal`; `KeywordEngine` owns the set/clear lifecycle. Its `toString()` omits raw and resolved values so sensitive step data is not exposed accidentally.
 
@@ -176,7 +178,7 @@ The framework resolves an Excel keyword into a `ResolvedKeyword`; `KeywordExecut
 
 `KeywordEngine` centrally logs concise `START`, `PASS`, `SKIP`, and `FAIL` events using the resolved step context, with sensitive values masked. `ScenarioRunner` adds short scenario/testcase boundaries, while resolver details and full invocation stack traces remain at debug level. Runtime failure text contains one readable summary and one context block instead of repeating the same cause at every layer. Internal helper methods are limited to shared context access, validation, waiting, and reusable custom keyword support; they are not Excel-facing keyword entry points.
 
-Excel execution builds and validates a resolved execution plan before runtime startup. Runtime execution uses each `ResolvedStepContext` as its source of truth; raw `TestStep` rows are parser input only, not a separate runtime execution path. `KeywordEngine` sets `StepContextHolder` for the step and clears it afterward, and report rows are populated from the same resolved step data.
+Excel execution builds a resolved execution plan before runtime startup and performs lightweight structural validation. Runtime execution uses each `ResolvedStepContext` as its source of truth; raw `TestStep` rows are parser input only, not a separate runtime execution path. `KeywordEngine` sets `StepContextHolder` for the step and clears it afterward, and report rows are populated from the same resolved step data.
 
 ## Configuration
 
@@ -442,13 +444,34 @@ Conditional flow directives are handled by `ScenarioRunner`, not by `BaseFunctio
 | `else` | No | No | Adds a fallback branch when no earlier branch matched. |
 | `endIf` | No | No | Ends the current conditional block. |
 
-Condition syntax:
+Preferred condition syntax:
+
+```text
+Value       = actual value or data reference
+Description = expected value
+```
+
+Example:
+
+```text
+Keyword   | Value                 | Description
+ifEquals  | BOOKING_DATA.SCHEDULE_TYPE | Single Meeting
+```
+
+For formula header references, this also works:
+
+```text
+Keyword   | Value              | Description
+ifEquals  | =BOOKING_DATA!$B$1 | Single Meeting
+```
+
+Legacy inline condition syntax is still supported:
 
 ```text
 ACTUAL = EXPECTED
 ```
 
-The left or right side may be a data reference. Values are resolved before runtime and compared after trimming, ignoring case.
+For legacy inline conditions, the left or right side may be a data reference. Values are resolved before runtime and compared after trimming, ignoring case.
 
 Visibility conditions use the Object column instead of Value. They are useful for optional popups, warnings, or application states that should branch without failing the scenario. Normal actions and verifications use `explicitTime`; visibility condition rows use the shorter `conditionTime`.
 
@@ -467,11 +490,11 @@ Example conditional block:
 
 ```text
 Keyword       | Object              | Value                                           | Description
-ifEquals      |                     | BOOKING_DATA.SCHEDULE_TYPE = Single Meeting     | Single meeting branch
+ifEquals      |                     | BOOKING_DATA.SCHEDULE_TYPE                      | Single Meeting
 input         | txtMeetingDate      | BOOKING_DATA.MEETING_DATE                       | Input meeting date
 input         | txtStartTime        | BOOKING_DATA.START_TIME                         | Input start time
 input         | txtDuration         | BOOKING_DATA.DURATION                           | Input duration
-elseIfEquals  |                     | BOOKING_DATA.SCHEDULE_TYPE = Repeating Meeting  | Repeating meeting branch
+elseIfEquals  |                     | BOOKING_DATA.SCHEDULE_TYPE                      | Repeating Meeting
 input         | txtStartDate        | BOOKING_DATA.START_DATE                         | Input start date
 input         | txtEndDate          | BOOKING_DATA.END_DATE                           | Input end date
 input         | txtFinishTime       | BOOKING_DATA.FINISH_TIME                        | Input finish time
@@ -500,9 +523,9 @@ Example data-row loop:
 ```text
 Keyword            | Object            | Value                                           | Description
 forEachDataRow     |                   | #BOOKING_DATA                                   | Repeat for each booking row
-ifEquals           |                   | BOOKING_DATA.SCHEDULE_TYPE = Single Meeting     | Single meeting branch
+ifEquals           |                   | BOOKING_DATA.SCHEDULE_TYPE                      | Single Meeting
 input              | txtMeetingDate    | BOOKING_DATA.MEETING_DATE                       | Input meeting date
-elseIfEquals       |                   | BOOKING_DATA.SCHEDULE_TYPE = Repeating Meeting  | Repeating meeting branch
+elseIfEquals       |                   | BOOKING_DATA.SCHEDULE_TYPE                      | Repeating Meeting
 input              | txtStartDate      | BOOKING_DATA.START_DATE                         | Input start date
 input              | txtEndDate        | BOOKING_DATA.END_DATE                           | Input end date
 endIf              |                   |                                                 | End schedule condition
@@ -551,7 +574,7 @@ Keyword lookup order:
 
 If the same no-argument method exists in both `SpecificFunction` and `BaseFunction`, the application-specific method wins. Public parameter-based keyword fallback is no longer part of runtime resolution.
 
-`KeywordCatalog` performs this method discovery and keeps optional early-validation rules for required Excel inputs (`Object` and/or `Value`). It is not a mandatory registration list for every custom keyword: if a public no-argument method exists in `SpecificFunction` or `BaseFunction`, the framework can discover it. Register the keyword in `KeywordCatalog` only when you want pre-run validation to require `Object`, `Value`, or both.
+`KeywordCatalog` performs method discovery for `KeywordResolver`. It is not a manual registration list for every custom keyword: if a public no-argument method exists in `SpecificFunction` or `BaseFunction`, the framework can discover it.
 
 Currently implemented application-specific commands:
 
@@ -560,7 +583,7 @@ Currently implemented application-specific commands:
 | `BRS` | `clickMultiValue` | Splits `Value` by `;`, replaces `#` in the resolved object XPath for each value, then clicks each matching target. |
 | `HRIS` | `verifyEmployeeVisible` | Verifies employee text using HRIS-specific naming. |
 
-To add a custom application command, add a public no-argument method to the matching `SpecificFunction` class, then use the method name in the Excel `Keyword` column. The method is discovered automatically. If it requires `Object`, `Value`, or both, add that early-validation requirement once in `KeywordCatalog`; a custom keyword without a registered requirement keeps the permissive no-required-input behavior.
+To add a custom application command, add a public no-argument method to the matching `SpecificFunction` class, then use the method name in the Excel `Keyword` column. The method is discovered automatically.
 
 Custom application commands can also compose screenshot evidence. For example, a `SpecificFunction` method may call `screenshot()` for a normal screenshot, `screenshotPartByObject()` for multi-part object evidence, or `screenshotFullPart()` for full-page scroll evidence. The framework still collects the generated evidence through `KeywordEngine`, so the report behavior stays consistent.
 

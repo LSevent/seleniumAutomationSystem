@@ -167,6 +167,69 @@ public class ExecutionPlanBuilderTest {
     }
 
     @Test
+    public void conditionalDirectiveShouldUseDescriptionAsExpectedValueWhenValueContainsActualOnly() throws IOException {
+        Path workbookPath = ValidationWorkbookFactory.createWorkbook(
+                TEMP_DIR.resolve("conditional-description-expected-value.xlsx"),
+                scenarios(new Object[][]{{1, "Y", "Booking Flow", "Create booking"}}),
+                scenarioSheet("Booking Flow", new Object[][]{
+                        {"Create Booking", "Y", "", "", "", "BRS", "Active testcase"},
+                        {"", "", "ifEquals", "", formula("BOOKING_DATA!$B$1"), "", "Single Meeting"},
+                        {"", "", "click", "btnSubmitBooking", "", "", "Submit booking"},
+                        {"", "", "endIf", "", "", "", "End condition"}
+                }),
+                sheet("BOOKING_DATA", new String[]{"NO", "SCHEDULE_TYPE"}, new Object[][]{{1, "Single Meeting"}}),
+                objectRepository(new Object[][]{
+                        {"BRS", "btnSubmitBooking", "//button[@id='submitBooking']", "Submit"}
+                })
+        );
+
+        try (ExcelReader excelReader = new ExcelReader(workbookPath.toString())) {
+            ResolvedStepContext ifStep = builder(excelReader)
+                    .build()
+                    .get(0)
+                    .getTestcases()
+                    .get(0)
+                    .getSteps()
+                    .get(0);
+
+            Assert.assertEquals(ifStep.getRawValue(), "=BOOKING_DATA!$B$1");
+            Assert.assertEquals(ifStep.getResolvedValue(), "Single Meeting = Single Meeting");
+            Assert.assertEquals(ifStep.getDescription(), "Single Meeting");
+        }
+    }
+
+    @Test
+    public void conditionalDirectiveShouldSupportFormulaReferenceInInlineCondition() throws IOException {
+        Path workbookPath = ValidationWorkbookFactory.createWorkbook(
+                TEMP_DIR.resolve("conditional-inline-formula-reference.xlsx"),
+                scenarios(new Object[][]{{1, "Y", "Booking Flow", "Create booking"}}),
+                scenarioSheet("Booking Flow", new Object[][]{
+                        {"Create Booking", "Y", "", "", "", "BRS", "Active testcase"},
+                        {"", "", "ifEquals", "", "=BOOKING_DATA!$B$1 = Single Meeting", "", "Single meeting condition"},
+                        {"", "", "click", "btnSubmitBooking", "", "", "Submit booking"},
+                        {"", "", "endIf", "", "", "", "End condition"}
+                }),
+                sheet("BOOKING_DATA", new String[]{"NO", "SCHEDULE_TYPE"}, new Object[][]{{1, "Single Meeting"}}),
+                objectRepository(new Object[][]{
+                        {"BRS", "btnSubmitBooking", "//button[@id='submitBooking']", "Submit"}
+                })
+        );
+
+        try (ExcelReader excelReader = new ExcelReader(workbookPath.toString())) {
+            ResolvedStepContext ifStep = builder(excelReader)
+                    .build()
+                    .get(0)
+                    .getTestcases()
+                    .get(0)
+                    .getSteps()
+                    .get(0);
+
+            Assert.assertEquals(ifStep.getRawValue(), "=BOOKING_DATA!$B$1 = Single Meeting");
+            Assert.assertEquals(ifStep.getResolvedValue(), "Single Meeting = Single Meeting");
+        }
+    }
+
+    @Test
     public void formulaHeaderReferenceShouldResolveUsingCurrentScenarioDataRow() throws IOException {
         Path workbookPath = ValidationWorkbookFactory.createWorkbook(
                 TEMP_DIR.resolve("formula-header-reference.xlsx"),

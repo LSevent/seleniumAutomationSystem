@@ -1,7 +1,5 @@
 package com.automation.validation;
 
-import com.automation.engine.KeywordCatalog;
-import com.automation.engine.KeywordRequirements;
 import com.automation.exceptions.ErrorContext;
 import com.automation.exceptions.FrameworkException;
 import com.automation.models.ConditionExpression;
@@ -9,16 +7,11 @@ import com.automation.models.FlowDirectiveType;
 import com.automation.models.ResolvedScenarioContext;
 import com.automation.models.ResolvedStepContext;
 import com.automation.models.ResolvedTestcaseContext;
-import com.automation.utils.XPathResolver;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 public class PreRunValidator {
-
-    private final XPathResolver xpathResolver = new XPathResolver();
-    private final KeywordCatalog keywordCatalog = new KeywordCatalog();
 
     public void validate(List<ResolvedScenarioContext> executionPlan) {
         if (executionPlan == null) {
@@ -64,6 +57,20 @@ public class PreRunValidator {
             ResolvedTestcaseContext testcase,
             List<ValidationError> errors
     ) {
+        if (testcase == null) {
+            errors.add(new ValidationError(
+                    "Resolved testcase context is not available.",
+                    scenario.getScenarioNo(),
+                    scenario.getScenarioAction(),
+                    scenario.getScenarioAction(),
+                    0,
+                    "",
+                    "",
+                    ""
+            ));
+            return;
+        }
+
         if (testcase.getSteps().isEmpty()) {
             errors.add(new ValidationError(
                     "Active testcase has no steps.",
@@ -103,146 +110,40 @@ public class PreRunValidator {
         }
 
         FlowDirectiveType flowDirective = step.getFlowDirective();
-        if (flowDirective != null && flowDirective.isFlowDirective()) {
-            if (flowDirective.isConditional()) {
-                validateConditionalDirective(step, flowDirective, errors);
-            } else if (flowDirective.isLoop()) {
-                validateLoopDirective(step, flowDirective, errors);
-            }
-            return;
-        }
-
-        Optional<KeywordCatalog.KeywordDefinition> keywordDefinition = validateKeywordIsKnown(
-                step,
-                keyword,
-                errors
-        );
-
-        validateDynamicXPath(step, errors);
-        if (keyword.isBlank() || keywordDefinition.isEmpty()) {
-            return;
-        }
-
-        KeywordRequirements requirements = keywordDefinition.get().requirements();
-        if (requirements.objectRequired()) {
-            requireObjectAndXPath(step, keyword, errors);
-        }
-        if (requirements.valueRequired()) {
-            requireValue(step, keyword, errors);
-        }
-    }
-
-    private Optional<KeywordCatalog.KeywordDefinition> validateKeywordIsKnown(
-            ResolvedStepContext step,
-            String keyword,
-            List<ValidationError> errors
-    ) {
-        if (keyword.isBlank() || isBlank(step.getApplication())) {
-            return Optional.empty();
-        }
-        Optional<KeywordCatalog.KeywordDefinition> definition = keywordCatalog.discover(
-                step.getApplication(),
-                keyword
-        );
-        if (definition.isPresent()) {
-            return definition;
-        }
-
-        addStepError(
-                errors,
-                "Unknown keyword '" + keyword + "' for application '" + safe(step.getApplication()) + "'. "
-                        + "Add a public no-argument method named '" + keyword + "' to "
-                        + "SpecificFunction for application '" + safe(step.getApplication()) + "' or BaseFunction.",
-                step
-        );
-        return Optional.empty();
-    }
-
-    private void validateConditionalDirective(
-            ResolvedStepContext step,
-            FlowDirectiveType flowDirective,
-            List<ValidationError> errors
-    ) {
-        if (flowDirective.isEqualityCondition() && isBlank(step.getRawValue())) {
-            addStepError(errors, "Value condition is required for keyword '" + step.getKeyword() + "'.", step);
+        if (flowDirective == null || !flowDirective.isFlowDirective()) {
             return;
         }
 
         if (flowDirective.isEqualityCondition()) {
-            try {
-                ConditionExpression condition = ConditionExpression.parse(step.getRawValue());
-            } catch (FrameworkException exception) {
-                addStepError(errors, exception.getMessage(), step);
-            }
-        }
-
-        if (flowDirective.isVisibilityCondition()) {
-            requireObjectAndXPath(step, step.getKeyword(), errors);
-            validateDynamicXPath(step, errors);
-        }
-    }
-
-    private void validateLoopDirective(
-            ResolvedStepContext step,
-            FlowDirectiveType flowDirective,
-            List<ValidationError> errors
-    ) {
-        if (flowDirective == FlowDirectiveType.FOR_EACH_DATA_ROW && isBlank(step.getRawValue())) {
+            validateEqualityCondition(step, errors);
+        } else if (flowDirective == FlowDirectiveType.FOR_EACH_DATA_ROW && isBlank(step.getRawValue())) {
             addStepError(errors, "Data sheet name is required for keyword '" + step.getKeyword() + "'.", step);
         }
     }
 
-    private void requireObjectAndXPath(
-            ResolvedStepContext step,
-            String keyword,
-            List<ValidationError> errors
-    ) {
-        if (isBlank(step.getObjectName())) {
-            addStepError(errors, "Object is required for keyword '" + keyword + "'.", step);
+    private void validateEqualityCondition(ResolvedStepContext step, List<ValidationError> errors) {
+        if (isBlank(step.getRawValue())) {
+            addStepError(errors, "Value condition is required for keyword '" + step.getKeyword() + "'.", step);
             return;
         }
-        if (isBlank(step.getRawXPath())) {
-            addStepError(errors, "Object was not resolved from OBJECT_REPOSITORY.", step);
-        }
-        if (isBlank(step.getResolvedXPath())) {
-            addStepError(errors, "XPath is required for keyword '" + keyword + "'.", step);
-        }
-    }
 
-    private void requireValue(
-            ResolvedStepContext step,
-            String keyword,
-            List<ValidationError> errors
-    ) {
-        if (isBlank(step.getResolvedValue())) {
-            addStepError(errors, "Value is required for keyword '" + keyword + "'.", step);
-        }
-    }
-
-    private void validateDynamicXPath(ResolvedStepContext step, List<ValidationError> errors) {
-        List<String> placeholders = xpathResolver.extractPlaceholders(step.getRawXPath());
-        if (placeholders.size() > 1) {
-            addStepError(errors, "Multiple XPath placeholders are not supported.", step);
-            return;
-        }
-        if (placeholders.isEmpty()) {
-            if (xpathResolver.hasPlaceholder(step.getResolvedXPath())) {
-                addStepError(errors, "Dynamic XPath placeholder was not resolved.", step);
+        if (!ConditionExpression.hasComparisonOperator(step.getRawValue())) {
+            if (isBlank(step.getDescription())) {
+                addStepError(
+                        errors,
+                        "Expected value is required in Description for keyword '" + step.getKeyword()
+                                + "' when Value contains only the actual value. "
+                                + "Use Value as ACTUAL = EXPECTED or Value as ACTUAL and Description as EXPECTED.",
+                        step
+                );
             }
             return;
         }
 
-        String placeholderName = placeholders.get(0);
-        String placeholder = "{" + placeholderName + "}";
-        if (placeholderName.isBlank()) {
-            addStepError(errors, "XPath placeholder cannot be blank.", step);
-            return;
-        }
-
-        if (isBlank(step.getResolvedValue())
-                || isBlank(step.getResolvedXPath())
-                || xpathResolver.hasPlaceholder(step.getResolvedXPath())) {
-            addStepError(errors, "XPath placeholder " + placeholder + " was not resolved.", step);
+        try {
+            ConditionExpression.parse(step.getRawValue());
+        } catch (FrameworkException exception) {
+            addStepError(errors, exception.getMessage(), step);
         }
     }
 

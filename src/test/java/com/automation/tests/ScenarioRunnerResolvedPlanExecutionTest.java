@@ -165,15 +165,14 @@ public class ScenarioRunnerResolvedPlanExecutionTest {
     }
 
     @Test
-    public void validationFailureShouldPreventRuntimeEngineStartup() throws IOException {
+    public void structureFailureShouldPreventRuntimeEngineStartup() throws IOException {
         Path invalidWorkbook = ValidationWorkbookFactory.createWorkbook(
                 TEMP_DIR.resolve("validation-before-runtime.xlsx"),
                 ValidationWorkbookFactory.scenarios(new Object[][]{
                         {1, "Y", "Invalid Flow", "Validation must fail first"}
                 }),
                 ValidationWorkbookFactory.scenarioSheet("Invalid Flow", new Object[][]{
-                        {"Invalid Testcase", "Y", "", "", "", "BRS", "Invalid testcase"},
-                        {"", "", "openUrl", "", "", "", "Missing URL"}
+                        {"Invalid Testcase", "Y", "", "", "", "BRS", "Invalid testcase"}
                 }),
                 ValidationWorkbookFactory.objectRepository(new Object[][]{})
         );
@@ -204,7 +203,7 @@ public class ScenarioRunnerResolvedPlanExecutionTest {
                     runner::runActiveScenarios
             );
 
-            Assert.assertTrue(exception.getMessage().contains("Pre-run validation failed"));
+            Assert.assertTrue(exception.getMessage().contains("has no steps"));
             Assert.assertFalse(runtimeStarted.get());
         }
     }

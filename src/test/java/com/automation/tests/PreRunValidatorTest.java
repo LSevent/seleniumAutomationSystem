@@ -19,110 +19,24 @@ public class PreRunValidatorTest {
         validator.validate(plan(
                 step("openUrl", "", "CONFIG.BASE_URL", "file:///test.html", "", "", "BRS"),
                 step("input", "txtUsername", "LOGIN_DATA.USERNAME", "brs_admin", "//input[@id='username']", "//input[@id='username']", "BRS"),
-                step("select", "sltScheduleType", "BOOKING_DATA.SCHEDULE_TYPE", "Repeating Meeting", "//select[@id='scheduleType']", "//select[@id='scheduleType']", "BRS"),
                 step("click", "btnLogin", "", "", "//button[@id='login']", "//button[@id='login']", "BRS"),
-                step("verifyText", "message", "DATA.MESSAGE", "Success", "//div[@id='message']", "//div[@id='message']", "BRS"),
-                step("verifyDisplayed", "dashboard", "", "", "//h1", "//h1", "BRS"),
-                step("verifyNotDisplayed", "loading", "", "", "//div[@id='loading']", "//div[@id='loading']", "BRS"),
-                step("ifEquals", "", "BOOKING_DATA.SCHEDULE_TYPE = Single Meeting", "BOOKING_DATA.SCHEDULE_TYPE = Single Meeting", "", "", "BRS"),
-                step("ifDisplayed", "dlgWarning", "", "", "//div[@id='warning']", "//div[@id='warning']", "BRS"),
-                step("elseIfDisplayed", "lblDashboard", "", "", "//h1[@id='dashboard']", "//h1[@id='dashboard']", "BRS"),
+                step("ifEquals", "", "BOOKING_DATA.SCHEDULE_TYPE", "Single Meeting = Single Meeting", "", "", "BRS", "Single Meeting"),
                 step("else", "", "", "", "", "", "BRS"),
                 step("endIf", "", "", "", "", "", "BRS"),
                 step("forEachDataRow", "", "BOOKING_DATA", "BOOKING_DATA row 1 of 2", "", "", "BRS"),
-                step("endForEachDataRow", "", "", "BOOKING_DATA row 1 of 2", "", "", "BRS"),
-                step("screenshot", "", "", "", "", "", "BRS"),
-                step("screenshotFullPart", "", "", "", "", "", "BRS"),
-                step("screenshotPartByObject", "pnlBooking", "Booking panel", "Booking panel", "//section[@id='booking']", "//section[@id='booking']", "BRS")
+                step("endForEachDataRow", "", "", "BOOKING_DATA row 1 of 2", "", "", "BRS")
         ));
     }
 
     @Test
-    public void allXPathDependentKeywordsShouldBeValidatedBeforeRuntime() {
-        List<String> keywords = List.of(
-                "click",
-                "verifyDisplayed",
-                "verifyNotDisplayed",
-                "clear",
-                "scrollToElement",
-                "pressEnter",
-                "screenshotPartByObject",
-                "input",
-                "select",
-                "verifyText",
-                "verifyTextContains",
-                "clickReplace",
-                "clickMultiValue",
-                "verifyEmployeeVisible"
-        );
-
-        for (String keyword : keywords) {
-            String application = keyword.equals("verifyEmployeeVisible") ? "HRIS" : "BRS";
-            FrameworkException exception = validationFailure(step(
-                    keyword, "targetObject", "literal value", "resolved value", "", "", application
-            ));
-
-            assertContainsContext(
-                    exception,
-                    "XPath is required for keyword '" + keyword + "'.",
-                    keyword,
-                    "targetObject",
-                    application
-            );
-        }
-    }
-
-    @Test
-    public void allValueDependentKeywordsShouldBeValidatedBeforeRuntime() {
-        List<String> keywords = List.of(
-                "openUrl",
-                "verifyUrlContains",
-                "verifyTitle",
-                "verifyTitleContains",
-                "input",
-                "select",
-                "verifyText",
-                "verifyTextContains",
-                "clickReplace",
-                "clickMultiValue",
-                "verifyEmployeeVisible"
-        );
-
-        for (String keyword : keywords) {
-            String application = keyword.equals("verifyEmployeeVisible") ? "HRIS" : "BRS";
-            boolean xpathRequired = !keyword.equals("openUrl")
-                    && !keyword.equals("verifyUrlContains")
-                    && !keyword.equals("verifyTitle")
-                    && !keyword.equals("verifyTitleContains");
-            String objectName = xpathRequired ? "targetObject" : "";
-            String resolvedXPath = xpathRequired ? "//div[@id='target']" : "";
-            FrameworkException exception = validationFailure(step(
-                    keyword, objectName, "", "", resolvedXPath, resolvedXPath, application
-            ));
-
-            assertContainsContext(
-                    exception,
-                    "Value is required for keyword '" + keyword + "'.",
-                    keyword,
-                    objectName,
-                    application
-            );
-        }
-    }
-
-    @Test
-    public void missingObjectShouldFailClearly() {
-        FrameworkException exception = validationFailure(step("click", "", "", "", "", "", "BRS"));
-
-        assertContainsContext(exception, "Object is required for keyword 'click'.", "click", "", "BRS");
-    }
-
-    @Test
-    public void missingXPathShouldFailClearly() {
-        FrameworkException exception = validationFailure(step("click", "btnMissing", "", "", "", "", "BRS"));
-
-        Assert.assertTrue(exception.getMessage().contains("Object was not resolved from OBJECT_REPOSITORY."));
-        assertContainsContext(exception, "XPath is required for keyword 'click'.", "click", "btnMissing", "BRS");
+    public void keywordRuntimeRequirementsShouldNotBlockPreRunValidation() {
+        validator.validate(plan(
+                step("openUrl", "", "", "", "", "", "BRS"),
+                step("input", "txtUsername", "", "", "", "", "BRS"),
+                step("click", "btnMissing", "", "", "", "", "BRS"),
+                step("approveBooking", "", "", "", "", "", "BRS"),
+                step("screenshotPartByObject", "", "", "", "", "", "BRS")
+        ));
     }
 
     @Test
@@ -133,133 +47,20 @@ public class PreRunValidatorTest {
     }
 
     @Test
-    public void openUrlMissingValueShouldFailClearly() {
-        FrameworkException exception = validationFailure(step("openUrl", "", "", "", "", "", "BRS"));
+    public void blankApplicationShouldFailClearly() {
+        FrameworkException exception = validationFailure(step("click", "btnLogin", "", "", "", "", ""));
 
-        assertContainsContext(exception, "Value is required for keyword 'openUrl'.", "openUrl", "", "BRS");
+        assertContainsContext(exception, "Application is required for active step.", "click", "btnLogin", "");
     }
 
     @Test
-    public void inputMissingValueShouldFailClearly() {
-        FrameworkException exception = validationFailure(step(
-                "input", "txtUsername", "", "", "//input[@id='username']", "//input[@id='username']", "BRS"
-        ));
-
-        assertContainsContext(exception, "Value is required for keyword 'input'.", "input", "txtUsername", "BRS");
-    }
-
-    @Test
-    public void clickMissingXPathShouldFailClearly() {
-        FrameworkException exception = validationFailure(step("click", "btnLogin", "", "", "", "", "BRS"));
-
-        assertContainsContext(exception, "XPath is required for keyword 'click'.", "click", "btnLogin", "BRS");
-    }
-
-    @Test
-    public void screenshotWithoutObjectShouldPass() {
-        validator.validate(plan(step("screenshot", "", "", "", "", "", "BRS")));
-    }
-
-    @Test
-    public void screenshotFullPartWithoutObjectShouldPass() {
-        validator.validate(plan(step("screenshotFullPart", "", "", "", "", "", "BRS")));
-    }
-
-    @Test
-    public void screenshotPartByObjectShouldRequireObjectAndXPath() {
-        FrameworkException missingObject = validationFailure(step("screenshotPartByObject", "", "", "", "", "", "BRS"));
-        assertContainsContext(
-                missingObject,
-                "Object is required for keyword 'screenshotPartByObject'.",
-                "screenshotPartByObject",
-                "",
-                "BRS"
-        );
-
-        FrameworkException missingXPath = validationFailure(step(
-                "screenshotPartByObject",
-                "pnlBooking",
-                "",
-                "",
-                "",
-                "",
-                "BRS"
-        ));
-        assertContainsContext(
-                missingXPath,
-                "XPath is required for keyword 'screenshotPartByObject'.",
-                "screenshotPartByObject",
-                "pnlBooking",
-                "BRS"
-        );
-    }
-
-    @Test
-    public void unknownKeywordShouldFailBeforeRuntime() {
-        FrameworkException exception = validationFailure(step("approveBooking", "", "", "", "", "", "BRS"));
-
-        assertContainsContext(
-                exception,
-                "Unknown keyword 'approveBooking' for application 'BRS'.",
-                "approveBooking",
-                "",
-                "BRS"
-        );
-        Assert.assertTrue(exception.getMessage().contains(
-                "Add a public no-argument method named 'approveBooking' to SpecificFunction for application 'BRS' or BaseFunction."
-        ));
-    }
-
-    @Test
-    public void applicationSpecificKeywordShouldPassKnownKeywordValidation() {
-        validator.validate(plan(step(
-                "clickMultiValue",
-                "btnRoomByName",
-                "Meeting Room A;Meeting Room B",
-                "Meeting Room A;Meeting Room B",
-                "//button[@data-room='#']",
-                "//button[@data-room='#']",
-                "BRS"
-        )));
-    }
-
-    @Test
-    public void customNoArgKeywordShouldNotRequireCatalogRegistration() {
-        validator.validate(plan(step("preferNoArg", "", "", "", "", "", "RESOLVERTEST")));
-    }
-
-    @Test
-    public void clickReplaceShouldRequireValueEvenForStaticXPathTemplate() {
-        FrameworkException exception = validationFailure(step(
-                "clickReplace",
-                "btnDefaultRoom",
-                "",
-                "",
-                "//button[@id='default-room']",
-                "//button[@id='default-room']",
-                "BRS"
-        ));
-
-        assertContainsContext(exception, "Value is required for keyword 'clickReplace'.", "clickReplace", "btnDefaultRoom", "BRS");
-    }
-
-    @Test
-    public void conditionalDirectivesShouldNotRequireObjectOrXPath() {
+    public void conditionalDirectivesShouldSupportDescriptionAsExpectedValue() {
         validator.validate(plan(
-                step("ifEquals", "", "BOOKING_DATA.SCHEDULE_TYPE = Single Meeting", "BOOKING_DATA.SCHEDULE_TYPE = Single Meeting", "", "", "BRS"),
-                step("elseIfEquals", "", "BOOKING_DATA.SCHEDULE_TYPE = Repeating Meeting", "BOOKING_DATA.SCHEDULE_TYPE = Repeating Meeting", "", "", "BRS"),
+                step("ifEquals", "", "BOOKING_DATA.SCHEDULE_TYPE", "Single Meeting = Single Meeting", "", "", "BRS", "Single Meeting"),
+                step("elseIfEquals", "", "=BOOKING_DATA!$B$1", "Repeating Meeting = Repeating Meeting", "", "", "BRS", "Repeating Meeting"),
                 step("else", "", "", "", "", "", "BRS"),
                 step("endIf", "", "", "", "", "", "BRS")
         ));
-    }
-
-    @Test
-    public void displayedConditionalDirectivesShouldRequireObjectAndXPath() {
-        FrameworkException missingObject = validationFailure(step("ifDisplayed", "", "", "", "", "", "BRS"));
-        assertContainsContext(missingObject, "Object is required for keyword 'ifDisplayed'.", "ifDisplayed", "", "BRS");
-
-        FrameworkException missingXPath = validationFailure(step("elseIfDisplayed", "dlgWarning", "", "", "", "", "BRS"));
-        assertContainsContext(missingXPath, "XPath is required for keyword 'elseIfDisplayed'.", "elseIfDisplayed", "dlgWarning", "BRS");
     }
 
     @Test
@@ -270,20 +71,21 @@ public class PreRunValidatorTest {
     }
 
     @Test
-    public void conditionalComparisonDirectivesShouldRequireValidConditionExpression() {
+    public void conditionalComparisonDirectivesShouldRequireDescriptionWhenValueContainsActualOnly() {
         FrameworkException exception = validationFailure(step(
                 "ifEquals",
                 "",
-                "BOOKING_DATA.SCHEDULE_TYPE",
-                "Single Meeting",
+                "=BOOKING_DATA!$B$1",
+                "Repeating Meeting",
                 "",
                 "",
-                "BRS"
+                "BRS",
+                ""
         ));
 
         assertContainsContext(
                 exception,
-                "Invalid condition expression: BOOKING_DATA.SCHEDULE_TYPE. Expected format: ACTUAL = EXPECTED.",
+                "Expected value is required in Description for keyword 'ifEquals' when Value contains only the actual value.",
                 "ifEquals",
                 "",
                 "BRS"
@@ -291,11 +93,25 @@ public class PreRunValidatorTest {
     }
 
     @Test
-    public void loopDirectivesShouldNotRequireObjectOrXPath() {
-        validator.validate(plan(
-                step("forEachDataRow", "", "BOOKING_DATA", "BOOKING_DATA row 1 of 2", "", "", "BRS"),
-                step("endForEachDataRow", "", "", "BOOKING_DATA row 1 of 2", "", "", "BRS")
+    public void conditionalComparisonDirectivesShouldRequireValidInlineConditionExpression() {
+        FrameworkException exception = validationFailure(step(
+                "ifEquals",
+                "",
+                "BOOKING_DATA.SCHEDULE_TYPE =",
+                "Single Meeting =",
+                "",
+                "",
+                "BRS",
+                "Single meeting condition"
         ));
+
+        assertContainsContext(
+                exception,
+                "Invalid condition expression: BOOKING_DATA.SCHEDULE_TYPE =. Expected format: ACTUAL = EXPECTED.",
+                "ifEquals",
+                "",
+                "BRS"
+        );
     }
 
     @Test
@@ -303,11 +119,6 @@ public class PreRunValidatorTest {
         FrameworkException exception = validationFailure(step("forEachDataRow", "", "", "", "", "", "BRS"));
 
         assertContainsContext(exception, "Data sheet name is required for keyword 'forEachDataRow'.", "forEachDataRow", "", "BRS");
-    }
-
-    @Test
-    public void inactiveScenarioAndTestcaseOutsideResolvedPlanShouldNotBlockValidation() {
-        validator.validate(plan(step("click", "btnLogin", "", "", "//button", "//button", "BRS")));
     }
 
     @Test
@@ -335,35 +146,7 @@ public class PreRunValidatorTest {
     }
 
     @Test
-    public void multiDotLiteralShouldPassValidationWhenAlreadyResolved() {
-        validator.validate(plan(step(
-                "input",
-                "txtUsername",
-                "john.middle.doe",
-                "john.middle.doe",
-                "//input",
-                "//input",
-                "BRS"
-        )));
-    }
-
-    @Test
-    public void unresolvedDynamicXPathShouldFailClearly() {
-        FrameworkException exception = validationFailure(step(
-                "click",
-                "btnRoomByName",
-                "BOOKING_DATA.ROOM_NAME",
-                "Meeting Room A",
-                "//button[contains(text(),'{ROOM_NAME}')]",
-                "//button[contains(text(),'{ROOM_NAME}')]",
-                "BRS"
-        ));
-
-        Assert.assertTrue(exception.getMessage().contains("XPath placeholder {ROOM_NAME} was not resolved."));
-    }
-
-    @Test
-    public void multipleErrorsShouldBeCollected() {
+    public void multipleStructuralErrorsShouldBeCollected() {
         FrameworkException exception = validationFailure(step("", "", "", "", "", "", ""));
 
         Assert.assertTrue(exception.getMessage().startsWith("Pre-run validation failed with 2 error(s)."));
@@ -394,6 +177,19 @@ public class PreRunValidatorTest {
             String resolvedXPath,
             String application
     ) {
+        return step(keyword, object, rawValue, resolvedValue, rawXPath, resolvedXPath, application, "Validation step");
+    }
+
+    private ResolvedStepContext step(
+            String keyword,
+            String object,
+            String rawValue,
+            String resolvedValue,
+            String rawXPath,
+            String resolvedXPath,
+            String application,
+            String description
+    ) {
         return ResolvedStepContext.builder()
                 .scenarioNo("1")
                 .scenarioAction("Local Keyword Test")
@@ -406,7 +202,7 @@ public class PreRunValidatorTest {
                 .keyword(keyword)
                 .objectName(object)
                 .application(application)
-                .description("Validation step")
+                .description(description)
                 .rawValue(rawValue)
                 .resolvedValue(resolvedValue)
                 .rawXPath(rawXPath)

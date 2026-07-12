@@ -20,10 +20,11 @@ public final class ConditionExpression {
             throw invalidExpression(raw);
         }
 
-        int operatorIndex = raw.indexOf("==");
+        int searchStartIndex = raw.startsWith("=") ? 1 : 0;
+        int operatorIndex = raw.indexOf("==", searchStartIndex);
         int operatorLength = 2;
         if (operatorIndex < 0) {
-            operatorIndex = raw.indexOf('=');
+            operatorIndex = raw.indexOf('=', searchStartIndex);
             operatorLength = 1;
         }
         if (operatorIndex < 0) {
@@ -37,6 +38,16 @@ public final class ConditionExpression {
         }
 
         return new ConditionExpression(raw, left, right);
+    }
+
+    public static boolean hasComparisonOperator(String expression) {
+        String raw = expression == null ? "" : expression.trim();
+        if (raw.isBlank()) {
+            return false;
+        }
+        int searchStartIndex = raw.startsWith("=") ? 1 : 0;
+        return raw.indexOf("==", searchStartIndex) >= 0
+                || raw.indexOf('=', searchStartIndex) >= 0;
     }
 
     public String getRawExpression() {
