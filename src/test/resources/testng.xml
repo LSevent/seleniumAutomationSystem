@@ -36,6 +36,7 @@
             <class name="com.automation.tests.ExcelKeywordExecutionTest"/>
             <class name="com.automation.tests.ScenarioRunnerValidationTest"/>
             <class name="com.automation.tests.ScenarioRunnerResolvedPlanExecutionTest"/>
+            <class name="com.automation.tests.ScenarioRunnerLogPresentationTest"/>
             <class name="com.automation.tests.ScenarioRunnerConditionalExecutionTest"/>
             <class name="com.automation.tests.ScenarioRunnerForEachDataRowExecutionTest"/>
             <class name="com.automation.tests.ScreenshotResolvedPlanRegressionTest"/>

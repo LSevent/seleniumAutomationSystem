@@ -79,7 +79,7 @@ public class KeywordResolver {
         String keyword = keywordName.trim();
         String normalizedApplication = normalizeApplication(application, keyword);
 
-        LOGGER.info("Resolving keyword '{}' for application '{}'.", keyword, normalizedApplication);
+        LOGGER.debug("Resolving keyword '{}' for application '{}'.", keyword, normalizedApplication);
 
         KeywordCatalog.KeywordDefinition definition = keywordCatalog.discover(normalizedApplication, keyword)
                 .orElseThrow(() -> new FrameworkException(withStepContext(
@@ -98,7 +98,7 @@ public class KeywordResolver {
                 definition.sourceType(),
                 definition.method().getName()
         );
-        LOGGER.info(
+        LOGGER.debug(
                 "Selected {} for keyword '{}': {}",
                 definition.sourceType() == KeywordSourceType.SPECIFIC ? "SpecificFunction" : "BaseFunction",
                 keyword,
@@ -125,10 +125,11 @@ public class KeywordResolver {
             Throwable cause,
             ResolvedStepContext step
     ) {
-        String message = "Failed to execute keyword '" + keyword + "' using "
-                + simpleClassName(resolvedKeyword.getResolvedClassName()) + ". Cause: " + cause.getMessage();
+        String resolvedClass = simpleClassName(resolvedKeyword.getResolvedClassName());
+        String message = "Keyword '" + keyword + "' failed in " + resolvedClass + ": "
+                + conciseCauseMessage(cause);
         message = withStepContext(message, step);
-        LOGGER.error(message, cause);
+        LOGGER.debug("Keyword invocation failed in {}.", resolvedClass, cause);
         if (cause instanceof AssertionError) {
             throw new AssertionError(message, cause);
         }
@@ -157,6 +158,20 @@ public class KeywordResolver {
             return "";
         }
         return className.substring(className.lastIndexOf('.') + 1);
+    }
+
+    private String conciseCauseMessage(Throwable cause) {
+        if (cause == null) {
+            return "Unknown keyword execution error.";
+        }
+        String message = cause.getMessage();
+        if (isBlank(message)) {
+            return cause.getClass().getSimpleName();
+        }
+        return message.split(
+                "\\R(?=Scenario NO:|Scenario ACTION:|Sheet:|Testcase:|Row:|Keyword:|Object:|Application:)",
+                2
+        )[0].trim();
     }
 
     private String withStepContext(String message, ResolvedStepContext step) {

@@ -40,10 +40,12 @@ public class KeywordEngineValidationTest {
             );
 
             Assert.assertFalse(result.isSuccess());
-            Assert.assertTrue(result.getMessage().contains("Keyword 'approveBooking' failed at step row 7."));
+            Assert.assertTrue(result.getMessage().contains(
+                    "Keyword 'approveBooking' not found in SpecificFunction for application 'BRS' or BaseFunction."
+            ));
             Assert.assertTrue(result.getMessage().contains("Application: BRS."));
             Assert.assertTrue(result.getMessage().contains("Scenario ACTION: Local Keyword Test."));
-            Assert.assertTrue(result.getMessage().contains("Cause: Keyword 'approveBooking' not found in SpecificFunction for application 'BRS' or BaseFunction."));
+            Assert.assertFalse(result.getMessage().contains("Cause:"));
         }
     }
 

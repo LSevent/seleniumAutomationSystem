@@ -158,10 +158,8 @@ public class ConfiguredExcelExecutionTest {
     private static String failureMessages(List<ExecutionResult> results) {
         return results.stream()
                 .filter(result -> !result.isSuccess())
-                .map(result -> "Row " + result.getExcelRowNumber()
-                        + ", Keyword " + result.getKeywordName()
-                        + ", Status " + result.getStatus()
-                        + ": " + result.getMessage())
+                .map(ExecutionResult::getMessage)
+                .distinct()
                 .collect(Collectors.joining(System.lineSeparator()));
     }
 

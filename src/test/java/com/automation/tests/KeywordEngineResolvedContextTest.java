@@ -140,7 +140,8 @@ public class KeywordEngineResolvedContextTest {
 
         Assert.assertFalse(result.isSuccess());
         Assert.assertEquals(result.getEvidence(), "target/screenshots/before-failure.png");
-        Assert.assertTrue(result.getMessage().contains("Cause: Synthetic keyword failure."));
+        Assert.assertTrue(result.getMessage().contains("Keyword 'customEvidence' failed: Synthetic keyword failure."));
+        Assert.assertFalse(result.getMessage().contains("Cause:"));
         Assert.assertTrue(EvidenceContextHolder.getAll().isEmpty());
         Assert.assertTrue(StepContextHolder.current().isEmpty());
     }
@@ -169,13 +170,12 @@ public class KeywordEngineResolvedContextTest {
         }
 
         String messages = String.join(System.lineSeparator(), appender.messages());
-        Assert.assertTrue(messages.contains("Executing keyword."));
+        Assert.assertTrue(messages.contains("START |"));
         Assert.assertTrue(messages.contains("Keyword = input"));
         Assert.assertTrue(messages.contains("Object = txtPassword"));
         Assert.assertTrue(messages.contains("XPath = //input[@id='resolvedUsername']"));
         Assert.assertTrue(messages.contains("Value = ****"));
-        Assert.assertTrue(messages.contains("Completed keyword."));
-        Assert.assertTrue(messages.contains("Status = PASS"));
+        Assert.assertTrue(messages.contains("PASS |"));
         Assert.assertTrue(messages.contains("Source = BASE"));
         Assert.assertFalse(messages.contains(secret));
     }
@@ -207,7 +207,31 @@ public class KeywordEngineResolvedContextTest {
         Assert.assertTrue(result.getMessage().contains("Keyword: click."));
         Assert.assertTrue(result.getMessage().contains("Object: btnLogin."));
         Assert.assertTrue(result.getMessage().contains("Application: BRS."));
-        Assert.assertTrue(result.getMessage().contains("Cause: Synthetic keyword failure."));
+        Assert.assertTrue(result.getMessage().contains("Keyword 'click' failed: Synthetic keyword failure."));
+        Assert.assertFalse(result.getMessage().contains("Cause:"));
+        Assert.assertEquals(occurrences(result.getMessage(), "Scenario NO:"), 1);
+    }
+
+    @Test
+    public void failureLoggingShouldEmitOneConciseEngineFailureEvent() {
+        MessageAppender appender = new MessageAppender();
+        Logger logger = (Logger) LogManager.getLogger(KeywordEngine.class);
+        appender.start();
+        logger.addAppender(appender);
+
+        try {
+            engine(new ObservingResolver(new FakeWebDriver(), true))
+                    .execute(step("click", "btnLogin", "", "", ""));
+        } finally {
+            logger.removeAppender(appender);
+            appender.stop();
+        }
+
+        long failureEvents = appender.messages().stream()
+                .filter(message -> message.startsWith("FAIL |"))
+                .count();
+        Assert.assertEquals(failureEvents, 1L);
+        Assert.assertTrue(appender.messages().stream().noneMatch(message -> message.contains("Cause: Cause:")));
     }
 
     @Test
@@ -395,5 +419,9 @@ public class KeywordEngineResolvedContextTest {
         private List<String> messages() {
             return List.copyOf(messages);
         }
+    }
+
+    private int occurrences(String value, String token) {
+        return value.split(java.util.regex.Pattern.quote(token), -1).length - 1;
     }
 }

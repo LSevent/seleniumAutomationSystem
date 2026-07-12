@@ -176,12 +176,15 @@ public class ExcelExecutionConfig {
         createDirectory(reportOutputDirectory, "Report run output path");
         createDirectory(screenshotOutputDirectory, "Screenshot output path");
 
-        LOGGER.info("Excel scenario file: {}", scenarioFilePath);
-        LOGGER.info("Report root output: {}", reportRootDirectory);
-        LOGGER.info("Report run folder: {}", reportRunFolderName);
-        LOGGER.info("Report output: {}", reportFilePath);
-        LOGGER.info("Screenshot output: {}", screenshotOutputDirectory);
-        LOGGER.info("Excel runner browser: {}, headless={}, remote={}", browser, headless, remote);
+        LOGGER.info("Excel run configured. Workbook = {} | Report = {}", scenarioFilePath, reportFilePath);
+        LOGGER.info(
+                "Browser = {} | Headless = {} | Remote = {} | Screenshots = {}",
+                browser,
+                headless,
+                remote,
+                screenshotOutputDirectory
+        );
+        LOGGER.debug("Report root = {} | Run folder = {}", reportRootDirectory, reportRunFolderName);
     }
 
     public Path getScenarioFilePath() {

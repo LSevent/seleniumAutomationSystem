@@ -174,7 +174,7 @@ SpecificFunction keywords also use no-argument context-based execution for appli
 
 The framework resolves an Excel keyword into a `ResolvedKeyword`; `KeywordExecutionResult` represents the result of invoking that resolved keyword method, and `KeywordSourceType` identifies whether the keyword came from `SpecificFunction` or `BaseFunction`.
 
-`KeywordEngine` centrally logs keyword start, completion, skip, and failure events using the resolved step context, with sensitive values masked. Internal helper methods are limited to shared context access, validation, waiting, and reusable custom keyword support; they are not Excel-facing keyword entry points.
+`KeywordEngine` centrally logs concise `START`, `PASS`, `SKIP`, and `FAIL` events using the resolved step context, with sensitive values masked. `ScenarioRunner` adds short scenario/testcase boundaries, while resolver details and full invocation stack traces remain at debug level. Runtime failure text contains one readable summary and one context block instead of repeating the same cause at every layer. Internal helper methods are limited to shared context access, validation, waiting, and reusable custom keyword support; they are not Excel-facing keyword entry points.
 
 Excel execution builds and validates a resolved execution plan before runtime startup. Runtime execution uses each `ResolvedStepContext` as its source of truth; raw `TestStep` rows are parser input only, not a separate runtime execution path. `KeywordEngine` sets `StepContextHolder` for the step and clears it afterward, and report rows are populated from the same resolved step data.
 

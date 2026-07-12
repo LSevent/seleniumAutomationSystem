@@ -68,7 +68,8 @@ public class TestListener implements ITestListener {
             }
         }
 
-        LOGGER.error("Test failed: {}", testName, throwable);
+        LOGGER.error("Test failed: {} | {}", testName, failureSummary(throwable));
+        LOGGER.debug("Full TestNG failure for {}.", testName, throwable);
         ExtentReportManager.unloadTest();
     }
 
@@ -81,5 +82,21 @@ public class TestListener implements ITestListener {
         }
         LOGGER.warn("Test skipped: {}", testName);
         ExtentReportManager.unloadTest();
+    }
+
+    private String failureSummary(Throwable throwable) {
+        if (throwable == null) {
+            return "No failure details were provided.";
+        }
+        String message = throwable.getMessage();
+        if (message == null || message.isBlank()) {
+            return throwable.getClass().getSimpleName();
+        }
+        return message.lines()
+                .map(String::trim)
+                .filter(line -> !line.isBlank())
+                .limit(2)
+                .reduce((first, second) -> first + " | " + second)
+                .orElse(throwable.getClass().getSimpleName());
     }
 }

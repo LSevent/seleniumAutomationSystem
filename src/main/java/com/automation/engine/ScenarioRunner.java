@@ -4,6 +4,7 @@ import com.automation.excel.DataReader;
 import com.automation.excel.ObjectRepositoryReader;
 import com.automation.excel.ScenarioReader;
 import com.automation.excel.StepReader;
+import com.automation.exceptions.ErrorContext;
 import com.automation.exceptions.FrameworkException;
 import com.automation.models.ConditionExpression;
 import com.automation.models.ExecutionResult;
@@ -122,16 +123,14 @@ public class ScenarioRunner {
 
     private List<ExecutionResult> runResolvedScenario(ResolvedScenarioContext resolvedScenario) {
         Scenario scenario = scenarioFrom(resolvedScenario);
-        LOGGER.info("Resolved scenario started. NO = {}, ACTION = {}", scenario.getNo(), scenario.getAction());
+        LOGGER.info("Scenario started: [{}] {}", scenario.getNo(), scenario.getAction());
         startScenarioReport(scenario);
 
         List<ExecutionResult> results = new ArrayList<>();
         for (ResolvedTestcaseContext resolvedTestcase : resolvedScenario.getTestcases()) {
             TestCaseBlock testcase = testcaseFrom(resolvedScenario, resolvedTestcase);
             LOGGER.info(
-                    "Resolved testcase started. Scenario NO = {}, ACTION = {}, Testcase = {}",
-                    scenario.getNo(),
-                    scenario.getAction(),
+                    "Testcase started: {}",
                     testcase.getTestcaseName()
             );
             startTestcaseReport(testcase);
@@ -153,33 +152,28 @@ public class ScenarioRunner {
                 results.add(result);
                 logStepReport(result);
                 if (!result.isSuccess()) {
-                    String scenarioMessage = "Scenario failed. NO = " + scenario.getNo()
-                            + ", ACTION = " + scenario.getAction()
-                            + ", Testcase = " + testcase.getTestcaseName()
-                            + ". " + result.getMessage();
-                    LOGGER.error(
-                            "Resolved scenario failed. NO = {}, ACTION = {}, Testcase = {}. Message = {}",
+                    LOGGER.warn(
+                            "Scenario stopped: [{}] {} | Testcase = {} | Row = {} | Keyword = {}",
                             scenario.getNo(),
                             scenario.getAction(),
                             testcase.getTestcaseName(),
-                            result.getMessage()
+                            result.getExcelRowNumber(),
+                            result.getKeywordName()
                     );
                     finishTestcaseReport(testcase, false, result.getMessage());
-                    finishScenarioReport(scenario, false, scenarioMessage);
+                    finishScenarioReport(scenario, false, result.getMessage());
                     return results;
                 }
             }
 
             finishTestcaseReport(testcase, true, "");
             LOGGER.info(
-                    "Resolved testcase finished. Scenario NO = {}, ACTION = {}, Testcase = {}",
-                    scenario.getNo(),
-                    scenario.getAction(),
+                    "Testcase passed: {}",
                     testcase.getTestcaseName()
             );
         }
 
-        LOGGER.info("Resolved scenario finished. NO = {}, ACTION = {}", scenario.getNo(), scenario.getAction());
+        LOGGER.info("Scenario passed: [{}] {}", scenario.getNo(), scenario.getAction());
         finishScenarioReport(scenario, true, "");
         return results;
     }
@@ -282,11 +276,26 @@ public class ScenarioRunner {
                     step,
                     ScenarioRunner.class.getName(),
                     "FLOW",
-                    "Conditional flow failed at step row " + step.getExcelRow() + "."
-                            + System.lineSeparator()
-                            + "Cause: " + exception.getMessage()
+                    flowFailureMessage(step, exception)
             );
         }
+    }
+
+    private String flowFailureMessage(ResolvedStepContext step, RuntimeException exception) {
+        String detail = exception.getMessage() == null || exception.getMessage().isBlank()
+                ? exception.getClass().getSimpleName()
+                : exception.getMessage().lines().findFirst().orElse(exception.getClass().getSimpleName()).trim();
+        String context = new ErrorContext()
+                .scenarioNo(step.getScenarioNo())
+                .scenarioAction(step.getScenarioAction())
+                .sheet(step.getSheetName())
+                .testcase(step.getTestcaseName())
+                .row(step.getExcelRow())
+                .keyword(step.getKeyword())
+                .object(step.getObjectName())
+                .application(step.getApplication())
+                .render();
+        return "Conditional flow failed: " + detail + System.lineSeparator() + context;
     }
 
     private ExecutionResult skippedByConditionalFlow(ResolvedStepContext step) {

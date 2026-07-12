@@ -79,7 +79,11 @@ public class KeywordResolverValidationTest {
                 () -> execute(resolver, "UNKNOWN", "click", "//button[@id='missing']", "")
         );
 
-        Assert.assertTrue(error.getMessage().contains("Failed to execute keyword 'click' using BaseFunction. Cause:"));
+        Assert.assertTrue(error.getMessage().contains(
+                "Keyword 'click' failed in BaseFunction: Element not found for keyword click."
+        ));
+        Assert.assertFalse(error.getMessage().contains("Cause:"));
+        Assert.assertEquals(occurrences(error.getMessage(), "Scenario NO:"), 1);
     }
 
     private FakeWebDriver driver() {
@@ -122,5 +126,9 @@ public class KeywordResolverValidationTest {
         } finally {
             StepContextHolder.clear();
         }
+    }
+
+    private int occurrences(String value, String token) {
+        return value.split(java.util.regex.Pattern.quote(token), -1).length - 1;
     }
 }

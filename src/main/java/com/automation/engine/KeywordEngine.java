@@ -110,8 +110,7 @@ public class KeywordEngine {
                         failureMessage(
                                 "Keyword is required in sheet " + safe(step.getSheetName())
                                         + " row " + step.getExcelRow() + ".",
-                                step,
-                                null
+                                step
                         )
                 );
             } else {
@@ -151,12 +150,14 @@ public class KeywordEngine {
                     keywordResult.getMessage()
             );
         } catch (RuntimeException | AssertionError exception) {
-            String message = "Keyword '" + safe(step.getKeyword()) + "' failed at step row "
-                    + step.getExcelRow() + ".";
-            if (!containsStepContext(exception.getMessage())) {
-                message += System.lineSeparator() + resolvedStepContext(step);
+            String message = safe(exception.getMessage());
+            if (message.isBlank()) {
+                message = "Keyword '" + safe(step.getKeyword()) + "' failed with "
+                        + exception.getClass().getSimpleName() + ".";
+            } else if (!containsStepContext(message)) {
+                message = "Keyword '" + safe(step.getKeyword()) + "' failed: " + message
+                        + System.lineSeparator() + resolvedStepContext(step);
             }
-            message += System.lineSeparator() + "Cause: " + safe(exception.getMessage());
             return ExecutionResult.failure(step, safe(step.getExecutedBy()), "KEYWORD", message);
         }
     }
@@ -217,39 +218,29 @@ public class KeywordEngine {
     private ExecutionResult logResolvedResult(ExecutionResult result) {
         if (ExecutionResult.STATUS_SKIP.equals(result.getStatus())) {
             LOGGER.info(
-                    "Keyword skipped. Scenario NO = {}, ACTION = {}, Testcase = {}, Row = {}, Keyword = {}, "
-                            + "Object = {}, Application = {}, XPath = {}, Status = {}, Source = {}, Message = {}",
+                    "SKIP | Scenario = [{}] {} | Testcase = {} | Row = {} | Keyword = {} | Source = {} | Reason = {}",
                     result.getScenarioNo(),
                     result.getScenarioAction(),
                     result.getTestcaseName(),
                     result.getExcelRowNumber(),
                     result.getKeywordName(),
-                    result.getObjectName(),
-                    result.getApplication(),
-                    result.getResolvedXPath(),
-                    result.getStatus(),
                     result.getExecutionSource(),
-                    result.getMessage()
+                    summaryLine(result.getMessage())
             );
         } else if (result.isSuccess()) {
             LOGGER.info(
-                    "Completed keyword. Scenario NO = {}, ACTION = {}, Testcase = {}, Row = {}, Keyword = {}, "
-                            + "Object = {}, Application = {}, XPath = {}, Status = {}, Source = {}",
+                    "PASS | Scenario = [{}] {} | Testcase = {} | Row = {} | Keyword = {} | Source = {}",
                     result.getScenarioNo(),
                     result.getScenarioAction(),
                     result.getTestcaseName(),
                     result.getExcelRowNumber(),
                     result.getKeywordName(),
-                    result.getObjectName(),
-                    result.getApplication(),
-                    result.getResolvedXPath(),
-                    result.getStatus(),
                     result.getExecutionSource()
             );
         } else {
             LOGGER.error(
-                    "Keyword failed. Scenario NO = {}, ACTION = {}, Testcase = {}, Row = {}, Keyword = {}, "
-                            + "Object = {}, Application = {}, XPath = {}, Status = {}, Source = {}, Message = {}",
+                    "FAIL | Scenario = [{}] {} | Testcase = {} | Row = {} | Keyword = {} | Object = {} | "
+                            + "Application = {} | Error = {}",
                     result.getScenarioNo(),
                     result.getScenarioAction(),
                     result.getTestcaseName(),
@@ -257,10 +248,7 @@ public class KeywordEngine {
                     result.getKeywordName(),
                     result.getObjectName(),
                     result.getApplication(),
-                    result.getResolvedXPath(),
-                    result.getStatus(),
-                    result.getExecutionSource(),
-                    result.getMessage()
+                    summaryLine(result.getMessage())
             );
         }
         return result;
@@ -277,8 +265,8 @@ public class KeywordEngine {
                 step.getKeyword()
         );
         LOGGER.info(
-                "Executing keyword. Scenario NO = {}, ACTION = {}, Testcase = {}, Row = {}, Keyword = {}, "
-                        + "Object = {}, Application = {}, XPath = {}, Value = {}",
+                "START | Scenario = [{}] {} | Testcase = {} | Row = {} | Keyword = {} | Object = {} | "
+                        + "Application = {} | XPath = {} | Value = {}",
                 step.getScenarioNo(),
                 step.getScenarioAction(),
                 step.getTestcaseName(),
@@ -289,6 +277,13 @@ public class KeywordEngine {
                 step.getResolvedXPath(),
                 valueForLog
         );
+    }
+
+    private String summaryLine(String message) {
+        if (isBlank(message)) {
+            return "";
+        }
+        return message.lines().findFirst().orElse("").trim();
     }
 
     private boolean isBlank(String value) {
@@ -308,12 +303,8 @@ public class KeywordEngine {
                 .render();
     }
 
-    private String failureMessage(String summary, ResolvedStepContext step, Throwable cause) {
-        String message = summary + System.lineSeparator() + resolvedStepContext(step);
-        if (cause != null) {
-            message += System.lineSeparator() + "Cause: " + safe(cause.getMessage());
-        }
-        return message;
+    private String failureMessage(String summary, ResolvedStepContext step) {
+        return summary + System.lineSeparator() + resolvedStepContext(step);
     }
 
     private String safe(String value) {
