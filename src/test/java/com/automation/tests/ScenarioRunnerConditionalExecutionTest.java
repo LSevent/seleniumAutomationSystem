@@ -88,6 +88,28 @@ public class ScenarioRunnerConditionalExecutionTest {
         Assert.assertFalse(result.executedKeywords().contains("endIf"));
     }
 
+    @Test
+    public void displayedIfBranchShouldExecuteWhenObjectIsVisible() throws IOException {
+        RunnerResult result = runDisplayedConditionalWorkbook("displayed-if-branch.xlsx", true);
+
+        Assert.assertEquals(result.executedObjects(), List.of("btnCloseWarning", "btnAfterConditional"));
+        Assert.assertEquals(result.resultForKeyword("ifDisplayed").getStatus(), ExecutionResult.STATUS_PASS);
+        Assert.assertEquals(result.resultForKeyword("else").getStatus(), ExecutionResult.STATUS_SKIP);
+        Assert.assertEquals(result.resultForObject("btnCloseWarning").getStatus(), ExecutionResult.STATUS_PASS);
+        Assert.assertEquals(result.resultForObject("btnFallback").getStatus(), ExecutionResult.STATUS_SKIP);
+    }
+
+    @Test
+    public void elseBranchShouldExecuteWhenDisplayedObjectIsMissing() throws IOException {
+        RunnerResult result = runDisplayedConditionalWorkbook("displayed-else-branch.xlsx", false);
+
+        Assert.assertEquals(result.executedObjects(), List.of("btnFallback", "btnAfterConditional"));
+        Assert.assertEquals(result.resultForKeyword("ifDisplayed").getStatus(), ExecutionResult.STATUS_SKIP);
+        Assert.assertEquals(result.resultForKeyword("else").getStatus(), ExecutionResult.STATUS_PASS);
+        Assert.assertEquals(result.resultForObject("btnCloseWarning").getStatus(), ExecutionResult.STATUS_SKIP);
+        Assert.assertEquals(result.resultForObject("btnFallback").getStatus(), ExecutionResult.STATUS_PASS);
+    }
+
     private RunnerResult runConditionalWorkbook(String fileName, String scheduleType) throws IOException {
         Path workbookPath = ValidationWorkbookFactory.createWorkbook(
                 TEMP_DIR.resolve(fileName),
@@ -134,6 +156,52 @@ public class ScenarioRunnerConditionalExecutionTest {
         }
     }
 
+    private RunnerResult runDisplayedConditionalWorkbook(String fileName, boolean warningVisible) throws IOException {
+        Path workbookPath = ValidationWorkbookFactory.createWorkbook(
+                TEMP_DIR.resolve(fileName),
+                scenarios(new Object[][]{{1, "Y", "Displayed Conditional Flow", "Displayed conditional execution"}}),
+                scenarioSheet("Displayed Conditional Flow", new Object[][]{
+                        {"Create Booking", "Y", "", "", "", "BRS", "Active testcase"},
+                        {"", "", "ifDisplayed", "dlgWarning", "", "", "Warning exists branch"},
+                        {"", "", "click", "btnCloseWarning", "", "", "Close warning"},
+                        {"", "", "else", "", "", "", "Fallback condition"},
+                        {"", "", "click", "btnFallback", "", "", "Fallback step"},
+                        {"", "", "endIf", "", "", "", "End condition"},
+                        {"", "", "click", "btnAfterConditional", "", "", "After conditional step"}
+                }),
+                objectRepository(new Object[][]{
+                        {"BRS", "dlgWarning", "//div[@id='warning']", "Warning"},
+                        {"BRS", "btnCloseWarning", "//button[@id='close-warning']", "Close"},
+                        {"BRS", "btnFallback", "//button[@id='fallback']", "Fallback"},
+                        {"BRS", "btnAfterConditional", "//button[@id='after']", "After"}
+                })
+        );
+
+        try (ExcelReader excelReader = new ExcelReader(workbookPath.toString())) {
+            DataReader dataReader = new DataReader(excelReader);
+            ObjectRepositoryReader objectRepositoryReader = new ObjectRepositoryReader(excelReader, dataReader);
+            FakeWebDriver driver = new FakeWebDriver();
+            if (warningVisible) {
+                driver.addElement("//div[@id='warning']", "Warning");
+            }
+            RecordingKeywordEngine keywordEngine = new RecordingKeywordEngine(
+                    dataReader,
+                    objectRepositoryReader,
+                    new KeywordResolver(driver.driver()),
+                    executionConfig(workbookPath)
+            );
+            ScenarioRunner runner = new ScenarioRunner(
+                    new ScenarioReader(excelReader),
+                    new StepReader(excelReader),
+                    dataReader,
+                    objectRepositoryReader,
+                    () -> keywordEngine
+            );
+
+            return new RunnerResult(runner.runActiveScenarios(), keywordEngine.executedSteps);
+        }
+    }
+
     private ExcelExecutionConfig executionConfig(Path scenarioFile) {
         Properties properties = new Properties();
         properties.setProperty(ExcelExecutionConfig.SCENARIO_FILE_PATH_KEY, scenarioFile.toString());
@@ -141,6 +209,7 @@ public class ScenarioRunnerConditionalExecutionTest {
                 ExcelExecutionConfig.REPORT_OUTPUT_DIRECTORY_KEY,
                 TEMP_DIR.resolve("reports").toString()
         );
+        properties.setProperty(ExcelExecutionConfig.CONDITION_TIME_KEY, "1");
         return ExcelExecutionConfig.fromProperties(properties, Map.of());
     }
 

@@ -17,6 +17,7 @@ public class KeywordCatalog {
     private static final Map<String, KeywordRequirements> COMMON_REQUIREMENTS = Map.ofEntries(
             Map.entry("openurl", KeywordRequirements.VALUE),
             Map.entry("click", KeywordRequirements.OBJECT),
+            Map.entry("clickreplace", KeywordRequirements.OBJECT_AND_VALUE),
             Map.entry("input", KeywordRequirements.OBJECT_AND_VALUE),
             Map.entry("clear", KeywordRequirements.OBJECT),
             Map.entry("select", KeywordRequirements.OBJECT_AND_VALUE),
@@ -35,8 +36,7 @@ public class KeywordCatalog {
     );
 
     private static final Map<String, KeywordRequirements> SPECIFIC_REQUIREMENTS = Map.ofEntries(
-            Map.entry(specificKey("BRS", "selectRoomByName"), KeywordRequirements.OBJECT),
-            Map.entry(specificKey("BRS", "verifyBookingCreated"), KeywordRequirements.OBJECT_AND_VALUE),
+            Map.entry(specificKey("BRS", "clickMultiValue"), KeywordRequirements.OBJECT_AND_VALUE),
             Map.entry(specificKey("HRIS", "verifyEmployeeVisible"), KeywordRequirements.OBJECT_AND_VALUE)
     );
 

@@ -163,18 +163,22 @@ public class PreRunValidator {
             FlowDirectiveType flowDirective,
             List<ValidationError> errors
     ) {
-        if ((flowDirective == FlowDirectiveType.IF_EQUALS || flowDirective == FlowDirectiveType.ELSE_IF_EQUALS)
-                && isBlank(step.getRawValue())) {
+        if (flowDirective.isEqualityCondition() && isBlank(step.getRawValue())) {
             addStepError(errors, "Value condition is required for keyword '" + step.getKeyword() + "'.", step);
             return;
         }
 
-        if (flowDirective == FlowDirectiveType.IF_EQUALS || flowDirective == FlowDirectiveType.ELSE_IF_EQUALS) {
+        if (flowDirective.isEqualityCondition()) {
             try {
                 ConditionExpression condition = ConditionExpression.parse(step.getRawValue());
             } catch (FrameworkException exception) {
                 addStepError(errors, exception.getMessage(), step);
             }
+        }
+
+        if (flowDirective.isVisibilityCondition()) {
+            requireObjectAndXPath(step, step.getKeyword(), errors);
+            validateDynamicXPath(step, errors);
         }
     }
 

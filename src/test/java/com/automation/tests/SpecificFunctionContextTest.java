@@ -63,8 +63,7 @@ public class SpecificFunctionContextTest {
 
     @Test
     public void productionSpecificKeywordsShouldExposeOnlyNoArgEntryPoints() {
-        assertNoArgKeyword(com.automation.functions.BRS.SpecificFunction.class, "selectRoomByName");
-        assertNoArgKeyword(com.automation.functions.BRS.SpecificFunction.class, "verifyBookingCreated");
+        assertNoArgKeyword(com.automation.functions.BRS.SpecificFunction.class, "clickMultiValue");
         assertNoArgKeyword(com.automation.functions.HRIS.SpecificFunction.class, "verifyEmployeeVisible");
     }
 

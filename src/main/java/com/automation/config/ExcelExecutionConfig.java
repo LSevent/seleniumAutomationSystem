@@ -21,6 +21,8 @@ public class ExcelExecutionConfig {
     public static final String DEFAULT_REPORT_OUTPUT_DIRECTORY = "test-output/reports";
     public static final String BROWSER_KEY = "browser";
     public static final String HEADLESS_KEY = "headless";
+    public static final String EXPLICIT_TIME_KEY = "explicitTime";
+    public static final String CONDITION_TIME_KEY = "conditionTime";
     public static final String TIMEOUT_KEY = "timeout";
     public static final String REMOTE_KEY = "remote";
     public static final String GRID_URL_KEY = "gridUrl";
@@ -30,7 +32,8 @@ public class ExcelExecutionConfig {
 
     public static final String DEFAULT_BROWSER = "chrome";
     public static final boolean DEFAULT_HEADLESS = false;
-    public static final int DEFAULT_TIMEOUT_SECONDS = 10;
+    public static final int DEFAULT_EXPLICIT_TIME_SECONDS = 10;
+    public static final int DEFAULT_CONDITION_TIME_SECONDS = 5;
     public static final boolean DEFAULT_REMOTE = false;
     public static final String DEFAULT_GRID_URL = "http://localhost:4444/wd/hub";
     public static final boolean DEFAULT_SHOW_SENSITIVE_DATA = false;
@@ -49,7 +52,8 @@ public class ExcelExecutionConfig {
     private final Path screenshotOutputDirectory;
     private final String browser;
     private final boolean headless;
-    private final int timeoutSeconds;
+    private final int explicitTimeSeconds;
+    private final int conditionTimeSeconds;
     private final boolean remote;
     private final String gridUrl;
     private final boolean showSensitiveData;
@@ -65,7 +69,8 @@ public class ExcelExecutionConfig {
             Path screenshotOutputDirectory,
             String browser,
             boolean headless,
-            int timeoutSeconds,
+            int explicitTimeSeconds,
+            int conditionTimeSeconds,
             boolean remote,
             String gridUrl,
             boolean showSensitiveData,
@@ -81,7 +86,8 @@ public class ExcelExecutionConfig {
         this.screenshotOutputDirectory = screenshotOutputDirectory;
         this.browser = browser;
         this.headless = headless;
-        this.timeoutSeconds = timeoutSeconds;
+        this.explicitTimeSeconds = explicitTimeSeconds;
+        this.conditionTimeSeconds = conditionTimeSeconds;
         this.remote = remote;
         this.gridUrl = gridUrl;
         this.showSensitiveData = showSensitiveData;
@@ -130,7 +136,20 @@ public class ExcelExecutionConfig {
         Path screenshotOutputDirectory = reportOutputDirectory.resolve("Screenshots").toAbsolutePath().normalize();
         String browser = valueFor(safeProperties, overrideResolver, BROWSER_KEY, DEFAULT_BROWSER);
         boolean headless = booleanValueFor(safeProperties, overrideResolver, HEADLESS_KEY, DEFAULT_HEADLESS);
-        int timeoutSeconds = intValueFor(safeProperties, overrideResolver, TIMEOUT_KEY, DEFAULT_TIMEOUT_SECONDS);
+        int explicitTimeSeconds = intValueFor(
+                safeProperties,
+                overrideResolver,
+                EXPLICIT_TIME_KEY,
+                TIMEOUT_KEY,
+                DEFAULT_EXPLICIT_TIME_SECONDS
+        );
+        int conditionTimeSeconds = intValueFor(
+                safeProperties,
+                overrideResolver,
+                CONDITION_TIME_KEY,
+                null,
+                DEFAULT_CONDITION_TIME_SECONDS
+        );
         boolean remote = booleanValueFor(safeProperties, overrideResolver, REMOTE_KEY, DEFAULT_REMOTE);
         String gridUrl = valueFor(safeProperties, overrideResolver, GRID_URL_KEY, DEFAULT_GRID_URL);
         boolean showSensitiveData = booleanValueFor(
@@ -161,7 +180,8 @@ public class ExcelExecutionConfig {
                 screenshotOutputDirectory,
                 browser,
                 headless,
-                timeoutSeconds,
+                explicitTimeSeconds,
+                conditionTimeSeconds,
                 remote,
                 gridUrl,
                 showSensitiveData,
@@ -224,7 +244,15 @@ public class ExcelExecutionConfig {
     }
 
     public int getTimeoutSeconds() {
-        return timeoutSeconds;
+        return explicitTimeSeconds;
+    }
+
+    public int getExplicitTimeSeconds() {
+        return explicitTimeSeconds;
+    }
+
+    public int getConditionTimeSeconds() {
+        return conditionTimeSeconds;
     }
 
     public boolean isRemote() {
@@ -339,7 +367,22 @@ public class ExcelExecutionConfig {
             String key,
             int defaultValue
     ) {
+        return intValueFor(properties, overrideResolver, key, null, defaultValue);
+    }
+
+    private static int intValueFor(
+            Properties properties,
+            PropertyResolver overrideResolver,
+            String key,
+            String legacyKey,
+            int defaultValue
+    ) {
         String value = valueFor(properties, overrideResolver, key, String.valueOf(defaultValue));
+        String sourceKey = key;
+        if (legacyKey != null && isDefaultValue(value, defaultValue) && !hasConfiguredValue(properties, overrideResolver, key)) {
+            value = valueFor(properties, overrideResolver, legacyKey, String.valueOf(defaultValue));
+            sourceKey = legacyKey;
+        }
         try {
             int parsedValue = Integer.parseInt(value);
             if (parsedValue <= 0) {
@@ -347,9 +390,26 @@ public class ExcelExecutionConfig {
             }
             return parsedValue;
         } catch (NumberFormatException exception) {
-            throw new FrameworkException("Excel execution configuration key '" + key
+            throw new FrameworkException("Excel execution configuration key '" + sourceKey
                     + "' must be a positive number. Actual value: " + value, exception);
         }
+    }
+
+    private static boolean hasConfiguredValue(
+            Properties properties,
+            PropertyResolver overrideResolver,
+            String key
+    ) {
+        String overrideValue = overrideResolver == null ? null : overrideResolver.get(key);
+        if (overrideValue != null && !clean(overrideValue).isBlank()) {
+            return true;
+        }
+        String propertyValue = properties.getProperty(key);
+        return propertyValue != null && !clean(propertyValue).isBlank();
+    }
+
+    private static boolean isDefaultValue(String value, int defaultValue) {
+        return String.valueOf(defaultValue).equals(value);
     }
 
     private static String deriveReportFileName(String scenarioFilePath) {

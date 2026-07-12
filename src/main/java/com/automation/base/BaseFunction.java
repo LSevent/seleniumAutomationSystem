@@ -35,6 +35,15 @@ public class BaseFunction extends KeywordSupport {
         }
     }
 
+    public void clickReplace() {
+        String targetXPath = xpath().replace("#", value().trim());
+        try {
+            waitForClickableElement(targetXPath, "click").click();
+        } catch (WebDriverException exception) {
+            clickUsingJavaScript(targetXPath, exception);
+        }
+    }
+
     public void input() {
         String targetXPath = xpath();
         String inputValue = value();

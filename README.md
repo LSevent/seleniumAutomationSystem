@@ -214,7 +214,8 @@ report.outputDirectory=C:/Automation/BRS/Reports
 
 browser=chrome
 headless=false
-timeout=10
+explicitTime=10
+conditionTime=5
 remote=false
 gridUrl=http://localhost:4444/wd/hub
 
@@ -267,7 +268,7 @@ src/test/resources/testdata/Final Excel Template.xlsx
 The template includes:
 
 - `Local Keyword Test` for simple login/create-booking examples.
-- `Create New Booking` for a loop + condition example using `forEachDataRow`, `ifEquals`, `elseIfEquals`, `else`, and `endIf`.
+- `Create New Booking` for a loop + condition example using `forEachDataRow`, `ifEquals`, `ifDisplayed`, `elseIfEquals`, `elseIfDisplayed`, `else`, and `endIf`.
 - `Cancel Booking` for a dynamic XPath example using `BOOKING_DATA.BOOKING_ID`.
 
 It contains these sheets:
@@ -313,7 +314,7 @@ Rules:
 - Parent rows require `Application`.
 - The parent testcase row controls whether the complete testcase is active.
 - On step rows, blank/`Yes` means run and `No` means skip. Skipped steps remain visible in the report with status `SKIP` and are not resolved or sent to the browser.
-- Keep flow directive rows (`ifEquals`, `elseIfEquals`, `else`, `endIf`, `forEachDataRow`, and `endForEachDataRow`) active. `Run=No` is rejected for these structural rows; use conditions to control their blocks.
+- Keep flow directive rows (`ifEquals`, `ifDisplayed`, `elseIfEquals`, `elseIfDisplayed`, `else`, `endIf`, `forEachDataRow`, and `endForEachDataRow`) active. `Run=No` is rejected for these structural rows; use conditions to control their blocks.
 - Step row `Application` can override the parent only when needed.
 - `Description` is optional.
 
@@ -402,6 +403,7 @@ Supported common Excel commands:
 | --- | --- | --- | --- |
 | `openUrl` | No | Yes | Opens the URL from `Value`. The value may be literal text or a data reference such as `CONFIG.BASE_URL`. |
 | `click` | Yes | No | Waits for the resolved object XPath, clicks it, and automatically uses a JavaScript fallback when a normal Selenium click fails. |
+| `clickReplace` | Yes | Yes | Replaces `#` in the resolved object XPath with `Value`, then clicks the resolved target. |
 | `input` | Yes | Yes | Waits for the resolved object XPath, clears the element when possible, then types `Value`. |
 | `clear` | Yes | No | Clears the target element. |
 | `select` | Yes | Yes | Selects an option from a native HTML `<select>` by its visible text. |
@@ -435,6 +437,8 @@ Conditional flow directives are handled by `ScenarioRunner`, not by `BaseFunctio
 | --- | --- | --- | --- |
 | `ifEquals` | No | Yes | Starts a conditional block when the left side equals the right side. |
 | `elseIfEquals` | No | Yes | Adds another conditional branch when earlier branches did not match. |
+| `ifDisplayed` | Yes | No | Starts a conditional block when the object is visible within `conditionTime`. |
+| `elseIfDisplayed` | Yes | No | Adds another visibility branch when earlier branches did not match. |
 | `else` | No | No | Adds a fallback branch when no earlier branch matched. |
 | `endIf` | No | No | Ends the current conditional block. |
 
@@ -445,6 +449,19 @@ ACTUAL = EXPECTED
 ```
 
 The left or right side may be a data reference. Values are resolved before runtime and compared after trimming, ignoring case.
+
+Visibility conditions use the Object column instead of Value. They are useful for optional popups, warnings, or application states that should branch without failing the scenario. Normal actions and verifications use `explicitTime`; visibility condition rows use the shorter `conditionTime`.
+
+Example visibility block:
+
+```text
+Keyword       | Object              | Value | Description
+ifDisplayed   | dlgPasswordWarning  |       | Optional password warning
+click         | btnCloseWarning     |       | Close warning
+else          |                     |       | No warning shown
+verifyDisplayed | lblDashboard      |       | Continue from dashboard
+endIf         |                     |       | End warning condition
+```
 
 Example conditional block:
 
@@ -540,8 +557,7 @@ Currently implemented application-specific commands:
 
 | Application | Keyword | Purpose |
 | --- | --- | --- |
-| `BRS` | `selectRoomByName` | Uses the resolved object XPath to select a room, including dynamic XPath values when configured. |
-| `BRS` | `verifyBookingCreated` | Verifies booking success text using application-specific naming. |
+| `BRS` | `clickMultiValue` | Splits `Value` by `;`, replaces `#` in the resolved object XPath for each value, then clicks each matching target. |
 | `HRIS` | `verifyEmployeeVisible` | Verifies employee text using HRIS-specific naming. |
 
 To add a custom application command, add a public no-argument method to the matching `SpecificFunction` class, then use the method name in the Excel `Keyword` column. The method is discovered automatically. If it requires `Object`, `Value`, or both, add that early-validation requirement once in `KeywordCatalog`; a custom keyword without a registered requirement keeps the permissive no-required-input behavior.

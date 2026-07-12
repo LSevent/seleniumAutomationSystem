@@ -80,6 +80,34 @@ public class StepReaderConditionalBlockTest {
     }
 
     @Test
+    public void displayedConditionalBlocksShouldParse() throws IOException {
+        Path workbookPath = workbook(
+                "displayed-conditional-block.xlsx",
+                new Object[][]{
+                        {"Create Booking", "Y", "", "", "", "BRS", "Active testcase"},
+                        {"", "", "ifDisplayed", "dlgWarning", "", "", "Warning exists branch"},
+                        {"", "", "click", "btnCloseWarning", "", "", "Close warning"},
+                        {"", "", "elseIfDisplayed", "lblDashboard", "", "", "Dashboard branch"},
+                        {"", "", "click", "btnContinue", "", "", "Continue"},
+                        {"", "", "else", "", "", "", "Fallback branch"},
+                        {"", "", "screenshot", "", "", "", "Capture fallback"},
+                        {"", "", "endIf", "", "", "", "End conditional"}
+                }
+        );
+
+        try (ExcelReader excelReader = new ExcelReader(workbookPath.toString())) {
+            List<TestStep> steps = new StepReader(excelReader).getActiveSteps(scenario());
+
+            Assert.assertEquals(steps.get(0).getKeyword(), "ifDisplayed");
+            Assert.assertEquals(steps.get(0).getObject(), "dlgWarning");
+            Assert.assertEquals(steps.get(0).getFlowDirective(), FlowDirectiveType.IF_DISPLAYED);
+            Assert.assertEquals(steps.get(2).getFlowDirective(), FlowDirectiveType.ELSE_IF_DISPLAYED);
+            Assert.assertEquals(steps.get(4).getFlowDirective(), FlowDirectiveType.ELSE);
+            Assert.assertEquals(steps.get(6).getFlowDirective(), FlowDirectiveType.END_IF);
+        }
+    }
+
+    @Test
     public void elseIfWithoutIfShouldFailClearly() throws IOException {
         Path workbookPath = workbook(
                 "elseif-without-if.xlsx",
@@ -96,7 +124,7 @@ public class StepReaderConditionalBlockTest {
         });
 
         Assert.assertTrue(exception.getMessage().contains(
-                "Conditional directive 'elseIfEquals' found without an open 'ifEquals'."
+                "Conditional directive 'elseIfEquals' found without an open 'ifEquals' or 'ifDisplayed'."
         ));
         Assert.assertTrue(exception.getMessage().contains("Sheet: Conditional Flow."));
         Assert.assertTrue(exception.getMessage().contains("Testcase: Create Booking."));
@@ -170,7 +198,7 @@ public class StepReaderConditionalBlockTest {
         });
 
         Assert.assertTrue(exception.getMessage().contains(
-                "Conditional directive 'endIf' found without an open 'ifEquals'."
+                "Conditional directive 'endIf' found without an open 'ifEquals' or 'ifDisplayed'."
         ));
         Assert.assertTrue(exception.getMessage().contains("Row: 3."));
     }
@@ -193,7 +221,7 @@ public class StepReaderConditionalBlockTest {
         });
 
         Assert.assertTrue(exception.getMessage().contains(
-                "Conditional block starting with 'ifEquals' is missing 'endIf'."
+                "Conditional block starting with 'ifEquals' or 'ifDisplayed' is missing 'endIf'."
         ));
         Assert.assertTrue(exception.getMessage().contains("Row: 3."));
     }

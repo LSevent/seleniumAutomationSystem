@@ -25,6 +25,8 @@ public class PreRunValidatorTest {
                 step("verifyDisplayed", "dashboard", "", "", "//h1", "//h1", "BRS"),
                 step("verifyNotDisplayed", "loading", "", "", "//div[@id='loading']", "//div[@id='loading']", "BRS"),
                 step("ifEquals", "", "BOOKING_DATA.SCHEDULE_TYPE = Single Meeting", "BOOKING_DATA.SCHEDULE_TYPE = Single Meeting", "", "", "BRS"),
+                step("ifDisplayed", "dlgWarning", "", "", "//div[@id='warning']", "//div[@id='warning']", "BRS"),
+                step("elseIfDisplayed", "lblDashboard", "", "", "//h1[@id='dashboard']", "//h1[@id='dashboard']", "BRS"),
                 step("else", "", "", "", "", "", "BRS"),
                 step("endIf", "", "", "", "", "", "BRS"),
                 step("forEachDataRow", "", "BOOKING_DATA", "BOOKING_DATA row 1 of 2", "", "", "BRS"),
@@ -49,8 +51,8 @@ public class PreRunValidatorTest {
                 "select",
                 "verifyText",
                 "verifyTextContains",
-                "selectRoomByName",
-                "verifyBookingCreated",
+                "clickReplace",
+                "clickMultiValue",
                 "verifyEmployeeVisible"
         );
 
@@ -81,7 +83,8 @@ public class PreRunValidatorTest {
                 "select",
                 "verifyText",
                 "verifyTextContains",
-                "verifyBookingCreated",
+                "clickReplace",
+                "clickMultiValue",
                 "verifyEmployeeVisible"
         );
 
@@ -210,27 +213,29 @@ public class PreRunValidatorTest {
     @Test
     public void applicationSpecificKeywordShouldPassKnownKeywordValidation() {
         validator.validate(plan(step(
-                "selectRoomByName",
+                "clickMultiValue",
                 "btnRoomByName",
-                "BOOKING_DATA.ROOM_NAME",
-                "Meeting Room A",
-                "//button[contains(text(),'{ROOM_NAME}')]",
-                "//button[contains(text(),'Meeting Room A')]",
+                "Meeting Room A;Meeting Room B",
+                "Meeting Room A;Meeting Room B",
+                "//button[@data-room='#']",
+                "//button[@data-room='#']",
                 "BRS"
         )));
     }
 
     @Test
-    public void selectRoomByNameShouldNotRequireValueForStaticXPath() {
-        validator.validate(plan(step(
-                "selectRoomByName",
+    public void clickReplaceShouldRequireValueEvenForStaticXPathTemplate() {
+        FrameworkException exception = validationFailure(step(
+                "clickReplace",
                 "btnDefaultRoom",
                 "",
                 "",
                 "//button[@id='default-room']",
                 "//button[@id='default-room']",
                 "BRS"
-        )));
+        ));
+
+        assertContainsContext(exception, "Value is required for keyword 'clickReplace'.", "clickReplace", "btnDefaultRoom", "BRS");
     }
 
     @Test
@@ -241,6 +246,15 @@ public class PreRunValidatorTest {
                 step("else", "", "", "", "", "", "BRS"),
                 step("endIf", "", "", "", "", "", "BRS")
         ));
+    }
+
+    @Test
+    public void displayedConditionalDirectivesShouldRequireObjectAndXPath() {
+        FrameworkException missingObject = validationFailure(step("ifDisplayed", "", "", "", "", "", "BRS"));
+        assertContainsContext(missingObject, "Object is required for keyword 'ifDisplayed'.", "ifDisplayed", "", "BRS");
+
+        FrameworkException missingXPath = validationFailure(step("elseIfDisplayed", "dlgWarning", "", "", "", "", "BRS"));
+        assertContainsContext(missingXPath, "XPath is required for keyword 'elseIfDisplayed'.", "elseIfDisplayed", "dlgWarning", "BRS");
     }
 
     @Test

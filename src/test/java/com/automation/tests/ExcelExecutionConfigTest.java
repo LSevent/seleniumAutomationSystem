@@ -37,6 +37,8 @@ public class ExcelExecutionConfigTest {
         Assert.assertEquals(config.getBrowser(), "chrome");
         Assert.assertFalse(config.isHeadless());
         Assert.assertEquals(config.getTimeoutSeconds(), 10);
+        Assert.assertEquals(config.getExplicitTimeSeconds(), 10);
+        Assert.assertEquals(config.getConditionTimeSeconds(), 5);
         Assert.assertFalse(config.isRemote());
         Assert.assertEquals(config.getGridUrl(), "http://localhost:4444/wd/hub");
         Assert.assertFalse(config.isShowSensitiveData());
@@ -86,7 +88,8 @@ public class ExcelExecutionConfigTest {
                 Map.of(
                         ExcelExecutionConfig.BROWSER_KEY, "firefox",
                         ExcelExecutionConfig.HEADLESS_KEY, "true",
-                        ExcelExecutionConfig.TIMEOUT_KEY, "25",
+                        ExcelExecutionConfig.EXPLICIT_TIME_KEY, "25",
+                        ExcelExecutionConfig.CONDITION_TIME_KEY, "3",
                         ExcelExecutionConfig.REMOTE_KEY, "true",
                         ExcelExecutionConfig.GRID_URL_KEY, "http://grid.example/wd/hub",
                         ExcelExecutionConfig.REPORT_SHOW_SENSITIVE_DATA_KEY, "true",
@@ -98,6 +101,8 @@ public class ExcelExecutionConfigTest {
         Assert.assertEquals(config.getBrowser(), "firefox");
         Assert.assertTrue(config.isHeadless());
         Assert.assertEquals(config.getTimeoutSeconds(), 25);
+        Assert.assertEquals(config.getExplicitTimeSeconds(), 25);
+        Assert.assertEquals(config.getConditionTimeSeconds(), 3);
         Assert.assertTrue(config.isRemote());
         Assert.assertEquals(config.getGridUrl(), "http://grid.example/wd/hub");
         Assert.assertTrue(config.isShowSensitiveData());
@@ -148,17 +153,56 @@ public class ExcelExecutionConfigTest {
     }
 
     @Test
-    public void invalidExcelRunnerTimeoutShouldFailClearly() throws IOException {
+    public void invalidExcelRunnerExplicitTimeShouldFailClearly() throws IOException {
         Path scenarioFile = createFile("invalid-timeout.xlsx");
         Properties properties = properties(scenarioFile.toString());
-        properties.setProperty(ExcelExecutionConfig.TIMEOUT_KEY, "0");
+        properties.setProperty(ExcelExecutionConfig.EXPLICIT_TIME_KEY, "0");
 
         IllegalArgumentException exception = Assert.expectThrows(
                 IllegalArgumentException.class,
                 () -> ExcelExecutionConfig.fromProperties(properties, Map.of())
         );
 
-        Assert.assertTrue(exception.getMessage().contains("Excel execution configuration key 'timeout' must be a positive number."));
+        Assert.assertTrue(exception.getMessage().contains("Excel execution configuration key 'explicitTime' must be a positive number."));
+    }
+
+    @Test
+    public void legacyTimeoutShouldStillConfigureExplicitTime() throws IOException {
+        Path scenarioFile = createFile("legacy-timeout.xlsx");
+        Properties properties = properties(scenarioFile.toString());
+        properties.setProperty(ExcelExecutionConfig.TIMEOUT_KEY, "22");
+
+        ExcelExecutionConfig config = ExcelExecutionConfig.fromProperties(properties, Map.of());
+
+        Assert.assertEquals(config.getTimeoutSeconds(), 22);
+        Assert.assertEquals(config.getExplicitTimeSeconds(), 22);
+    }
+
+    @Test
+    public void explicitTimeShouldWinOverLegacyTimeout() throws IOException {
+        Path scenarioFile = createFile("explicit-time-wins.xlsx");
+        Properties properties = properties(scenarioFile.toString());
+        properties.setProperty(ExcelExecutionConfig.TIMEOUT_KEY, "22");
+        properties.setProperty(ExcelExecutionConfig.EXPLICIT_TIME_KEY, "11");
+
+        ExcelExecutionConfig config = ExcelExecutionConfig.fromProperties(properties, Map.of());
+
+        Assert.assertEquals(config.getTimeoutSeconds(), 11);
+        Assert.assertEquals(config.getExplicitTimeSeconds(), 11);
+    }
+
+    @Test
+    public void invalidConditionTimeShouldFailClearly() throws IOException {
+        Path scenarioFile = createFile("invalid-condition-time.xlsx");
+        Properties properties = properties(scenarioFile.toString());
+        properties.setProperty(ExcelExecutionConfig.CONDITION_TIME_KEY, "0");
+
+        IllegalArgumentException exception = Assert.expectThrows(
+                IllegalArgumentException.class,
+                () -> ExcelExecutionConfig.fromProperties(properties, Map.of())
+        );
+
+        Assert.assertTrue(exception.getMessage().contains("Excel execution configuration key 'conditionTime' must be a positive number."));
     }
 
     @Test

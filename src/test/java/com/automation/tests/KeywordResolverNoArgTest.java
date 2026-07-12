@@ -102,16 +102,17 @@ public class KeywordResolverNoArgTest {
     }
 
     @Test
-    public void productionSpecificNoArgShouldUseResolvedXPathFromCurrentContext() {
+    public void productionSpecificNoArgShouldUseResolvedXPathAndValueFromCurrentContext() {
         FakeWebDriver driver = driver();
-        String resolvedXPath = "//button[@id='resolved-room']";
-        driver.addElement(resolvedXPath, "Meeting Room A");
+        String resolvedXPath = "//button[@data-room='#']";
+        driver.addElement("//button[@data-room='Meeting Room A']", "Meeting Room A");
+        driver.addElement("//button[@data-room='Meeting Room B']", "Meeting Room B");
         ResolvedStepContext step = step(
                 "BRS",
-                "selectRoomByName",
+                "clickMultiValue",
                 "btnRoom",
                 resolvedXPath,
-                "Meeting Room A"
+                "Meeting Room A;Meeting Room B"
         );
         StepContextHolder.set(step);
 
@@ -121,7 +122,8 @@ public class KeywordResolverNoArgTest {
         );
 
         Assert.assertEquals(result.getSourceType(), KeywordSourceType.SPECIFIC);
-        Assert.assertTrue(driver.element(resolvedXPath).isClicked());
+        Assert.assertTrue(driver.element("//button[@data-room='Meeting Room A']").isClicked());
+        Assert.assertTrue(driver.element("//button[@data-room='Meeting Room B']").isClicked());
         Assert.assertSame(StepContextHolder.get(), step);
     }
 
@@ -146,7 +148,7 @@ public class KeywordResolverNoArgTest {
     @Test
     public void baseFunctionShouldExposeOnlyNoArgKeywordMethods() {
         Set<String> keywords = Set.of(
-                "openUrl", "click", "input", "clear", "select", "verifyDisplayed", "verifyNotDisplayed",
+                "openUrl", "click", "clickReplace", "input", "clear", "select", "verifyDisplayed", "verifyNotDisplayed",
                 "verifyText", "verifyTextContains", "verifyUrlContains", "verifyTitle",
                 "verifyTitleContains", "scrollToElement",
                 "pressEnter", "screenshot", "screenshotPartByObject",

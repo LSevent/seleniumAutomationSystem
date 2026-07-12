@@ -220,8 +220,8 @@ public class StepReader {
             }
 
             switch (directive) {
-                case IF_EQUALS -> openBlocks.push(FlowBlock.conditional(step.getExcelRowNumber()));
-                case ELSE_IF_EQUALS -> validateElseIf(sheetName, testCase, step, openBlocks);
+                case IF_EQUALS, IF_DISPLAYED -> openBlocks.push(FlowBlock.conditional(step.getExcelRowNumber()));
+                case ELSE_IF_EQUALS, ELSE_IF_DISPLAYED -> validateElseIf(sheetName, testCase, step, openBlocks);
                 case ELSE -> validateElse(sheetName, testCase, step, openBlocks);
                 case END_IF -> validateEndIf(sheetName, testCase, step, openBlocks);
                 case FOR_EACH_DATA_ROW -> openBlocks.push(FlowBlock.loop(step.getExcelRowNumber()));
@@ -249,10 +249,10 @@ public class StepReader {
             TestStep step,
             Deque<FlowBlock> openBlocks
     ) {
-        FlowBlock currentBlock = requireOpenConditionalBlock("elseIfEquals", sheetName, testCase, step, openBlocks);
+        FlowBlock currentBlock = requireOpenConditionalBlock(step.getKeyword(), sheetName, testCase, step, openBlocks);
         if (currentBlock.hasElse()) {
             throw flowBlockError(
-                    "Conditional directive 'elseIfEquals' cannot appear after 'else' in the same conditional block.",
+                    "Conditional directive '" + step.getKeyword() + "' cannot appear after 'else' in the same conditional block.",
                     sheetName,
                     testCase,
                     step.getExcelRowNumber()
@@ -307,7 +307,7 @@ public class StepReader {
     ) {
         if (openBlocks.isEmpty()) {
             throw flowBlockError(
-                    "Conditional directive '" + directive + "' found without an open 'ifEquals'.",
+                    "Conditional directive '" + directive + "' found without an open 'ifEquals' or 'ifDisplayed'.",
                     sheetName,
                     testCase,
                     step.getExcelRowNumber()
@@ -517,7 +517,7 @@ public class StepReader {
             if (isLoop()) {
                 return "Loop block starting with 'forEachDataRow' is missing 'endForEachDataRow'.";
             }
-            return "Conditional block starting with 'ifEquals' is missing 'endIf'.";
+            return "Conditional block starting with 'ifEquals' or 'ifDisplayed' is missing 'endIf'.";
         }
     }
 

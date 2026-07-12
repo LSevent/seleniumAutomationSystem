@@ -16,6 +16,7 @@ import com.automation.services.ScreenshotService;
 import com.automation.utils.WaitUtil;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.openqa.selenium.By;
 
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -132,6 +133,21 @@ public class KeywordEngine {
 
     ObjectRepositoryReader getObjectRepositoryReader() {
         return objectRepositoryReader;
+    }
+
+    boolean isDisplayed(ResolvedStepContext step) {
+        if (step == null) {
+            throw new IllegalArgumentException("ResolvedStepContext must not be null.");
+        }
+        String xpath = safe(step.getResolvedXPath());
+        if (xpath.isBlank()) {
+            throw new IllegalArgumentException("Resolved XPath is required for keyword '" + safe(step.getKeyword()) + "'.");
+        }
+        return WaitUtil.isVisibleWithin(
+                keywordResolver.getDriver(),
+                By.xpath(xpath),
+                executionConfig.getConditionTimeSeconds()
+        );
     }
 
     private ExecutionResult executeResolvedKeyword(ResolvedStepContext step) {

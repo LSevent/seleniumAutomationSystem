@@ -44,8 +44,8 @@ public class KeywordResolverTest {
     public void shouldResolveUppercaseSpecificFunctionClassForKnownApplications() {
         KeywordResolver resolver = new KeywordResolver(testDriver().driver());
 
-        assertSpecificClass(resolver.resolve("brs", "selectRoomByName"), "BRS");
-        assertSpecificClass(resolver.resolve("Brs", "selectRoomByName"), "BRS");
+        assertSpecificClass(resolver.resolve("brs", "clickMultiValue"), "BRS");
+        assertSpecificClass(resolver.resolve("Brs", "clickMultiValue"), "BRS");
         assertSpecificClass(resolver.resolve("HRIS", "verifyEmployeeVisible"), "HRIS");
     }
 
@@ -76,18 +76,21 @@ public class KeywordResolverTest {
     @Test
     public void shouldExecuteBrsSpecificKeyword() {
         FakeDriver fakeDriver = testDriver();
+        fakeDriver.addElement("//button[@data-room='Meeting Room A']", "Meeting Room A");
+        fakeDriver.addElement("//button[@data-room='Meeting Room B']", "Meeting Room B");
         KeywordResolver resolver = new KeywordResolver(fakeDriver.driver());
 
         KeywordExecutionResult result = execute(
                 resolver,
                 "BRS",
-                "selectRoomByName",
-                ROOM_BUTTON_XPATH,
-                "Meeting Room A"
+                "clickMultiValue",
+                "//button[@data-room='#']",
+                "Meeting Room A;Meeting Room B"
         );
 
         Assert.assertEquals(result.getSourceType(), KeywordSourceType.SPECIFIC);
-        Assert.assertTrue(fakeDriver.element(ROOM_BUTTON_XPATH).clicked);
+        Assert.assertTrue(fakeDriver.element("//button[@data-room='Meeting Room A']").clicked);
+        Assert.assertTrue(fakeDriver.element("//button[@data-room='Meeting Room B']").clicked);
     }
 
     @Test
@@ -152,11 +155,11 @@ public class KeywordResolverTest {
 
         IllegalArgumentException exception = Assert.expectThrows(
                 IllegalArgumentException.class,
-                () -> execute(resolver, "HRIS", "selectRoomByName", ROOM_BUTTON_XPATH, "Meeting Room A")
+                () -> execute(resolver, "HRIS", "clickMultiValue", ROOM_BUTTON_XPATH, "Meeting Room A")
         );
 
         Assert.assertTrue(exception.getMessage().contains(
-                "Keyword 'selectRoomByName' not found in SpecificFunction for application 'HRIS' or BaseFunction."
+                "Keyword 'clickMultiValue' not found in SpecificFunction for application 'HRIS' or BaseFunction."
         ));
     }
 

@@ -9,11 +9,16 @@ public class SpecificFunction extends BaseFunction {
         super(driver);
     }
 
-    public void selectRoomByName() {
-        click();
-    }
+    public void clickMultiValue() {
+        String[] arrValues = value().split(";");
 
-    public void verifyBookingCreated() {
-        verifyTextContains();
+        for (String strValue : arrValues) {
+            String targetXPath = xpath().replace("#", strValue.trim());
+            try {
+                waitForClickableElement(targetXPath, "click").click();
+            } catch (Exception exception) {
+                throw new RuntimeException("Failed to click element with value: " + strValue, exception);
+            }
+        }
     }
 }

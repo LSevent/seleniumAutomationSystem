@@ -37,12 +37,12 @@ public class KeywordCatalogTest {
 
     @Test
     public void shouldDiscoverApplicationSpecificRequirements() {
-        KeywordCatalog.KeywordDefinition brs = catalog.discover("brs", "selectRoomByName").orElseThrow();
+        KeywordCatalog.KeywordDefinition brs = catalog.discover("brs", "clickMultiValue").orElseThrow();
         KeywordCatalog.KeywordDefinition hris = catalog.discover("hris", "verifyEmployeeVisible").orElseThrow();
 
-        Assert.assertEquals(brs.requirements(), KeywordRequirements.OBJECT);
+        Assert.assertEquals(brs.requirements(), KeywordRequirements.OBJECT_AND_VALUE);
         Assert.assertEquals(hris.requirements(), KeywordRequirements.OBJECT_AND_VALUE);
-        Assert.assertTrue(catalog.hasRegisteredRequirements("BRS", "selectRoomByName", KeywordSourceType.SPECIFIC));
+        Assert.assertTrue(catalog.hasRegisteredRequirements("BRS", "clickMultiValue", KeywordSourceType.SPECIFIC));
         Assert.assertTrue(catalog.hasRegisteredRequirements("HRIS", "verifyEmployeeVisible", KeywordSourceType.SPECIFIC));
     }
 

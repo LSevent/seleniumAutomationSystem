@@ -164,7 +164,7 @@ public class ExecutionPlanBuilder {
 
         String rawXPath = "";
         String resolvedXPath = "";
-        if (step.isRun() && !step.isFlowDirective() && !isBlank(step.getObject())) {
+        if (step.isRun() && shouldResolveObject(step) && !isBlank(step.getObject())) {
             try {
                 ResolvedObject resolvedObject = objectRepositoryReader.resolveObject(step, rawValue, resolvedValue);
                 if (resolvedObject != null) {
@@ -201,9 +201,7 @@ public class ExecutionPlanBuilder {
     }
 
     private String resolveFlowDirectiveValue(TestStep step, Scenario scenario, LoopDataContext loopDataContext) {
-        if (step.getFlowDirective() == null
-                || !(step.getFlowDirective().startsConditionalBlock()
-                || step.getFlowDirective() == FlowDirectiveType.ELSE_IF_EQUALS)) {
+        if (step.getFlowDirective() == null || !step.getFlowDirective().isEqualityCondition()) {
             return safe(step.getValue());
         }
 
@@ -234,6 +232,13 @@ public class ExecutionPlanBuilder {
             );
         }
         return dataReader.resolveValue(rawValue, scenario);
+    }
+
+    private boolean shouldResolveObject(TestStep step) {
+        FlowDirectiveType directive = step.getFlowDirective();
+        return directive == null
+                || !directive.isFlowDirective()
+                || directive.isVisibilityCondition();
     }
 
     private int findMatchingEndForEach(List<TestStep> steps, int startIndex) {

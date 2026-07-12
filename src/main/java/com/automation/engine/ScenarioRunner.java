@@ -23,6 +23,7 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.List;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 public class ScenarioRunner {
@@ -135,7 +136,9 @@ public class ScenarioRunner {
             );
             startTestcaseReport(testcase);
 
-            ConditionalFlowController conditionalFlowController = new ConditionalFlowController();
+            ConditionalFlowController conditionalFlowController = new ConditionalFlowController(
+                    step -> keywordEngine().isDisplayed(step)
+            );
             for (ResolvedStepContext step : resolvedTestcase.getSteps()) {
                 ExecutionResult result;
                 if (!step.isRun()) {
@@ -341,6 +344,11 @@ public class ScenarioRunner {
     private static final class ConditionalFlowController {
 
         private final Deque<ConditionalBlockState> blocks = new ArrayDeque<>();
+        private final Predicate<ResolvedStepContext> visibilityEvaluator;
+
+        private ConditionalFlowController(Predicate<ResolvedStepContext> visibilityEvaluator) {
+            this.visibilityEvaluator = visibilityEvaluator;
+        }
 
         private ConditionalFlowDecision apply(ResolvedStepContext step) {
             FlowDirectiveType directive = step.getFlowDirective();
@@ -350,7 +358,9 @@ public class ScenarioRunner {
 
             return switch (directive) {
                 case IF_EQUALS -> applyIfEquals(step);
+                case IF_DISPLAYED -> applyIfDisplayed(step);
                 case ELSE_IF_EQUALS -> applyElseIfEquals(step);
+                case ELSE_IF_DISPLAYED -> applyElseIfDisplayed(step);
                 case ELSE -> applyElse(step);
                 case END_IF -> applyEndIf();
                 default -> new ConditionalFlowDecision(shouldExecuteCurrentStep(), "Not a conditional directive.");
@@ -370,6 +380,18 @@ public class ScenarioRunner {
                     matched
                             ? "Condition matched. Entering ifEquals branch."
                             : "Condition did not match. Skipping ifEquals branch."
+            );
+        }
+
+        private ConditionalFlowDecision applyIfDisplayed(ResolvedStepContext step) {
+            boolean parentActive = shouldExecuteCurrentStep();
+            boolean matched = parentActive && elementDisplayed(step);
+            blocks.push(new ConditionalBlockState(parentActive, matched, matched));
+            return new ConditionalFlowDecision(
+                    matched,
+                    matched
+                            ? "Element is displayed. Entering ifDisplayed branch."
+                            : "Element is not displayed. Skipping ifDisplayed branch."
             );
         }
 
@@ -394,6 +416,30 @@ public class ScenarioRunner {
                     matched
                             ? "Condition matched. Entering elseIfEquals branch."
                             : "Condition did not match. Skipping elseIfEquals branch."
+            );
+        }
+
+        private ConditionalFlowDecision applyElseIfDisplayed(ResolvedStepContext step) {
+            ConditionalBlockState block = requireOpenBlock("elseIfDisplayed");
+            if (!block.isParentActive()) {
+                block.deactivateCurrentBranch();
+                return new ConditionalFlowDecision(false, "Parent conditional branch is inactive. Skipping elseIfDisplayed branch.");
+            }
+            if (block.hasMatchedBranch()) {
+                block.deactivateCurrentBranch();
+                return new ConditionalFlowDecision(false, "A previous conditional branch already matched. Skipping elseIfDisplayed branch.");
+            }
+
+            boolean matched = elementDisplayed(step);
+            block.setCurrentBranchActive(matched);
+            if (matched) {
+                block.markMatched();
+            }
+            return new ConditionalFlowDecision(
+                    matched,
+                    matched
+                            ? "Element is displayed. Entering elseIfDisplayed branch."
+                            : "Element is not displayed. Skipping elseIfDisplayed branch."
             );
         }
 
@@ -429,6 +475,10 @@ public class ScenarioRunner {
         private boolean conditionMatches(ResolvedStepContext step) {
             ConditionExpression condition = ConditionExpression.parse(step.getResolvedValue());
             return safe(condition.getLeftOperand()).equalsIgnoreCase(safe(condition.getRightOperand()));
+        }
+
+        private boolean elementDisplayed(ResolvedStepContext step) {
+            return visibilityEvaluator.test(step);
         }
 
         private static String safe(String value) {

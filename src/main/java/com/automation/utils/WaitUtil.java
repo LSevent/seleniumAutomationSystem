@@ -4,6 +4,7 @@ import com.automation.config.ConfigReader;
 import com.automation.constants.FrameworkConstants;
 import org.openqa.selenium.By;
 import org.openqa.selenium.StaleElementReferenceException;
+import org.openqa.selenium.TimeoutException;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.ExpectedConditions;
@@ -49,9 +50,24 @@ public final class WaitUtil {
         return createWait(driver).until(ExpectedConditions.titleContains(title));
     }
 
+    public static boolean isVisibleWithin(WebDriver driver, By locator, int timeoutSeconds) {
+        try {
+            createWait(driver, timeoutSeconds).until(ExpectedConditions.visibilityOfElementLocated(locator));
+            return true;
+        } catch (TimeoutException exception) {
+            return false;
+        }
+    }
+
     private static WebDriverWait createWait(WebDriver driver) {
-        int timeout = timeoutSeconds();
-        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(timeout));
+        return createWait(driver, timeoutSeconds());
+    }
+
+    private static WebDriverWait createWait(WebDriver driver, int timeoutSeconds) {
+        if (timeoutSeconds <= 0) {
+            throw new IllegalArgumentException("Timeout must be greater than zero. Actual value: " + timeoutSeconds);
+        }
+        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(timeoutSeconds));
         wait.ignoring(StaleElementReferenceException.class);
         return wait;
     }
