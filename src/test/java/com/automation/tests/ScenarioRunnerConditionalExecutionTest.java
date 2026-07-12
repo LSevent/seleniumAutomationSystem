@@ -110,6 +110,17 @@ public class ScenarioRunnerConditionalExecutionTest {
         Assert.assertEquals(result.resultForObject("btnFallback").getStatus(), ExecutionResult.STATUS_PASS);
     }
 
+    @Test
+    public void outerElseShouldExecuteWhenNestedConditionalIsInsideSkippedIfBranch() throws IOException {
+        RunnerResult result = runNestedConditionalWorkbook("nested-outer-else.xlsx", "Repeating Meeting");
+
+        Assert.assertEquals(result.executedObjects(), List.of("btnOuterFallback", "btnAfterConditional"));
+        Assert.assertEquals(result.resultForObject("btnOuterTrue").getStatus(), ExecutionResult.STATUS_SKIP);
+        Assert.assertEquals(result.resultForObject("btnInnerTrue").getStatus(), ExecutionResult.STATUS_SKIP);
+        Assert.assertEquals(result.resultForObject("btnInnerFallback").getStatus(), ExecutionResult.STATUS_SKIP);
+        Assert.assertEquals(result.resultForObject("btnOuterFallback").getStatus(), ExecutionResult.STATUS_PASS);
+    }
+
     private RunnerResult runConditionalWorkbook(String fileName, String scheduleType) throws IOException {
         Path workbookPath = ValidationWorkbookFactory.createWorkbook(
                 TEMP_DIR.resolve(fileName),
@@ -184,6 +195,58 @@ public class ScenarioRunnerConditionalExecutionTest {
             if (warningVisible) {
                 driver.addElement("//div[@id='warning']", "Warning");
             }
+            RecordingKeywordEngine keywordEngine = new RecordingKeywordEngine(
+                    dataReader,
+                    objectRepositoryReader,
+                    new KeywordResolver(driver.driver()),
+                    executionConfig(workbookPath)
+            );
+            ScenarioRunner runner = new ScenarioRunner(
+                    new ScenarioReader(excelReader),
+                    new StepReader(excelReader),
+                    dataReader,
+                    objectRepositoryReader,
+                    () -> keywordEngine
+            );
+
+            return new RunnerResult(runner.runActiveScenarios(), keywordEngine.executedSteps);
+        }
+    }
+
+    private RunnerResult runNestedConditionalWorkbook(String fileName, String scheduleType) throws IOException {
+        Path workbookPath = ValidationWorkbookFactory.createWorkbook(
+                TEMP_DIR.resolve(fileName),
+                scenarios(new Object[][]{{1, "Y", "Nested Conditional Flow", "Nested conditional execution"}}),
+                scenarioSheet("Nested Conditional Flow", new Object[][]{
+                        {"Create Booking", "Y", "", "", "", "BRS", "Active testcase"},
+                        {"", "", "ifEquals", "", "BOOKING_DATA.SCHEDULE_TYPE = Single Meeting", "", "Outer condition"},
+                        {"", "", "click", "btnOuterTrue", "", "", "Outer true step"},
+                        {"", "", "ifDisplayed", "dlgWarning", "", "", "Inner displayed condition"},
+                        {"", "", "click", "btnInnerTrue", "", "", "Inner true step"},
+                        {"", "", "else", "", "", "", "Inner fallback condition"},
+                        {"", "", "click", "btnInnerFallback", "", "", "Inner fallback step"},
+                        {"", "", "endIf", "", "", "", "End inner condition"},
+                        {"", "", "else", "", "", "", "Outer fallback condition"},
+                        {"", "", "click", "btnOuterFallback", "", "", "Outer fallback step"},
+                        {"", "", "endIf", "", "", "", "End outer condition"},
+                        {"", "", "click", "btnAfterConditional", "", "", "After conditional step"}
+                }),
+                sheet("BOOKING_DATA", new String[]{"NO", "SCHEDULE_TYPE"}, new Object[][]{{1, scheduleType}}),
+                objectRepository(new Object[][]{
+                        {"BRS", "dlgWarning", "//div[@id='warning']", "Warning"},
+                        {"BRS", "btnOuterTrue", "//button[@id='outer-true']", "Outer true"},
+                        {"BRS", "btnInnerTrue", "//button[@id='inner-true']", "Inner true"},
+                        {"BRS", "btnInnerFallback", "//button[@id='inner-fallback']", "Inner fallback"},
+                        {"BRS", "btnOuterFallback", "//button[@id='outer-fallback']", "Outer fallback"},
+                        {"BRS", "btnAfterConditional", "//button[@id='after']", "After"}
+                })
+        );
+
+        try (ExcelReader excelReader = new ExcelReader(workbookPath.toString())) {
+            DataReader dataReader = new DataReader(excelReader);
+            ObjectRepositoryReader objectRepositoryReader = new ObjectRepositoryReader(excelReader, dataReader);
+            FakeWebDriver driver = new FakeWebDriver();
+            driver.addElement("//div[@id='warning']", "Warning");
             RecordingKeywordEngine keywordEngine = new RecordingKeywordEngine(
                     dataReader,
                     objectRepositoryReader,

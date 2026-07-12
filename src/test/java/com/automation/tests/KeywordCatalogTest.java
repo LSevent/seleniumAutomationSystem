@@ -7,8 +7,7 @@ import com.automation.models.KeywordSourceType;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
+import java.util.List;
 
 public class KeywordCatalogTest {
 
@@ -72,14 +71,31 @@ public class KeywordCatalogTest {
     }
 
     @Test
-    public void everyBaseKeywordShouldHaveCentralRequirements() {
-        for (Method method : BaseFunction.class.getDeclaredMethods()) {
-            if (Modifier.isPublic(method.getModifiers()) && method.getParameterCount() == 0) {
-                Assert.assertTrue(
-                        catalog.hasRegisteredRequirements("BRS", method.getName(), KeywordSourceType.BASE),
-                        "Missing centralized requirements for BaseFunction keyword: " + method.getName()
-                );
-            }
+    public void builtInBaseKeywordsShouldHaveCentralRequirements() {
+        for (String keyword : List.of(
+                "openUrl",
+                "click",
+                "clickReplace",
+                "input",
+                "clear",
+                "select",
+                "verifyDisplayed",
+                "verifyNotDisplayed",
+                "verifyText",
+                "verifyTextContains",
+                "verifyUrlContains",
+                "verifyTitle",
+                "verifyTitleContains",
+                "scrollToElement",
+                "pressEnter",
+                "screenshot",
+                "screenshotPartByObject",
+                "screenshotFullPart"
+        )) {
+            Assert.assertTrue(
+                    catalog.hasRegisteredRequirements("BRS", keyword, KeywordSourceType.BASE),
+                    "Missing centralized requirements for built-in BaseFunction keyword: " + keyword
+            );
         }
     }
 }

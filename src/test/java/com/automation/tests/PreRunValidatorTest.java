@@ -224,6 +224,11 @@ public class PreRunValidatorTest {
     }
 
     @Test
+    public void customNoArgKeywordShouldNotRequireCatalogRegistration() {
+        validator.validate(plan(step("preferNoArg", "", "", "", "", "", "RESOLVERTEST")));
+    }
+
+    @Test
     public void clickReplaceShouldRequireValueEvenForStaticXPathTemplate() {
         FrameworkException exception = validationFailure(step(
                 "clickReplace",

@@ -551,7 +551,7 @@ Keyword lookup order:
 
 If the same no-argument method exists in both `SpecificFunction` and `BaseFunction`, the application-specific method wins. Public parameter-based keyword fallback is no longer part of runtime resolution.
 
-`KeywordCatalog` is the shared source for this discovery order. Both `KeywordResolver` and `PreRunValidator` use the same catalog, so a keyword cannot be accepted during validation and then resolved differently at runtime. The catalog also keeps the required Excel inputs (`Object` and/or `Value`) in one place instead of repeating keyword-name switches across the framework.
+`KeywordCatalog` performs this method discovery and keeps optional early-validation rules for required Excel inputs (`Object` and/or `Value`). It is not a mandatory registration list for every custom keyword: if a public no-argument method exists in `SpecificFunction` or `BaseFunction`, the framework can discover it. Register the keyword in `KeywordCatalog` only when you want pre-run validation to require `Object`, `Value`, or both.
 
 Currently implemented application-specific commands:
 
