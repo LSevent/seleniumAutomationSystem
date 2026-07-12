@@ -70,11 +70,6 @@ public class BaseFunctionTest {
         useContext("openUrl", "", "file:///base-function-test.html");
         baseFunction.openUrl();
 
-        useContext("waitVisible", MESSAGE_XPATH, "");
-        baseFunction.waitVisible();
-        useContext("waitClickable", BUTTON_XPATH, "");
-        baseFunction.waitClickable();
-
         useContext("verifyDisplayed", MESSAGE_XPATH, "");
         baseFunction.verifyDisplayed();
         useContext("verifyText", MESSAGE_XPATH, "Booking created successfully");
@@ -94,14 +89,14 @@ public class BaseFunctionTest {
     }
 
     @Test
-    public void safeClickShouldUseJavaScriptFallbackWhenNormalClickFails() {
+    public void clickShouldUseJavaScriptFallbackWhenNormalClickFails() {
         FakeWebDriver driver = testDriver();
         FakeWebElement button = driver.element(BUTTON_XPATH);
         button.failNextClick = true;
         BaseFunction baseFunction = new BaseFunction(driver);
 
-        useContext("safeClick", BUTTON_XPATH, "");
-        baseFunction.safeClick();
+        useContext("click", BUTTON_XPATH, "");
+        baseFunction.click();
 
         Assert.assertTrue(button.clicked);
         Assert.assertTrue(button.javascriptClicked);

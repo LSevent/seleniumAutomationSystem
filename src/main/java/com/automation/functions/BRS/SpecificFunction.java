@@ -10,7 +10,7 @@ public class SpecificFunction extends BaseFunction {
     }
 
     public void selectRoomByName() {
-        safeClick();
+        click();
     }
 
     public void verifyBookingCreated() {

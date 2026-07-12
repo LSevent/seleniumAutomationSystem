@@ -27,7 +27,12 @@ public class BaseFunction extends KeywordSupport {
     }
 
     public void click() {
-        clickableElement("click").click();
+        String targetXPath = xpath();
+        try {
+            waitForClickableElement(targetXPath, "click").click();
+        } catch (WebDriverException exception) {
+            clickUsingJavaScript(targetXPath, exception);
+        }
     }
 
     public void input() {
@@ -98,25 +103,8 @@ public class BaseFunction extends KeywordSupport {
         assertContains("title", value().trim(), driver.getTitle());
     }
 
-    public void waitVisible() {
-        visibleElement("waitVisible");
-    }
-
-    public void waitClickable() {
-        clickableElement("waitClickable");
-    }
-
     public void scrollToElement() {
         JavaScriptUtil.scrollToElement(driver, visibleElement("scrollToElement"));
-    }
-
-    public void safeClick() {
-        String targetXPath = xpath();
-        try {
-            waitForClickableElement(targetXPath, "safeClick").click();
-        } catch (WebDriverException exception) {
-            clickUsingJavaScript(targetXPath, exception);
-        }
     }
 
     public void pressEnter() {
@@ -137,12 +125,12 @@ public class BaseFunction extends KeywordSupport {
 
     private void clickUsingJavaScript(String xpath, RuntimeException originalException) {
         try {
-            WebElement element = waitForVisibleElement(xpath, "safeClick");
+            WebElement element = waitForVisibleElement(xpath, "click");
             JavaScriptUtil.scrollToElement(driver, element);
             JavaScriptUtil.clickUsingJavaScript(driver, element);
         } catch (RuntimeException fallbackException) {
             fallbackException.addSuppressed(originalException);
-            throw new AssertionError("Safe click failed for XPath: " + xpath, fallbackException);
+            throw new AssertionError("Click failed for XPath: " + xpath, fallbackException);
         }
     }
 

@@ -148,8 +148,8 @@ public class KeywordResolverNoArgTest {
         Set<String> keywords = Set.of(
                 "openUrl", "click", "input", "clear", "select", "verifyDisplayed", "verifyNotDisplayed",
                 "verifyText", "verifyTextContains", "verifyUrlContains", "verifyTitle",
-                "verifyTitleContains", "waitVisible", "waitClickable", "scrollToElement",
-                "safeClick", "pressEnter", "screenshot", "screenshotPartByObject",
+                "verifyTitleContains", "scrollToElement",
+                "pressEnter", "screenshot", "screenshotPartByObject",
                 "screenshotFullPart"
         );
 

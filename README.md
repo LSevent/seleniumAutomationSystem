@@ -401,7 +401,7 @@ Supported common Excel commands:
 | Keyword | Object required | Value required | Purpose |
 | --- | --- | --- | --- |
 | `openUrl` | No | Yes | Opens the URL from `Value`. The value may be literal text or a data reference such as `CONFIG.BASE_URL`. |
-| `click` | Yes | No | Waits for the resolved object XPath to be clickable, then clicks it. |
+| `click` | Yes | No | Waits for the resolved object XPath, clicks it, and automatically uses a JavaScript fallback when a normal Selenium click fails. |
 | `input` | Yes | Yes | Waits for the resolved object XPath, clears the element when possible, then types `Value`. |
 | `clear` | Yes | No | Clears the target element. |
 | `select` | Yes | Yes | Selects an option from a native HTML `<select>` by its visible text. |
@@ -412,13 +412,12 @@ Supported common Excel commands:
 | `verifyUrlContains` | No | Yes | Fails unless the current browser URL contains `Value`. |
 | `verifyTitle` | No | Yes | Fails unless the page title exactly equals `Value`. |
 | `verifyTitleContains` | No | Yes | Fails unless the page title contains `Value`. |
-| `waitVisible` | Yes | No | Waits until the target element is visible. |
-| `waitClickable` | Yes | No | Waits until the target element is clickable. |
 | `scrollToElement` | Yes | No | Scrolls the target element into view. |
-| `safeClick` | Yes | No | Tries a normal click first, then falls back to JavaScript click when Selenium click is intercepted or stale. |
 | `pressEnter` | Yes | No | Sends the Enter key to the target element. |
 
 Excel-facing keywords are no-argument `void` commands. Internal helpers may return text or elements for custom Java workflows, but return-only methods are intentionally not exposed as Excel keywords because Excel does not consume Java return values.
+
+Element synchronization is automatic. Actions such as `click`, `input`, `clear`, `select`, and `pressEnter` wait for the state they need, while `verifyDisplayed` expresses visibility as a test expectation. Separate `waitVisible` and `waitClickable` Excel commands are intentionally not exposed because they would repeat the same waits.
 
 Screenshot keywords are normal reusable `BaseFunction` keywords. `KeywordEngine` still owns the execution context and evidence collection, while `ScreenshotService` owns the actual screenshot file creation. This keeps screenshot keywords easy to reuse from `SpecificFunction` methods without adding special engine-only code for each screenshot command.
 

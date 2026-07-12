@@ -65,6 +65,13 @@ public class KeywordCatalogTest {
     }
 
     @Test
+    public void redundantSynchronizationAndClickAliasesShouldNotBeExposed() {
+        Assert.assertTrue(catalog.discover("BRS", "waitVisible").isEmpty());
+        Assert.assertTrue(catalog.discover("BRS", "waitClickable").isEmpty());
+        Assert.assertTrue(catalog.discover("BRS", "safeClick").isEmpty());
+    }
+
+    @Test
     public void everyBaseKeywordShouldHaveCentralRequirements() {
         for (Method method : BaseFunction.class.getDeclaredMethods()) {
             if (Modifier.isPublic(method.getModifiers()) && method.getParameterCount() == 0) {

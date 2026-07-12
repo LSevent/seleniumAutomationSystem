@@ -62,10 +62,6 @@ public abstract class KeywordSupport {
         }
     }
 
-    protected String visibleText(String keyword) {
-        return visibleElement(keyword).getText();
-    }
-
     protected ResolvedStepContext currentStep() {
         return StepContextHolder.get();
     }
