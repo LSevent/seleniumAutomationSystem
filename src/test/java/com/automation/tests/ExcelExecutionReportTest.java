@@ -130,6 +130,23 @@ public class ExcelExecutionReportTest {
             Assert.assertTrue(reportHtml.contains("Manual screenshot"));
             Assert.assertTrue(reportHtml.contains("Evidence Gallery"));
             Assert.assertTrue(reportHtml.contains("Screenshots/"));
+            Assert.assertTrue(reportHtml.contains(".test-wrapper .test-list"));
+            Assert.assertTrue(reportHtml.contains("width: 25%;"));
+            Assert.assertTrue(reportHtml.contains(".test-wrapper .test-content"));
+            Assert.assertTrue(reportHtml.contains("width: 75%;"));
+            Assert.assertTrue(reportHtml.contains("excel-step-table-wrapper"));
+            Assert.assertTrue(reportHtml.contains("overflow-x: auto;"));
+            Assert.assertTrue(reportHtml.contains("min-width: 1900px;"));
+            Assert.assertTrue(reportHtml.contains("excel-evidence-items"));
+            Assert.assertTrue(reportHtml.contains("max-height: 480px;"));
+            Assert.assertTrue(reportHtml.matches("(?s).*Step Count</th><td[^>]*>[1-9][0-9]*</td>.*"),
+                    "Testcase summary should show the number of reported rows instead of zero.");
+            Assert.assertTrue(reportHtml.matches("(?s).*Duration</th><td[^>]*>[0-9]+\\.[0-9]{3} seconds</td>.*"),
+                    "Durations should be displayed in readable seconds.");
+            Assert.assertTrue(reportHtml.contains("Evidence Gallery (3)"));
+            Assert.assertTrue(reportHtml.contains("spark/spark-style.css"));
+            Assert.assertFalse(reportHtml.contains("cdn.jsdelivr.net"));
+            Assert.assertFalse(reportHtml.contains("stackpath.bootstrapcdn.com"));
             Assert.assertTrue(reportHtml.contains("Capture form after title"));
             Assert.assertTrue(reportHtml.contains("Capture selected room"));
             Assert.assertTrue(reportHtml.contains("Capture submit result"));
@@ -309,6 +326,10 @@ public class ExcelExecutionReportTest {
         Assert.assertTrue(reportHtml.contains("Ended data row loop. BOOKING_DATA row 2 of 2."));
         Assert.assertTrue(reportHtml.contains("A previous conditional branch already matched. Skipping else branch."));
         Assert.assertTrue(reportHtml.contains("Skipped because the active conditional branch does not include this step."));
+        Assert.assertFalse(reportHtml.contains("Step 6 skipped:"),
+                "Skipped flow rows should stay in the step table without changing the testcase status.");
+        Assert.assertTrue(reportHtml.matches("(?s).*<li class=\"test-item\"\\s+status=\"pass\".*"),
+                "A scenario with only conditional step skips should remain passed.");
     }
 
     @Test(priority = 6)

@@ -28,6 +28,63 @@ public class ExcelExecutionReporter {
 
     private static final Logger LOGGER = LogManager.getLogger(ExcelExecutionReporter.class);
     private static final DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+    private static final String REPORT_LAYOUT_CSS = """
+            @media only screen and (min-width: 992px) {
+                .test-wrapper .test-list {
+                    width: 25%;
+                }
+                .test-wrapper .test-content {
+                    width: 75%;
+                }
+            }
+            .excel-step-table-wrapper {
+                width: 100%;
+                overflow-x: auto;
+                margin-bottom: 12px;
+            }
+            .excel-step-table {
+                min-width: 1900px;
+            }
+            .excel-step-table th {
+                white-space: nowrap;
+            }
+            .excel-step-table th:nth-child(3),
+            .excel-step-table td:nth-child(3) {
+                min-width: 180px;
+            }
+            .excel-step-table th:nth-child(4),
+            .excel-step-table td:nth-child(4),
+            .excel-step-table th:nth-child(5),
+            .excel-step-table td:nth-child(5),
+            .excel-step-table th:nth-child(11),
+            .excel-step-table td:nth-child(11) {
+                min-width: 140px;
+            }
+            .excel-step-table th:nth-child(7),
+            .excel-step-table td:nth-child(7),
+            .excel-step-table th:nth-child(8),
+            .excel-step-table td:nth-child(8) {
+                min-width: 160px;
+            }
+            .excel-step-table th:nth-child(9),
+            .excel-step-table td:nth-child(9),
+            .excel-step-table th:nth-child(10),
+            .excel-step-table td:nth-child(10) {
+                min-width: 280px;
+            }
+            .excel-step-table th:nth-child(13),
+            .excel-step-table td:nth-child(13) {
+                min-width: 220px;
+            }
+            .excel-evidence-items {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 12px;
+                max-height: 480px;
+                overflow-y: auto;
+                padding: 4px;
+            }
+            """;
     private static final String[] STEP_TABLE_HEADERS = {
             "Step",
             "Excel Row",
@@ -158,9 +215,7 @@ public class ExcelExecutionReporter {
         String evidence = evidenceFor(result);
         currentStepRows.add(stepRow(result, evidence));
 
-        if (ExecutionResult.STATUS_SKIP.equals(result.getStatus())) {
-            testCaseNode.skip("Step " + result.getStepOrder() + " skipped: " + safe(result.getMessage()));
-        } else if (!result.isSuccess()) {
+        if (!result.isSuccess()) {
             currentFailureResult = result;
             currentFailureEvidence = evidence;
         }
@@ -215,6 +270,8 @@ public class ExcelExecutionReporter {
         sparkReporter.config().setTheme(Theme.STANDARD);
         sparkReporter.config().setDocumentTitle("Excel Automation Report");
         sparkReporter.config().setReportName("Excel-Driven Automation Execution");
+        sparkReporter.config().setCss(REPORT_LAYOUT_CSS);
+        sparkReporter.config().setOfflineMode(true);
 
         ExtentReports reports = new ExtentReports();
         reports.attachReporter(sparkReporter);
@@ -372,6 +429,7 @@ public class ExcelExecutionReporter {
     private String stepTableHtml(List<String[]> rows) {
         StringBuilder html = new StringBuilder();
         html.append("<h4>Steps</h4>");
+        html.append("<div class='excel-step-table-wrapper'>");
         html.append("<table class='excel-step-table' style='border-collapse:collapse;width:100%;font-size:12px;'>");
         html.append("<thead><tr>");
         for (String header : STEP_TABLE_HEADERS) {
@@ -389,7 +447,7 @@ public class ExcelExecutionReporter {
             }
             html.append("</tr>");
         }
-        html.append("</tbody></table>");
+        html.append("</tbody></table></div>");
         return html.toString();
     }
 
@@ -414,7 +472,7 @@ public class ExcelExecutionReporter {
         rows.add(new String[]{"Testcase", safe(testCaseBlock.getTestcaseName())});
         rows.add(new String[]{"Application", safe(testCaseBlock.getApplication())});
         rows.add(new String[]{"Parent Excel Row", String.valueOf(testCaseBlock.getExcelRowNumber())});
-        rows.add(new String[]{"Step Count", String.valueOf(testCaseBlock.getSteps().size())});
+        rows.add(new String[]{"Step Count", String.valueOf(currentStepRows.size())});
         rows.add(new String[]{"Status", status});
         rows.add(new String[]{"Duration", formatDuration(startTime, endTime)});
         String safeMessage = safe(message);
@@ -466,8 +524,10 @@ public class ExcelExecutionReporter {
     private String evidenceGalleryHtml(List<EvidenceItem> evidenceItems) {
         StringBuilder html = new StringBuilder();
         html.append("<div class='excel-evidence-gallery'>");
-        html.append("<h4>Evidence Gallery</h4>");
-        html.append("<div style='display:flex;flex-wrap:wrap;gap:12px;'>");
+        html.append("<h4>Evidence Gallery (")
+                .append(evidenceItems.size())
+                .append(")</h4>");
+        html.append("<div class='excel-evidence-items'>");
         for (EvidenceItem item : evidenceItems) {
             String relativePath = toReportRelativePath(item.path());
             String label = safe(item.label());
@@ -573,7 +633,7 @@ public class ExcelExecutionReporter {
             return "";
         }
         long millis = Duration.between(startTime, endTime).toMillis();
-        return millis + " ms";
+        return String.format(Locale.ROOT, "%.3f seconds", millis / 1000.0);
     }
 
     private String cleanFailureMessage(String message) {
