@@ -136,7 +136,14 @@ public class ExcelExecutionReportTest {
             Assert.assertTrue(reportHtml.contains("width: 75%;"));
             Assert.assertTrue(reportHtml.contains("excel-step-table-wrapper"));
             Assert.assertTrue(reportHtml.contains("overflow-x: auto;"));
+            Assert.assertTrue(reportHtml.contains(".test-wrapper .test-content"));
+            Assert.assertTrue(reportHtml.contains("overflow-x: hidden;"));
+            Assert.assertTrue(reportHtml.contains("max-width: 100%;"));
+            Assert.assertTrue(reportHtml.contains("width: 1900px !important;"));
             Assert.assertTrue(reportHtml.contains("min-width: 1900px;"));
+            Assert.assertTrue(reportHtml.contains("table-layout: fixed;"));
+            Assert.assertTrue(reportHtml.contains(".event-row > td:last-child"));
+            Assert.assertTrue(reportHtml.contains("contain: inline-size;"));
             Assert.assertTrue(reportHtml.contains("excel-evidence-items"));
             Assert.assertTrue(reportHtml.contains("max-height: 480px;"));
             Assert.assertTrue(reportHtml.matches("(?s).*Step Count</th><td[^>]*>[1-9][0-9]*</td>.*"),
@@ -144,6 +151,20 @@ public class ExcelExecutionReportTest {
             Assert.assertTrue(reportHtml.matches("(?s).*Duration</th><td[^>]*>[0-9]+\\.[0-9]{3} seconds</td>.*"),
                     "Durations should be displayed in readable seconds.");
             Assert.assertTrue(reportHtml.contains("Evidence Gallery (3)"));
+            Assert.assertTrue(reportHtml.contains("class='excel-evidence-preview'"));
+            Assert.assertTrue(reportHtml.contains("class='excel-evidence-step-link'"));
+            Assert.assertTrue(reportHtml.contains("excel-evidence-modal"));
+            Assert.assertTrue(reportHtml.contains("excel-evidence-previous"));
+            Assert.assertTrue(reportHtml.contains("excel-evidence-next"));
+            Assert.assertTrue(reportHtml.contains("background: #111827;"));
+            Assert.assertTrue(reportHtml.contains("align-items: center;"));
+            Assert.assertTrue(reportHtml.contains("justify-content: center;"));
+            Assert.assertTrue(reportHtml.contains("ArrowLeft"));
+            Assert.assertTrue(reportHtml.contains("ArrowRight"));
+            Assert.assertFalse(reportHtml.contains("data-evidence-label='Manual%20screenshot"),
+                    "Evidence captions should display spaces instead of URL encoding.");
+            Assert.assertFalse(reportHtml.contains("target='_blank'>Manual screenshot"),
+                    "Evidence should open in the report preview instead of a new tab.");
             Assert.assertTrue(reportHtml.contains("spark/spark-style.css"));
             Assert.assertFalse(reportHtml.contains("cdn.jsdelivr.net"));
             Assert.assertFalse(reportHtml.contains("stackpath.bootstrapcdn.com"));

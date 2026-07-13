@@ -37,12 +37,46 @@ public class ExcelExecutionReporter {
                     width: 75%;
                 }
             }
-            .excel-step-table-wrapper {
+            .test-wrapper {
+                overflow-x: hidden;
+            }
+            .test-wrapper .test-content {
+                min-width: 0;
+                overflow-x: hidden;
+                overflow-y: auto;
+            }
+            .test-content-detail,
+            .test-content-detail .detail-body,
+            .test-content-detail .card-body {
+                min-width: 0;
+                max-width: 100%;
+            }
+            .test-content-detail .card-body > table.table {
                 width: 100%;
+                table-layout: fixed;
+            }
+            .test-content-detail .card-body > table.table .status-col {
+                width: 70px;
+            }
+            .test-content-detail .card-body > table.table .timestamp-col {
+                width: 110px;
+            }
+            .test-content-detail .card-body > table.table .event-row > td:last-child {
+                min-width: 0;
+                max-width: 0;
+            }
+            .excel-step-table-wrapper {
+                display: block;
+                width: 100%;
+                max-width: 100%;
+                box-sizing: border-box;
+                contain: inline-size;
                 overflow-x: auto;
+                overflow-y: hidden;
                 margin-bottom: 12px;
             }
             .excel-step-table {
+                width: 1900px !important;
                 min-width: 1900px;
             }
             .excel-step-table th {
@@ -84,6 +118,194 @@ public class ExcelExecutionReporter {
                 overflow-y: auto;
                 padding: 4px;
             }
+            .excel-evidence-modal {
+                position: fixed;
+                inset: 0;
+                z-index: 100000;
+                display: none;
+                align-items: center;
+                justify-content: center;
+                padding: 24px;
+                background: rgba(8, 15, 28, 0.88);
+            }
+            .excel-evidence-modal.is-open {
+                display: flex;
+            }
+            .excel-evidence-dialog {
+                position: relative;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                max-width: 94vw;
+                max-height: 94vh;
+                padding: 18px 56px 14px;
+                border-radius: 8px;
+                border: 1px solid rgba(255, 255, 255, 0.14);
+                background: #111827;
+                box-shadow: 0 18px 50px rgba(0, 0, 0, 0.4);
+            }
+            .excel-evidence-image {
+                display: block;
+                max-width: 86vw;
+                max-height: 78vh;
+                object-fit: contain;
+            }
+            .excel-evidence-caption {
+                margin-top: 10px;
+                color: #f3f4f6;
+                font-size: 13px;
+                text-align: center;
+            }
+            .excel-evidence-counter {
+                margin-top: 4px;
+                color: #9ca3af;
+                font-size: 12px;
+            }
+            .excel-evidence-close,
+            .excel-evidence-previous,
+            .excel-evidence-next {
+                position: absolute;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 0;
+                border: 0;
+                border-radius: 50%;
+                color: #ffffff;
+                background: rgba(15, 23, 42, 0.78);
+                cursor: pointer;
+                font-family: Arial, sans-serif;
+                line-height: 1;
+            }
+            .excel-evidence-close {
+                top: 10px;
+                right: 10px;
+                width: 34px;
+                height: 34px;
+                font-size: 22px;
+            }
+            .excel-evidence-previous,
+            .excel-evidence-next {
+                top: 50%;
+                width: 40px;
+                height: 40px;
+                transform: translateY(-50%);
+                font-size: 24px;
+            }
+            .excel-evidence-previous {
+                left: 8px;
+            }
+            .excel-evidence-next {
+                right: 8px;
+            }
+            .excel-evidence-previous:disabled,
+            .excel-evidence-next:disabled {
+                display: none;
+            }
+            body.excel-evidence-modal-open {
+                overflow: hidden;
+            }
+            """;
+    private static final String REPORT_EVIDENCE_JS = """
+            (() => {
+                const modal = document.createElement("div");
+                modal.className = "excel-evidence-modal";
+                modal.setAttribute("role", "dialog");
+                modal.setAttribute("aria-modal", "true");
+                modal.setAttribute("aria-label", "Evidence preview");
+                modal.innerHTML = `
+                    <div class="excel-evidence-dialog">
+                        <button class="excel-evidence-close" type="button" aria-label="Close evidence preview">&times;</button>
+                        <button class="excel-evidence-previous" type="button" aria-label="Previous evidence">&#10094;</button>
+                        <img class="excel-evidence-image" alt="">
+                        <button class="excel-evidence-next" type="button" aria-label="Next evidence">&#10095;</button>
+                        <div class="excel-evidence-caption"></div>
+                        <div class="excel-evidence-counter"></div>
+                    </div>`;
+                document.body.appendChild(modal);
+
+                const image = modal.querySelector(".excel-evidence-image");
+                const caption = modal.querySelector(".excel-evidence-caption");
+                const counter = modal.querySelector(".excel-evidence-counter");
+                const previous = modal.querySelector(".excel-evidence-previous");
+                const next = modal.querySelector(".excel-evidence-next");
+                const close = modal.querySelector(".excel-evidence-close");
+                let evidenceItems = [];
+                let currentIndex = 0;
+
+                const itemFrom = link => ({
+                    source: link.dataset.evidenceSrc || link.getAttribute("href"),
+                    label: link.dataset.evidenceLabel || link.textContent.trim() || "Evidence"
+                });
+
+                const itemsFor = link => {
+                    const testcase = link.closest(".card-body");
+                    if (testcase) {
+                        const galleryItems = Array.from(testcase.querySelectorAll(".excel-evidence-preview"));
+                        if (galleryItems.length > 0) {
+                            return galleryItems.map(itemFrom);
+                        }
+                    }
+                    return [itemFrom(link)];
+                };
+
+                const render = () => {
+                    const item = evidenceItems[currentIndex];
+                    image.src = item.source;
+                    image.alt = item.label;
+                    caption.textContent = item.label;
+                    counter.textContent = `${currentIndex + 1} / ${evidenceItems.length}`;
+                    previous.disabled = evidenceItems.length < 2;
+                    next.disabled = evidenceItems.length < 2;
+                };
+
+                const open = link => {
+                    evidenceItems = itemsFor(link);
+                    const selected = itemFrom(link);
+                    const selectedIndex = evidenceItems.findIndex(item => item.source === selected.source);
+                    currentIndex = selectedIndex < 0 ? 0 : selectedIndex;
+                    render();
+                    modal.classList.add("is-open");
+                    document.body.classList.add("excel-evidence-modal-open");
+                    close.focus();
+                };
+
+                const hide = () => {
+                    modal.classList.remove("is-open");
+                    document.body.classList.remove("excel-evidence-modal-open");
+                    image.removeAttribute("src");
+                };
+
+                const move = direction => {
+                    currentIndex = (currentIndex + direction + evidenceItems.length) % evidenceItems.length;
+                    render();
+                };
+
+                document.addEventListener("click", event => {
+                    const link = event.target.closest(".excel-evidence-preview, .excel-evidence-step-link");
+                    if (link) {
+                        event.preventDefault();
+                        open(link);
+                    } else if (event.target === modal) {
+                        hide();
+                    }
+                });
+                close.addEventListener("click", hide);
+                previous.addEventListener("click", () => move(-1));
+                next.addEventListener("click", () => move(1));
+                document.addEventListener("keydown", event => {
+                    if (!modal.classList.contains("is-open")) {
+                        return;
+                    }
+                    if (event.key === "Escape") {
+                        hide();
+                    } else if (event.key === "ArrowLeft") {
+                        move(-1);
+                    } else if (event.key === "ArrowRight") {
+                        move(1);
+                    }
+                });
+            })();
             """;
     private static final String[] STEP_TABLE_HEADERS = {
             "Step",
@@ -271,6 +493,7 @@ public class ExcelExecutionReporter {
         sparkReporter.config().setDocumentTitle("Excel Automation Report");
         sparkReporter.config().setReportName("Excel-Driven Automation Execution");
         sparkReporter.config().setCss(REPORT_LAYOUT_CSS);
+        sparkReporter.config().setJs(REPORT_EVIDENCE_JS);
         sparkReporter.config().setOfflineMode(true);
 
         ExtentReports reports = new ExtentReports();
@@ -532,13 +755,17 @@ public class ExcelExecutionReporter {
             String relativePath = toReportRelativePath(item.path());
             String label = safe(item.label());
             html.append("<figure style='margin:0;width:220px;'>");
-            html.append("<a href='")
+            html.append("<a class='excel-evidence-preview' href='")
                     .append(escapeAttribute(relativePath))
-                    .append("' target='_blank'>")
+                    .append("' data-evidence-src='")
+                    .append(escapeAttribute(relativePath))
+                    .append("' data-evidence-label='")
+                    .append(escape(label))
+                    .append("'>")
                     .append("<img src='")
                     .append(escapeAttribute(relativePath))
                     .append("' alt='")
-                    .append(escapeAttribute(label))
+                    .append(escape(label))
                     .append("' style='width:220px;max-height:140px;object-fit:contain;border:1px solid #d0d7de;'>")
                     .append("</a>");
             html.append("<figcaption style='font-size:12px;margin-top:4px;'>")
@@ -552,7 +779,15 @@ public class ExcelExecutionReporter {
 
     private String screenshotLink(String screenshotPath, String label) {
         String relativePath = toReportRelativePath(screenshotPath);
-        return "<a href='" + escapeAttribute(relativePath) + "' target='_blank'>" + escape(label) + "</a>";
+        return "<a class='excel-evidence-step-link' href='"
+                + escapeAttribute(relativePath)
+                + "' data-evidence-src='"
+                + escapeAttribute(relativePath)
+                + "' data-evidence-label='"
+                + escape(label)
+                + "'>"
+                + escape(label)
+                + "</a>";
     }
 
     private String toReportRelativePath(String screenshotPath) {
