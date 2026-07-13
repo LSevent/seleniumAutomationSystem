@@ -66,7 +66,7 @@ public class SpecificFunctionScreenshotCompositionTest {
                 "com.automation.functions.DEMO.SpecificFunction"
         );
         Assert.assertEquals(result.getEvidence(), "target/screenshots/specific-manual.png");
-        Assert.assertTrue(screenshotService.observedScreenshotName.contains("Specific composed screenshot"));
+        Assert.assertEquals(screenshotService.observedScreenshotName, "25D_Specific composed screenshot testcase_1");
         Assert.assertFalse(screenshotService.observedScreenshotName.contains("Value should not label screenshot"));
         Assert.assertTrue(EvidenceContextHolder.getAll().isEmpty());
         Assert.assertTrue(StepContextHolder.current().isEmpty());
@@ -186,6 +186,12 @@ public class SpecificFunctionScreenshotCompositionTest {
 
         @Override
         public String capture(WebDriver driver, String screenshotName) {
+            observedScreenshotName = screenshotName;
+            return "target/screenshots/specific-manual.png";
+        }
+
+        @Override
+        public String capture(WebDriver driver, String screenshotName, String screenshotType) {
             observedScreenshotName = screenshotName;
             return "target/screenshots/specific-manual.png";
         }

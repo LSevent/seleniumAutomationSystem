@@ -156,7 +156,7 @@ public class BaseFunctionContextTest {
         new BaseFunction(driver.driver()).screenshot();
 
         Assert.assertEquals(EvidenceContextHolder.getAll(), List.of("target/screenshots/manual.png"));
-        Assert.assertTrue(screenshotService.observedScreenshotName.contains("BaseFunction context test"));
+        Assert.assertEquals(screenshotService.observedScreenshotName, "1_Login BRS_1");
         Assert.assertFalse(screenshotService.observedScreenshotName.contains("Value should not label screenshot"));
     }
 
@@ -329,6 +329,12 @@ public class BaseFunctionContextTest {
 
         @Override
         public String capture(WebDriver driver, String screenshotName) {
+            observedScreenshotName = screenshotName;
+            return "target/screenshots/manual.png";
+        }
+
+        @Override
+        public String capture(WebDriver driver, String screenshotName, String screenshotType) {
             observedScreenshotName = screenshotName;
             return "target/screenshots/manual.png";
         }

@@ -61,7 +61,7 @@ public class ScreenshotKeywordSupportTest {
 
         service.captureScreen(null, step, service.manualLabel(step));
 
-        Assert.assertEquals(service.observedScreenshotName, "25F_Login BRS_step3_row9_After login");
+        Assert.assertEquals(service.observedScreenshotName, "25F_Login BRS_3");
         Assert.assertFalse(service.observedScreenshotName.contains("Value should not label screenshot"));
     }
 
@@ -102,6 +102,12 @@ public class ScreenshotKeywordSupportTest {
 
         @Override
         public String capture(WebDriver driver, String screenshotName) {
+            observedScreenshotName = screenshotName;
+            return "target/screenshots/manual.png";
+        }
+
+        @Override
+        public String capture(WebDriver driver, String screenshotName, String screenshotType) {
             observedScreenshotName = screenshotName;
             return "target/screenshots/manual.png";
         }

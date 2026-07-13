@@ -15,6 +15,7 @@ import com.automation.models.ResolvedTestcaseContext;
 import com.automation.models.Scenario;
 import com.automation.models.TestCaseBlock;
 import com.automation.reports.ExcelExecutionReporter;
+import com.automation.reports.SensitiveDataMasker;
 import com.automation.validation.PreRunValidator;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -29,6 +30,7 @@ import java.util.function.Supplier;
 public class ScenarioRunner {
 
     private static final Logger LOGGER = LogManager.getLogger(ScenarioRunner.class);
+    private static final SensitiveDataMasker SENSITIVE_DATA_MASKER = new SensitiveDataMasker();
 
     private KeywordEngine keywordEngine;
     private final Supplier<KeywordEngine> keywordEngineSupplier;
@@ -153,6 +155,7 @@ public class ScenarioRunner {
                     result = keywordEngine().execute(step);
                 }
                 results.add(result);
+                logPassedRow(step, result);
                 logStepReport(result);
                 if (!result.isSuccess()) {
                     LOGGER.warn(
@@ -179,6 +182,29 @@ public class ScenarioRunner {
         LOGGER.info("Scenario passed: [{}] {}", scenario.getNo(), scenario.getAction());
         finishScenarioReport(scenario, true, "");
         return results;
+    }
+
+    private void logPassedRow(ResolvedStepContext step, ExecutionResult result) {
+        if (!ExecutionResult.STATUS_PASS.equals(result.getStatus())) {
+            return;
+        }
+        String processedValue = SENSITIVE_DATA_MASKER.maskIfNeeded(
+                step.getResolvedValue(),
+                false,
+                step.getRawValue(),
+                step.getObjectName(),
+                step.getResolvedXPath(),
+                step.getDescription(),
+                step.getKeyword()
+        );
+        LOGGER.info(
+                "[{}] | Row = {} | {} | {} | {}",
+                step.getScenarioNo(),
+                step.getExcelRow(),
+                step.getKeyword(),
+                step.getObjectName(),
+                processedValue
+        );
     }
 
     private Scenario scenarioFrom(ResolvedScenarioContext scenario) {

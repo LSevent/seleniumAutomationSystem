@@ -28,6 +28,10 @@ public final class ScreenshotUtil {
     }
 
     public static String captureScreenshot(WebDriver driver, String testName, Path screenshotDirectory) {
+        return captureScreenshot(driver, testName, "", screenshotDirectory);
+    }
+
+    public static String captureScreenshot(WebDriver driver, String testName, String screenshotType, Path screenshotDirectory) {
         if (!(driver instanceof TakesScreenshot takesScreenshot)) {
             LOGGER.warn("Driver does not support screenshots.");
             return null;
@@ -38,7 +42,7 @@ public final class ScreenshotUtil {
                     ? Path.of(FrameworkConstants.SCREENSHOT_DIR)
                     : screenshotDirectory;
             Files.createDirectories(targetDirectory);
-            String fileName = sanitizeFileName(testName) + "_" + LocalDateTime.now().format(TIMESTAMP_FORMAT) + ".png";
+            String fileName = screenshotFileName(testName, screenshotType);
             Path destination = targetDirectory.resolve(fileName);
             File source = takesScreenshot.getScreenshotAs(OutputType.FILE);
             FileUtils.copyFile(source, destination.toFile());
@@ -49,7 +53,23 @@ public final class ScreenshotUtil {
         }
     }
 
+    private static String screenshotFileName(String testName, String screenshotType) {
+        String baseName = sanitizeFileName(testName);
+        String timestamp = LocalDateTime.now().format(TIMESTAMP_FORMAT);
+        String type = sanitizeFileName(screenshotType);
+        if (type.isBlank() || "test".equals(type)) {
+            return baseName + "_" + timestamp + ".png";
+        }
+        return baseName + "_" + timestamp + "_" + type + ".png";
+    }
+
     private static String sanitizeFileName(String value) {
-        return value == null || value.isBlank() ? "test" : value.replaceAll("[^a-zA-Z0-9._-]", "_");
+        if (value == null || value.isBlank()) {
+            return "test";
+        }
+        return value
+                .replaceAll("[^a-zA-Z0-9 ._-]", "_")
+                .replaceAll("\\s+", " ")
+                .trim();
     }
 }

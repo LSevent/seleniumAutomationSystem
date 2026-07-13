@@ -272,8 +272,8 @@ public class ExcelExecutionReporter {
         if (driver == null) {
             return "";
         }
-        String screenshotName = screenshotBaseName(result, "Failure");
-        String screenshotPath = screenshotService.capture(driver, screenshotName);
+        String screenshotName = screenshotBaseName(result);
+        String screenshotPath = screenshotService.capture(driver, screenshotName, "Failure");
         return screenshotPath == null ? "" : screenshotPath;
     }
 
@@ -532,15 +532,36 @@ public class ExcelExecutionReporter {
         return label + suffix;
     }
 
-    private String screenshotBaseName(ExecutionResult result, String label) {
+    private String screenshotBaseName(ExecutionResult result) {
         return String.join(
                 "_",
                 safe(result.getScenarioNo()),
-                safe(result.getTestcaseName()),
-                "step" + result.getStepOrder(),
-                "row" + result.getExcelRowNumber(),
-                safe(label)
+                scenarioLabel(result),
+                stepNumberLabel(result.getStepOrder(), result.getExcelRowNumber())
         );
+    }
+
+    private String scenarioLabel(ExecutionResult result) {
+        String label = safe(result.getTestcaseName());
+        if (!label.isBlank()) {
+            return label;
+        }
+        label = safe(result.getScenarioAction());
+        if (!label.isBlank()) {
+            return label;
+        }
+        label = safe(result.getScenarioName());
+        return label.isBlank() ? "Scenario" : label;
+    }
+
+    private String stepNumberLabel(int stepNumber, int excelRowNumber) {
+        if (stepNumber > 0) {
+            return String.valueOf(stepNumber);
+        }
+        if (excelRowNumber > 0) {
+            return String.valueOf(excelRowNumber);
+        }
+        return "0";
     }
 
     private String formatTime(Instant time) {

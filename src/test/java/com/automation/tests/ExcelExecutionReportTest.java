@@ -77,7 +77,14 @@ public class ExcelExecutionReportTest {
                     .toList();
 
             Assert.assertEquals(manualScreenshots.size(), 3);
-            manualScreenshots.forEach(path -> Assert.assertTrue(Files.exists(Path.of(path)), "Screenshot should exist: " + path));
+            manualScreenshots.forEach(path -> {
+                Assert.assertTrue(Files.exists(Path.of(path)), "Screenshot should exist: " + path);
+                Assert.assertTrue(
+                        Path.of(path).getFileName().toString()
+                                .matches("\\d+_[A-Za-z0-9 ._-]+_\\d+_\\d{8}_\\d{6}_\\d{3}_Manual\\.png"),
+                        "Manual screenshot should use clean timestamp/type naming: " + path
+                );
+            });
 
             Path reportPath = Path.of(ExcelExecutionReporter.getReportFilePath());
             Assert.assertTrue(Files.exists(reportPath), "HTML report should be created.");
@@ -156,7 +163,7 @@ public class ExcelExecutionReportTest {
                 "Failure With Screenshot"
         );
         executionConfig = executionConfig(failureWorkbook);
-        String prefix = "91_Failure_With_Screenshot_step1_row5_Failure";
+        String prefix = "91_Failure With Screenshot_1_";
         Set<String> before = screenshotFilesStartingWith(prefix);
 
         FakeWebDriver fakeDriver = localPageDriver();
@@ -175,6 +182,10 @@ public class ExcelExecutionReportTest {
         Set<String> after = screenshotFilesStartingWith(prefix);
         after.removeAll(before);
         Assert.assertFalse(after.isEmpty(), "Failure screenshot should be created when enabled.");
+        Assert.assertTrue(
+                after.stream().anyMatch(fileName -> fileName.matches("91_Failure With Screenshot_1_\\d{8}_\\d{6}_\\d{3}_Failure\\.png")),
+                "Failure screenshot should use clean timestamp/type naming: " + after
+        );
 
         String reportHtml = Files.readString(Path.of(ExcelExecutionReporter.getReportFilePath()));
         Assert.assertTrue(reportHtml.contains("Failure screenshot"));
@@ -200,7 +211,7 @@ public class ExcelExecutionReportTest {
                 "Failure Without Screenshot"
         );
         executionConfig = executionConfig(failureWorkbook);
-        String prefix = "92_Failure_Without_Screenshot_step1_row5_Failure";
+        String prefix = "92_Failure Without Screenshot_1_";
         Set<String> before = screenshotFilesStartingWith(prefix);
 
         FakeWebDriver fakeDriver = localPageDriver();

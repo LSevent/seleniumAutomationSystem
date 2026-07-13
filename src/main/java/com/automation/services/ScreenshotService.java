@@ -32,8 +32,12 @@ public class ScreenshotService {
         return ScreenshotUtil.captureScreenshot(driver, screenshotName, outputDirectory);
     }
 
+    public String capture(WebDriver driver, String screenshotName, String screenshotType) {
+        return ScreenshotUtil.captureScreenshot(driver, screenshotName, screenshotType, outputDirectory);
+    }
+
     public String captureScreen(WebDriver driver, ResolvedStepContext step, String label) {
-        return capture(driver, screenshotName(step, label, "ManualScreenshot"));
+        return capture(driver, screenshotBaseName(step), "Manual");
     }
 
     public List<String> captureObjectInParts(WebDriver driver, WebElement element, ResolvedStepContext step, String label) {
@@ -203,18 +207,43 @@ public class ScreenshotService {
         return fallbackLabel(step == null ? "" : step.getDescription(), "FullPageScreenshot");
     }
 
-    private String screenshotName(ResolvedStepContext step, String label, String fallbackLabel) {
+    private String screenshotBaseName(ResolvedStepContext step) {
         if (step == null) {
-            return fallbackLabel(label, "Screenshot");
+            return "Screenshot";
         }
         return String.join(
                 "_",
                 safe(step.getScenarioNo()),
-                safe(step.getTestcaseName()),
-                "step" + step.getStepNumber(),
-                "row" + step.getExcelRow(),
-                fallbackLabel(label, fallbackLabel)
+                scenarioLabel(step),
+                stepNumberLabel(step.getStepNumber(), step.getExcelRow())
         );
+    }
+
+    private String scenarioLabel(ResolvedStepContext step) {
+        String label = safe(step.getTestcaseName());
+        if (!label.isBlank()) {
+            return label;
+        }
+        label = safe(step.getScenarioAction());
+        if (!label.isBlank()) {
+            return label;
+        }
+        label = safe(step.getScenarioName());
+        if (!label.isBlank()) {
+            return label;
+        }
+        label = safe(step.getSheetName());
+        return label.isBlank() ? "Scenario" : label;
+    }
+
+    private String stepNumberLabel(int stepNumber, int excelRow) {
+        if (stepNumber > 0) {
+            return String.valueOf(stepNumber);
+        }
+        if (excelRow > 0) {
+            return String.valueOf(excelRow);
+        }
+        return "0";
     }
 
     protected void pauseAfterScroll() {

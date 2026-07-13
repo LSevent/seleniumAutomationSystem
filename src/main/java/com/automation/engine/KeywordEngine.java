@@ -11,7 +11,6 @@ import com.automation.models.ExecutionResult;
 import com.automation.models.KeywordExecutionResult;
 import com.automation.models.ResolvedStepContext;
 import com.automation.reports.ExcelReportConfig;
-import com.automation.reports.SensitiveDataMasker;
 import com.automation.services.ScreenshotService;
 import com.automation.utils.WaitUtil;
 import org.apache.logging.log4j.LogManager;
@@ -25,7 +24,6 @@ import java.util.Set;
 public class KeywordEngine {
 
     private static final Logger LOGGER = LogManager.getLogger(KeywordEngine.class);
-    private static final SensitiveDataMasker SENSITIVE_DATA_MASKER = new SensitiveDataMasker();
 
     private final DataReader dataReader;
     private final ObjectRepositoryReader objectRepositoryReader;
@@ -100,8 +98,6 @@ public class KeywordEngine {
         ScreenshotContextHolder.set(screenshotService, reportConfig);
         WaitUtil.setTimeoutSeconds(executionConfig.getTimeoutSeconds());
         try {
-            logResolvedStepStarted(step);
-
             ExecutionResult result;
             if (isBlank(step.getKeyword())) {
                 result = ExecutionResult.failure(
@@ -232,28 +228,7 @@ public class KeywordEngine {
     }
 
     private ExecutionResult logResolvedResult(ExecutionResult result) {
-        if (ExecutionResult.STATUS_SKIP.equals(result.getStatus())) {
-            LOGGER.info(
-                    "SKIP | Scenario = [{}] {} | Testcase = {} | Row = {} | Keyword = {} | Source = {} | Reason = {}",
-                    result.getScenarioNo(),
-                    result.getScenarioAction(),
-                    result.getTestcaseName(),
-                    result.getExcelRowNumber(),
-                    result.getKeywordName(),
-                    result.getExecutionSource(),
-                    summaryLine(result.getMessage())
-            );
-        } else if (result.isSuccess()) {
-            LOGGER.info(
-                    "PASS | Scenario = [{}] {} | Testcase = {} | Row = {} | Keyword = {} | Source = {}",
-                    result.getScenarioNo(),
-                    result.getScenarioAction(),
-                    result.getTestcaseName(),
-                    result.getExcelRowNumber(),
-                    result.getKeywordName(),
-                    result.getExecutionSource()
-            );
-        } else {
+        if (!result.isSuccess()) {
             LOGGER.error(
                     "FAIL | Scenario = [{}] {} | Testcase = {} | Row = {} | Keyword = {} | Object = {} | "
                             + "Application = {} | Error = {}",
@@ -268,31 +243,6 @@ public class KeywordEngine {
             );
         }
         return result;
-    }
-
-    private void logResolvedStepStarted(ResolvedStepContext step) {
-        String valueForLog = SENSITIVE_DATA_MASKER.maskIfNeeded(
-                step.getResolvedValue(),
-                false,
-                step.getRawValue(),
-                step.getObjectName(),
-                step.getResolvedXPath(),
-                step.getDescription(),
-                step.getKeyword()
-        );
-        LOGGER.info(
-                "START | Scenario = [{}] {} | Testcase = {} | Row = {} | Keyword = {} | Object = {} | "
-                        + "Application = {} | XPath = {} | Value = {}",
-                step.getScenarioNo(),
-                step.getScenarioAction(),
-                step.getTestcaseName(),
-                step.getExcelRow(),
-                step.getKeyword(),
-                step.getObjectName(),
-                step.getApplication(),
-                step.getResolvedXPath(),
-                valueForLog
-        );
     }
 
     private String summaryLine(String message) {

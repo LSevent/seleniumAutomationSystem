@@ -60,6 +60,16 @@ public class ScenarioRunnerLogPresentationTest {
                 Assert.assertTrue(results.stream().allMatch(ExecutionResult::isSuccess));
                 Assert.assertTrue(appender.messages().contains("Scenario started: [1] Local Keyword Test"));
                 Assert.assertTrue(appender.messages().contains("Testcase started: Login BRS"));
+                Assert.assertTrue(appender.messages().stream().anyMatch(
+                        message -> message.equals(
+                                "[1] | Row = 5 | input | txtUsername | brs_admin"
+                        )
+                ));
+                Assert.assertTrue(appender.messages().stream().anyMatch(
+                        message -> message.equals(
+                                "[1] | Row = 6 | input | txtPassword | ****"
+                        )
+                ));
                 Assert.assertTrue(appender.messages().contains("Testcase passed: Login BRS"));
                 Assert.assertTrue(appender.messages().contains("Scenario passed: [1] Local Keyword Test"));
                 Assert.assertTrue(appender.messages().stream().noneMatch(message -> message.contains("Resolved scenario")));
@@ -82,6 +92,7 @@ public class ScenarioRunnerLogPresentationTest {
                         appender.messages().stream().filter(message -> message.startsWith("Scenario stopped:")).count(),
                         1L
                 );
+                Assert.assertTrue(appender.messages().stream().noneMatch(message -> message.startsWith("[1] | Row =")));
                 Assert.assertTrue(appender.messages().stream().noneMatch(
                         message -> message.contains("Synthetic concise failure")
                 ));

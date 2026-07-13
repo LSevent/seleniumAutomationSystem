@@ -147,7 +147,7 @@ public class KeywordEngineResolvedContextTest {
     }
 
     @Test
-    public void lifecycleLoggingShouldBeCentralizedAndMaskSensitiveValue() {
+    public void successfulExecutionShouldNotEmitDuplicateLifecycleLogs() {
         String secret = "super-secret-password";
         ResolvedStepContext step = step(
                 "input",
@@ -169,15 +169,10 @@ public class KeywordEngineResolvedContextTest {
             appender.stop();
         }
 
-        String messages = String.join(System.lineSeparator(), appender.messages());
-        Assert.assertTrue(messages.contains("START |"));
-        Assert.assertTrue(messages.contains("Keyword = input"));
-        Assert.assertTrue(messages.contains("Object = txtPassword"));
-        Assert.assertTrue(messages.contains("XPath = //input[@id='resolvedUsername']"));
-        Assert.assertTrue(messages.contains("Value = ****"));
-        Assert.assertTrue(messages.contains("PASS |"));
-        Assert.assertTrue(messages.contains("Source = BASE"));
-        Assert.assertFalse(messages.contains(secret));
+        Assert.assertTrue(appender.messages().stream().noneMatch(message -> message.startsWith("START |")));
+        Assert.assertTrue(appender.messages().stream().noneMatch(message -> message.startsWith("PASS |")));
+        Assert.assertTrue(appender.messages().stream().noneMatch(message -> message.startsWith("SKIP |")));
+        Assert.assertTrue(appender.messages().stream().noneMatch(message -> message.contains(secret)));
     }
 
     @Test
@@ -245,7 +240,7 @@ public class KeywordEngineResolvedContextTest {
 
         Assert.assertTrue(result.isSuccess(), result.getMessage());
         Assert.assertSame(screenshotService.observedContext, step);
-        Assert.assertTrue(screenshotService.observedScreenshotName.contains("Execute an already-resolved step"));
+        Assert.assertEquals(screenshotService.observedScreenshotName, "SC-13C_Valid Login_3");
         Assert.assertFalse(screenshotService.observedScreenshotName.contains("Login complete"));
         Assert.assertEquals(result.getExecutionSource(), "BASE");
         Assert.assertEquals(result.getStatus(), ExecutionResult.STATUS_PASS);
@@ -376,6 +371,13 @@ public class KeywordEngineResolvedContextTest {
 
         @Override
         public String capture(WebDriver driver, String screenshotName) {
+            observedContext = StepContextHolder.get();
+            observedScreenshotName = screenshotName;
+            return "target/screenshots/resolved-context.png";
+        }
+
+        @Override
+        public String capture(WebDriver driver, String screenshotName, String screenshotType) {
             observedContext = StepContextHolder.get();
             observedScreenshotName = screenshotName;
             return "target/screenshots/resolved-context.png";
