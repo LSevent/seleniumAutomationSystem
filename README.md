@@ -67,6 +67,11 @@ Normal Excel users do not need to understand `KeywordEngine`,
 `ResolvedStepContext`, context holders, reflection, or report internals. Those
 classes support execution behind the workbook-facing API.
 
+Detailed guides:
+
+- [`docs/ADDING_SCREENSHOT_EVIDENCE_KEYWORDS.md`](docs/ADDING_SCREENSHOT_EVIDENCE_KEYWORDS.md) explains how to reuse or extend screenshot/evidence commands.
+- [`src/test/resources/testdata/README.md`](src/test/resources/testdata/README.md) is the short workbook-maintainer checklist.
+
 ## Tech Stack
 
 - Java 17 or newer
@@ -176,7 +181,7 @@ SpecificFunction keywords also use no-argument context-based execution for appli
 
 The framework resolves an Excel keyword into a `ResolvedKeyword`; `KeywordExecutionResult` represents the result of invoking that resolved keyword method, and `KeywordSourceType` identifies whether the keyword came from `SpecificFunction` or `BaseFunction`.
 
-`KeywordEngine` centrally logs concise `START`, `PASS`, `SKIP`, and `FAIL` events using the resolved step context, with sensitive values masked. `ScenarioRunner` adds short scenario/testcase boundaries, while resolver details and full invocation stack traces remain at debug level. Runtime failure text contains one readable summary and one context block instead of repeating the same cause at every layer. Internal helper methods are limited to shared context access, validation, waiting, and reusable custom keyword support; they are not Excel-facing keyword entry points.
+`KeywordEngine` owns keyword failure logging and context cleanup. `ScenarioRunner` logs scenario/testcase boundaries and one concise row line only after a row passes, for example `[1] | Row = 5 | input | txtUsername | ****`. Rows skipped by flow control are kept in the report but are not printed as successful runtime rows. Sensitive values are masked, resolver details stay at debug level, and runtime failure text contains one readable summary plus one context block instead of repeating the same cause at every layer. Internal helper methods are limited to shared context access, validation, waiting, and reusable custom keyword support; they are not Excel-facing keyword entry points.
 
 Excel execution builds a resolved execution plan before runtime startup and performs lightweight structural validation. Runtime execution uses each `ResolvedStepContext` as its source of truth; raw `TestStep` rows are parser input only, not a separate runtime execution path. `KeywordEngine` sets `StepContextHolder` for the step and clears it afterward, and report rows are populated from the same resolved step data.
 
@@ -225,6 +230,8 @@ report.showSensitiveData=false
 report.screenshotOnFailure=true
 report.manualScreenshotEnabled=true
 ```
+
+`explicitTime` is the normal Selenium wait limit for actions and assertions. `conditionTime` is the shorter probe used by `ifDisplayed` and `elseIfDisplayed`, so an optional element does not delay the scenario for the full action timeout. The legacy Excel-runner key `timeout` is accepted only as a fallback for older configuration files; new configuration should use `explicitTime`.
 
 The report root directory is configured manually, but each execution creates its own timestamped run folder inside it:
 
@@ -618,6 +625,8 @@ Screenshots are saved under the automatically derived screenshot directory:
 
 Manual screenshots and failure screenshots are attached as evidence in the Excel HTML report.
 
+Screenshot file names contain the scenario number, testcase label, step number, timestamp, and capture type. Spaces in scenario/testcase labels are preserved for readability; unsafe filename characters are replaced automatically.
+
 ## HTML Report
 
 Excel execution generates a dedicated report in a new run folder under the configured report directory. The file name is derived from the Excel workbook name:
@@ -642,6 +651,12 @@ Every testcase uses the same step columns:
 Step | Excel Row | Description | Keyword | Object | Application | Raw Value | Resolved Value | Raw XPath | Resolved XPath | Executed By | Status | Evidence
 ```
 
+The report is generated in ExtentReports offline mode, so its styles and scripts do not require an internet connection. On desktop screens, the scenario list uses roughly 25% of the page and the selected scenario uses the remaining space. Each wide Steps table has its own horizontal scrollbar instead of widening the complete report page.
+
+Conditional rows and inactive branch rows remain visible with `SKIP` details, but a testcase is still reported as `PASS` when its executable path succeeds. Testcase `Step Count` is the number of rows actually written to that testcase report, including flow rows and reported skips.
+
+Evidence appears both on the step row and in a bounded Evidence Gallery. Selecting an image opens a dark in-report preview rather than a new browser tab. Use the on-screen previous/next controls, the Left/Right arrow keys, or `Escape`; navigation stays within the selected testcase evidence.
+
 Sensitive resolved values are masked by default:
 
 ```properties
@@ -658,7 +673,7 @@ For example, resolved password values display as:
 
 ## Validations And Error Handling
 
-The Excel flow fails early with clear validation messages.
+Workbook structure and resolvable references fail early with clear messages. Browser/action requirements are checked only when their active step executes, so incomplete rows in an inactive conditional branch do not block the complete workbook.
 
 Current validation coverage includes:
 

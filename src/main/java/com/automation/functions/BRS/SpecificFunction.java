@@ -8,6 +8,10 @@ public class SpecificFunction extends BaseFunction {
     public SpecificFunction(WebDriver driver) {
         super(driver);
     }
+    
+    public void debug() {
+        System.out.println("Debugging SpecificFunction");
+    }
 
     public void clickMultiValue() {
         String[] arrValues = value().split(";");

@@ -19,6 +19,16 @@ Normal workflow:
 - Put screenshot evidence labels in `Description`; screenshot keywords do not
   use `Value` as the label.
 - Use the `Create New Booking` sheet as the sample for loop + condition flow:
-  `forEachDataRow`, `ifEquals`, `elseIfEquals`, `else`, `endIf`, and `endForEachDataRow`.
+  `forEachDataRow`, `ifEquals`, `ifDisplayed`, `elseIfEquals`,
+  `elseIfDisplayed`, `else`, `endIf`, and `endForEachDataRow`.
+- Put the actual value/data reference in `Value` and the expected comparison in
+  `Description` for `ifEquals` and `elseIfEquals`. The older
+  `ACTUAL = EXPECTED` value form is still accepted.
+- Close nested flow blocks from the inside out: an inner `endIf` must appear
+  before the outer `endIf` or `endForEachDataRow`.
+- The configured Excel runner uses `explicitTime` for normal browser actions
+  and the shorter `conditionTime` for `ifDisplayed` checks.
+- Each run creates its own timestamped report folder. Evidence opens inside the
+  offline HTML report with previous/next navigation.
 
 `Template Testing.xlsx` is the stable workbook used by the automated tests in this repository.
