@@ -59,8 +59,9 @@ KeywordEngine
 
 ExcelExecutionReporter
   Report presentation:
-  - render evidence links
-  - render the Evidence Gallery
+  - render step evidence links
+  - render the bounded Evidence Gallery
+  - open evidence in an in-report modal with previous/next navigation
   - create failure screenshots when enabled
 ```
 
@@ -222,4 +223,7 @@ screenshotFullPart |        |       | Complete booking page
 ```
 
 The report displays each saved image in the `Evidence` column and the Evidence
-Gallery.
+Gallery. Selecting either link opens the same dark in-report preview. Previous
+and next navigation stays within the current testcase; Left/Right arrow keys
+and `Escape` are also supported. The report uses offline assets, so opening the
+HTML file and previewing local evidence do not require internet access.
